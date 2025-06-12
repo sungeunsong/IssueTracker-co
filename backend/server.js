@@ -11,8 +11,8 @@ const userRoutes = require('./routes/users');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// serve public assets (css, etc.) and React frontend
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')));
 

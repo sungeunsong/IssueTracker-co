@@ -1,6 +1,8 @@
+import React, { useState } from 'react';
+
 export default function NewIssueForm({ onCreated, onCancel }) {
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
 
   const submit = e => {
     e.preventDefault();
@@ -18,20 +20,20 @@ export default function NewIssueForm({ onCreated, onCancel }) {
   };
 
   return (
-    React.createElement('form', { onSubmit: submit },
-      React.createElement('h2', null, 'New Issue'),
-      React.createElement('input', {
-        placeholder: 'Title',
-        value: title,
-        onChange: e => setTitle(e.target.value)
-      }),
-      React.createElement('textarea', {
-        placeholder: 'Description',
-        value: description,
-        onChange: e => setDescription(e.target.value)
-      }),
-      React.createElement('button', { type: 'submit' }, 'Create'),
-      React.createElement('button', { type: 'button', onClick: onCancel }, 'Cancel')
-    )
+    <form onSubmit={submit}>
+      <h2>New Issue</h2>
+      <input
+        placeholder="Title"
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+      />
+      <textarea
+        placeholder="Description"
+        value={description}
+        onChange={e => setDescription(e.target.value)}
+      />
+      <button type="submit">Create</button>
+      <button type="button" onClick={onCancel}>Cancel</button>
+    </form>
   );
 }
