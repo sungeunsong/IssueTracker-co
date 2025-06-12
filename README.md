@@ -9,10 +9,17 @@ This project now separates the **backend** and **frontend**. The backend is impl
 - Assign users and change status
 - Comment on issues
 - Pagination for issue list
-
-- React-based UI served from the `frontend/public` directory
-
-
+- React-based UI built with **Vite** under the `frontend` directory
+1. Install backend dependencies (requires internet access):
+2. Install and build the frontend:
+   ```bash
+   cd frontend
+   npm install
+   npm run build
+   cd ..
+   ```
+3. Start the server from the project root:
+4. Open `http://localhost:3000` in your browser.
 ## Getting Started
 
 1. Install dependencies (requires internet access):
