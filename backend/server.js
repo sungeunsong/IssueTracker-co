@@ -11,15 +11,19 @@ const userRoutes = require('./routes/users');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+// serve public assets (css, etc.) and React frontend
 app.use(express.static(path.join(__dirname, '..', 'public')));
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')));
 
 app.locals.store = new InMemoryStore();
 
-app.use('/', userRoutes);
-app.use('/issues', issueRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/issues', issueRoutes);
+
+// send the React application's HTML
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'index.html'));
+});
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
