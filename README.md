@@ -9,13 +9,16 @@ This project now separates the **backend** and **frontend**. The backend is impl
 - Assign users and change status
 - Comment on issues
 - Pagination for issue list
-- React-based UI served from `/frontend`
+
+- React-based UI served from the `frontend/public` directory
+
 
 ## Getting Started
 
 1. Install dependencies (requires internet access):
    ```bash
-   npm install express body-parser
+
+   npm install
    ```
 2. Start the server:
    ```bash
