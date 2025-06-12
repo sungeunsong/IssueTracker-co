@@ -1,6 +1,6 @@
 # Issue Tracker Prototype
 
-This project is a simple issue tracker implemented with **Node.js** and **Express**. It stores data in memory so you can test functionality without a database. You can later replace the in-memory store with a real database.
+This project now separates the **backend** and **frontend**. The backend is implemented with **Node.js** and **Express** while the frontend is a small **React** app. Data is still stored in memory so you can test functionality without a database.
 
 ## Features
 
@@ -9,13 +9,13 @@ This project is a simple issue tracker implemented with **Node.js** and **Expres
 - Assign users and change status
 - Comment on issues
 - Pagination for issue list
-- Simple EJS-based UI with modern styling
+- React-based UI served from `/frontend`
 
 ## Getting Started
 
 1. Install dependencies (requires internet access):
    ```bash
-   npm install express body-parser ejs
+   npm install express body-parser
    ```
 2. Start the server:
    ```bash
