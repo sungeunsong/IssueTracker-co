@@ -1,8 +1,0 @@
-<% layout('layout') -%>
-<h2>Issues - Page <%= page %></h2>
-<ul>
-  <% issues.forEach(issue => { %>
-    <li><a href="/issues/<%= issue.id %>"><%= issue.title %></a> - <%= issue.status %></li>
-  <% }) %>
-</ul>
-<a href="/issues?page=<%= page + 1 %>">Next Page</a>
