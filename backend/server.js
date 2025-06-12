@@ -11,9 +11,11 @@ const userRoutes = require('./routes/users');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
 // serve public assets (css, etc.) and React frontend
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')));
+
 
 app.locals.store = new InMemoryStore();
 
