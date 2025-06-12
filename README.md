@@ -2,6 +2,7 @@
 
 This project is a simple issue tracker with a **Node.js** API backend and a **React** frontend. Data is stored in memory for now so you can test functionality without a database. You can later swap in a real database.
 
+
 ## Features
 
 - User registration and login (no sessions yet)
@@ -9,6 +10,7 @@ This project is a simple issue tracker with a **Node.js** API backend and a **Re
 - Assign users and change status
 - Comment on issues
 - Pagination for issue list
+
 - React-based frontend separated from the backend
 
 ## Getting Started

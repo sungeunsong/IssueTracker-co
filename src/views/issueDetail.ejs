@@ -1,0 +1,27 @@
+<% layout('layout') -%>
+<h2><%= issue.title %></h2>
+<p>Status: <%= issue.status %></p>
+<p>Description: <%= issue.description %></p>
+<p>Assignee: <%= issue.assignee || 'Unassigned' %></p>
+<form method="post" action="/issues/<%= issue.id %>">
+  <label>Status
+    <select name="status">
+      <option value="open" <%= issue.status === 'open' ? 'selected' : '' %>>Open</option>
+      <option value="in progress" <%= issue.status === 'in progress' ? 'selected' : '' %>>In Progress</option>
+      <option value="closed" <%= issue.status === 'closed' ? 'selected' : '' %>>Closed</option>
+    </select>
+  </label>
+  <label>Assignee <input name="assignee" value="<%= issue.assignee || '' %>" /></label>
+  <button type="submit">Update</button>
+</form>
+<h3>Comments</h3>
+<ul>
+  <% issue.comments.forEach(c => { %>
+    <li><strong><%= c.author %></strong>: <%= c.text %> (<%= c.createdAt.toISOString() %>)</li>
+  <% }) %>
+</ul>
+<form method="post" action="/issues/<%= issue.id %>/comments">
+  <label>Author <input name="author" /></label>
+  <label>Comment <textarea name="text"></textarea></label>
+  <button type="submit">Add Comment</button>
+</form>
