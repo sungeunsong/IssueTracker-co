@@ -7,26 +7,24 @@ router.get('/', (req, res) => {
   const page = parseInt(req.query.page || '1', 10);
   const limit = 10;
   const issues = req.app.locals.store.getIssues(page, limit);
-  res.render('issues', { issues, page });
+  res.json({ issues, page });
 });
 
 // show create issue form
-router.get('/new', (req, res) => {
-  res.render('newIssue');
-});
+// frontend will handle form rendering
 
 // create issue
 router.post('/', (req, res) => {
   const store = req.app.locals.store;
   const issue = store.addIssue(new Issue(req.body));
-  res.redirect('/issues/' + issue.id);
+  res.json(issue);
 });
 
 // view issue details
 router.get('/:id', (req, res) => {
   const issue = req.app.locals.store.getIssue(req.params.id);
-  if (!issue) return res.status(404).send('Issue not found');
-  res.render('issueDetail', { issue });
+  if (!issue) return res.status(404).json({ error: 'Issue not found' });
+  res.json(issue);
 });
 
 // update issue (status or assignee)
@@ -36,8 +34,9 @@ router.post('/:id', (req, res) => {
     status: req.body.status,
     assignee: req.body.assignee
   };
-  store.updateIssue(req.params.id, update);
-  res.redirect('/issues/' + req.params.id);
+  const issue = store.updateIssue(req.params.id, update);
+  if (!issue) return res.status(404).json({ error: 'Issue not found' });
+  res.json(issue);
 });
 
 // add comment
@@ -48,8 +47,9 @@ router.post('/:id/comments', (req, res) => {
     text: req.body.text,
     createdAt: new Date()
   };
-  store.addComment(req.params.id, comment);
-  res.redirect('/issues/' + req.params.id);
+  const result = store.addComment(req.params.id, comment);
+  if (!result) return res.status(404).json({ error: 'Issue not found' });
+  res.json(result);
 });
 
 module.exports = router;
