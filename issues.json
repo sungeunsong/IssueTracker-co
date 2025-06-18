@@ -1,0 +1,1562 @@
+[
+  {
+    "id": "6fd9a9f3-3a27-4577-a413-bfb75581d778",
+    "content": "사용자 > 목록> 시간 유형 지정 팝업 필터 디자인",
+    "reporter": "강보경",
+    "status": "OPEN",
+    "createdAt": "2025-06-11T01:56:48.069Z",
+    "assignee": "강보경"
+  },
+  {
+    "id": "0f02714d-8048-4b5b-8a10-9143f42b7fb1",
+    "content": "관리자 관리폴더 하단 버튼 디자인",
+    "reporter": "강보경",
+    "assignee": "강보경",
+    "status": "IN_PROGRESS",
+    "createdAt": "2025-06-11T01:50:11.344Z"
+  },
+  {
+    "id": "72fd3f32-b6f1-4805-9570-1bf46cb510f5",
+    "content": "팝업 스크롤 시 select 움직이는 현상",
+    "reporter": "강보경",
+    "status": "OPEN",
+    "createdAt": "2025-06-11T01:38:02.268Z"
+  },
+  {
+    "id": "c119f0b6-e28f-4641-b687-08100274b68f",
+    "content": "내 정보 수정 팝업 카테고리 별 타이틀 높이 및 간격 조정",
+    "reporter": "강보경",
+    "assignee": "강보경",
+    "status": "IN_PROGRESS",
+    "createdAt": "2025-06-11T01:36:23.077Z"
+  },
+  {
+    "id": "62906ac4-6dc3-4e95-9610-b56b6592f101",
+    "content": "자원>계정>노드 테이블이 노드 영역을 벗어나는 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T07:25:36.906Z"
+  },
+  {
+    "id": "0dcf2bbb-4765-4dcf-ab71-c3265cebad6a",
+    "content": "이력>결재문서>진행함 대리결재 요청 후, 결재상세보기문서까지 닫히는 현상 -> 대리결재 모달만 닫혀야함",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-10T07:02:58.461Z"
+  },
+  {
+    "id": "2bb85a4c-09b6-47ac-9845-568a8b9ef888",
+    "content": "관리>제품설정>환경설정, 비밀번호 금지단어, 계정 비밀번호 보기, 보안서약서 페이지, setconfig 페이지 수정 버튼과 새로고침 버튼 순서 뒤바뀜",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-10T06:57:57.777Z",
+    "comment": "디자인과 순서 동일함\n재오픈시 코멘트 필요"
+  },
+  {
+    "id": "31eba0b6-8842-441e-bfcc-f160592de0b3",
+    "content": "폴더뷰 관련 \n1) 1개당 ndepth인 폴더일 때 폴더 이음 선 끊기는 현상\n2) 우클릭 메뉴에 선 생기는 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T06:11:14.208Z"
+  },
+  {
+    "id": "9b30e78b-11ba-4843-bae3-ecd1be1678be",
+    "content": "대시보드>토폴로지>새로고침 버튼 클릭 시, \"요청이 성공하였습니다\" alert이 나왔다 안나왔다 하는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T04:43:35.567Z"
+  },
+  {
+    "id": "41ca5191-24d9-4dc2-986e-87c4ab81569c",
+    "content": "로그인>토큰 로그인> 1)\"발급요청\" 버튼 디자인과 다름 2)발급요청 클릭시 , placeholder 좌측 패딩 개선",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T02:25:44.678Z"
+  },
+  {
+    "id": "2e924675-c3b9-4390-b63c-57d2321b70c8",
+    "content": "활동감지>이벤트>폴더뷰 height 를 노드/사용자 폴더와 통일",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T02:18:00.432Z"
+  },
+  {
+    "id": "b2f290b6-fb11-4319-93c8-93668b04add7",
+    "content": "자원>노드>폴더뷰에서 우클릭 시 에러",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T02:16:46.069Z"
+  },
+  {
+    "id": "f2e3312f-5ae7-4788-ab39-93c72f6286a8",
+    "content": "자원>관리자/사용자>상세보기와 우클릭 시간유형 지정에서 시간유형의 색상이 흰색 일 때 border 처리 안됨",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T02:09:59.344Z"
+  },
+  {
+    "id": "921ff943-9a7f-4a9f-9814-a969e5aeafdc",
+    "content": "접근제어 정책의 시간유형이 간접 선택되어져 있을 떄, 선택된 시간유형이 무엇인지 표시되지 않음 (룰셋은 잘 표시가 됨)",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T02:05:46.419Z"
+  },
+  {
+    "id": "0edafbb0-93bc-4ab2-83ae-c81eb17f2284",
+    "content": "결재상세문서에서 접근제어정책 목록 기본 영역 좀더 넓게 개선 (현재 한개밖에 보이지 않음)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T01:59:51.700Z"
+  },
+  {
+    "id": "aae2c7ff-d805-4112-995f-d3e58f14c54c",
+    "content": "전체적으로 새로고침버튼 통일\n예) 관리>프로세스> 설정에서의 새로고침 버튼과 정책>비밀번호>관리자에서의 새로고침 버튼 클릭 시, 색상처리 동작이 다름",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T01:55:50.784Z"
+  },
+  {
+    "id": "1f65fa4c-babf-4bef-987d-a9aec1e4752d",
+    "content": "정책>접근제어>룰셋 > 상세보기에서 명령어규칙, SU허용규칙, 파일전송 쓰기규칙, 파일전송 읽기규칙이 많아졌을 때 영역을 벗어남 -> 스크롤 처리 요청",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T01:49:53.364Z"
+  },
+  {
+    "id": "fc048fcd-3398-4a58-af9a-51991564c390",
+    "content": "자원>계정>노드 선택 후 계정 조회> 계정 우클릭 후 비밀번호 변경>비밀번호 입력>비밀번호 확인 입력 시, \"비밀번호가 일치하지 않습니다\" 디자인을 자원> \"사용자\" 부분과 일치하도록 수정",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T01:31:35.800Z"
+  },
+  {
+    "id": "6029b400-d3e6-4df3-9035-9c70a3d087c6",
+    "content": "이력>요청>상세보기> array 데이터 맨 아래줄이 짤리는 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-10T00:56:48.897Z"
+  },
+  {
+    "id": "92265e4f-7519-42f7-bd54-de50cd4014bc",
+    "content": "상세보기 모달에서 라벨 오른쪽에 아이콘등 들어가있는 라벨들의 폰트가 적용되지 않음",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T00:52:32.967Z"
+  },
+  {
+    "id": "a710eede-4a0a-4079-acb8-88d61aacaecc",
+    "content": "setconfig 맨 아래 \"이전페이지\" 하단 여백없음",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-10T00:50:47.577Z"
+  },
+  {
+    "id": "7e61af7f-ef25-48c9-ad94-4cf0ea330552",
+    "content": "자원>계정>노드 선택 후 계정 조회> 계정 우클릭 후 비밀번호 변경>모달에서 \"자동생성\" 부분 폰트 변경",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T00:40:13.508Z"
+  },
+  {
+    "id": "2c39a958-1055-463a-9b83-703839b11d35",
+    "content": "이력>결재문서>상세보기에서 현재 결재단계 표시와 결재자가 겹치는 현상 (현재 단계는 3명 이상의 ...이 붙은 결재자)\n참고: 이력>결재문서>진행함> 결재번호 20240926-0001",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-10T00:06:24.082Z"
+  },
+  {
+    "id": "364cf41a-1626-495f-96b3-a62813d73751",
+    "content": "차트 데이터 없는 경우 \nNo Data 출력 문구 디자인 처리 안된듯",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T23:55:44.248Z",
+    "comment": "테이블 데이터 없을때와 아이콘과 통일"
+  },
+  {
+    "id": "e93a8547-38a4-4d56-a071-818884800ac2",
+    "content": "정책>접근제어>사용자/역할 대량정책 추가/수정 버튼 클릭> \"대량 추가\", \"대량 수정\" 폰트 적용 안됨 (작업 리스트 폰트 참고)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T23:48:16.122Z"
+  },
+  {
+    "id": "3d80268f-cd99-4e23-b9c2-591537505e83",
+    "content": "자원>계정> 노드 테이블에서 한개의 노드 체크>계정 테이블의 등록과 추가 앞에 + 버튼이 다른 현상\n-> 다른 페이지의 테이블 상단에 추가 버튼 아이콘도 함께 확인",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T23:34:14.675Z"
+  },
+  {
+    "id": "43b8d5ac-fb9a-4c25-85e6-8769cb07026b",
+    "content": "자원>노드>추가 및 상세보기에서 프록시/에이전트 cursor pointer로 되어있는 것 해제 요청 (동작할 수 있어보임)",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-09T23:12:20.623Z",
+    "comment": "원래 동작할 수 있는게 맞음\n에이전트 추가 옵션이 켜져 있으면 동작 가능\n상세보기시에는 동작 안되지만 추가와 통일시킴"
+  },
+  {
+    "id": "9a710fb7-b798-4afb-94a9-9da31c98615f",
+    "content": "자원>노드>연결테스트 클릭 시, 로딩바 추가",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T23:09:40.602Z"
+  },
+  {
+    "id": "4c307303-f583-49b2-b28d-58b4653571e8",
+    "content": "/setconfig 페이지 1) 디자인 2) 새로고침 버튼 없음",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T07:48:30.795Z"
+  },
+  {
+    "id": "8b21a6c4-dc7d-4b3d-a036-26a351e43b79",
+    "content": "정책>접근제어>사용자에서 대용량 정책 업로드 시, 검증 버튼(클릭 후) 위치 개선 및 검증, 추가 버튼 디자인",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-09T07:38:23.159Z"
+  },
+  {
+    "id": "781afa0d-2e08-4a9e-805a-6d4cf05ab01e",
+    "content": "수명주기 요일별시간대\n마우스 클릭 후 드래그 하여 영역 선택할 경우, 화면에 알수없는 박스 생김",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T07:37:03.575Z"
+  },
+  {
+    "id": "f4fc1b2c-2df5-47e5-ba24-8caeafd61b6e",
+    "content": "헤더>비밀번호 변경>\"비밀번호\"와 \"비밀번호 확인\" input heigth가 다른 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T07:22:24.351Z"
+  },
+  {
+    "id": "9ed77877-3884-4f4d-9292-3505af0a8c3c",
+    "content": "1) 헤더>제품정보>제품버전 refresh 시 로딩바 추가\n2) 헤더>제품정보>라이선스 정보 refresh 시 로딩바 추가\n3) 탭메뉴와 refresh 버튼과 등록 버튼 라인 맞추기",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T07:21:26.155Z",
+    "comment": "3)완료"
+  },
+  {
+    "id": "b81ce082-a05b-42f2-a719-0919caae1368",
+    "content": "대시보드>토폴로지>노드 클릭 시, 노드 상세에 탭, 닫기 버튼 디자인 적용 안됨",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T07:15:39.106Z"
+  },
+  {
+    "id": "a5434612-7950-4b69-b762-fa11cb6eb2bb",
+    "content": "헤더>내정보>내정보수정에서 title에 콜론(:) 붙은 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T07:06:53.858Z"
+  },
+  {
+    "id": "27c8cdc9-d93f-4c33-ab81-b9a1d5a65ea0",
+    "content": "정책>수명주기>상세보기에서 요일별 시간대 input 에서 설정됨(텍스트) hover 시, 커서 pointer 안되는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T07:01:39.014Z"
+  },
+  {
+    "id": "86bfbcf8-b7d9-4069-aa72-49b4b75e9939",
+    "content": "자원>관리자/사용자>상세보기 시, \"모바일토큰\", \"고정토큰\" 있는 경우 cursor가 pointer 되지 않도록 수정",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T06:58:37.008Z"
+  },
+  {
+    "id": "23b7ff95-84c6-44b4-b8b3-57cc59c9a9f4",
+    "content": "자원>노드>그룹, 자원>사용자>역할 추가 시 초기화 안되는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T06:52:51.255Z"
+  },
+  {
+    "id": "3ad25796-6982-4e0b-a0ea-38fce6b00892",
+    "content": "관리>제품설정>보안서약서 각각 refresh 시, 로딩바 추가",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T06:47:53.364Z"
+  },
+  {
+    "id": "d3190f2e-6b98-408d-87f6-0562d630f9e8",
+    "content": "관리>제품설정>보안서약서 max-heigth 조정 요청 (여백 및 heigth 관련)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T06:39:50.065Z"
+  },
+  {
+    "id": "5443aa1a-bf36-4969-b055-7460e88f6642",
+    "content": "관리>제품설정>보안서약서 각 내용들 font 적용 안됨(시안과 다름)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T06:39:07.354Z"
+  },
+  {
+    "id": "35b578ad-9530-4ecc-a1df-bfa49a6cd08f",
+    "content": "활동감지>이벤트>검색 영역 확장 >AI 버튼 아이콘과 AI 텍스트 사이 넓음 -> \"초기화\", \"조회\" 버튼과 같은 padding 요청",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T06:36:17.613Z"
+  },
+  {
+    "id": "94abdda6-3136-4c96-b6e9-2c794111af1d",
+    "content": "자원>노드/사용자/이벤트>폴더뷰에서 depth가 깊어졌을 때 우측 여백 필요",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T06:32:20.426Z"
+  },
+  {
+    "id": "d5eb5b8e-26b8-4dc3-8ad2-9032bdf0e44a",
+    "content": "자원>노드/사용자>목록(폴더뷰) 폴더 우클릭하여 \"폴더 추가\" ,\"폴더명 수정\", \"색상 수정\" 시, 파란색 화살표 버튼 보라 계열로 개선",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T06:30:40.819Z",
+    "comment": "아이콘 변경 필요"
+  },
+  {
+    "id": "cdcd499c-9f15-45ee-b4e0-50f81aeed695",
+    "content": "세션 페이지에서 원하는 세션만 골라서 '세션관제' 한다. \n이때 새로운 탭이 실행된다.\n\n상단 \"방송중:1\", \"방송종료:2\" 글자가 윗쪽 margin없이 딱 붙어있음",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T05:59:33.314Z"
+  },
+  {
+    "id": "d6c7871b-3014-47ff-98b4-a177602cc7d4",
+    "content": "대시보드>세션관제>전체보기 화면에서 \n1) Font Size 버튼 클릭했을 때, 팝업의 오른쪽 여백이 많음\n2) InputNumber 영역 hover 했을 때, 화살표 위치 개선",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-09T05:57:37.440Z"
+  },
+  {
+    "id": "42cdb3bb-33ff-4019-b612-d1e4b5c11995",
+    "content": "우측상단 > 제품정보 > 라이선스등록\n\"클라이언트키\" 정렬 필요",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T05:15:48.567Z",
+    "comment": "원래도 우측정렬이었으나\n좌, 우측 정렬 비교좀 해보고 결정하는 것으로.\n=> 좌측정렬로 변경"
+  },
+  {
+    "id": "3ee8520a-e4bf-40d7-96af-8f914faae619",
+    "content": "노드 추가 > 고급옵션 \n타임아웃(초) : 상하 화살표를 내리다보면 음수도 입력됨\n음수입력 안되게 하자",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T04:33:23.803Z"
+  },
+  {
+    "id": "dd3500fb-75bc-4231-a4b4-33747cac278b",
+    "content": "사용자 목록 페이지에서, 특정 폴더 색상수정할 경우 \n색상선택부분 오른쪽에 큰 공백이 나타남",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T03:35:51.029Z"
+  },
+  {
+    "id": "70acfdb2-f31e-425e-bb75-1575f9b89c3e",
+    "content": "토폴로지 페이지에서 \"편집\" 클릭 후 \n\"토폴로지 설정\" 팝업을 띄운다. \n특정 탭이름 우클릭 시 팝업메뉴가 엉뚱한 위치에 노출된다",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T02:32:02.549Z"
+  },
+  {
+    "id": "92e64e46-4f91-4c4f-84d6-59250c93f3ee",
+    "content": "\"사용자 접근 가능한 계정 보기\"\n룰셋, 시간유형, 비밀번호보기 - 돋보기 아이콘 누락",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T02:15:42.887Z",
+    "comment": "사용자, 노드 모두 접근 가능한 계정 보기에서\n룰셋, 시간 유형은 무조건 값을 갖고 아이콘으로 노출 되기에\n돋보기 및 sorter가 무의미하여 제거함.\n*비밀번호 보기는 동작이 안되고 있어서 수정함."
+  },
+  {
+    "id": "476146cb-3ca0-4de0-a1c7-ca7dd941a11e",
+    "content": "\"사용자 접근 가능한 계정 보기\", \"노드 접근 가능한 계정 보기\"\n룰셋 및 시간유형에 이름이 아닌 아이콘이 나타난다.\n룰셋 아이콘을 클릭해도 \"기본룰셋\"이름이 표시되지 않는다.\n\n차라리 아이콘대신 이름text를 나타내주는 것이 어떨지?",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T02:12:42.230Z",
+    "comment": "넣고 테스트 해보았으나, \n룰셋,시간유형 모두 텍스트가 가변적이라 미적으로 아름답지 않음.\ntooltip을 추가해서 hover시 볼 수 있도록 개선함\n추가로 \"기본룰셋\" 이름이 안나오는 것은 버그 였음. 수정함."
+  },
+  {
+    "id": "26ee44d4-09dc-41b8-aee8-1e328d20be32",
+    "content": "세션로그인차트보기\n월요일 데이터이 일요일 데이터로 노출되는 듯 한 현상",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T01:59:35.680Z",
+    "comment": "엔진 데이터 및 기존 웹은 \"월\" 부터 시작이나\n신규 디자인이 \"일\" 부터 시작이어서 나타난 현상\n\"월\" 부터 시작 되도록 수정"
+  },
+  {
+    "id": "016a2b22-bfa3-4c46-acb1-65176c82d914",
+    "content": "프록시 노드 추가 시, \"접속계정비밀번호 확인\" 입력박스에\n입력값을 넣으면 뒷부분에 빨간색아이콘 혹은 초록색 아이콘이 표시된다.\n이때 아이콘이 margin없이 박스경계에 딱 붙어있다.",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T01:49:58.222Z"
+  },
+  {
+    "id": "cd4b9249-ae70-45a7-9178-aa02b462e122",
+    "content": "노드 팝업 ,관리자 지정 팝업 하단 버튼 스타일",
+    "reporter": "강보경",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T01:13:54.139Z"
+  },
+  {
+    "id": "7d09b0b9-a425-4493-be78-26023d57ffcb",
+    "content": "우측 상단 종모양 아이콘에 숫자가 표시되어 클릭 후 모든 공지 모든 알림을 다 읽고 닫았다.\n그너라 종모양 아이콘의 숫자가 바로 없어지지 않고, 오래 걸린다.",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T00:31:37.884Z",
+    "comment": "알림-전체 읽음에서만 나오는 현상.\n전체읽음시 헤더쪽 리로딩이 빠져있었음.\n수정 완료."
+  },
+  {
+    "id": "edae3ad6-40f9-4a5f-8a41-07a1e0114a2c",
+    "content": "플러터 접속기 다운로드 주소 /public/access/flutter/win으로 변경 되었습니다\n접속기 다운로드 아이콘에 적용 부탁드립니다",
+    "reporter": "김우찬",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-09T00:02:26.347Z"
+  },
+  {
+    "id": "3d887751-22d1-4f2d-98e5-ead24d4665bf",
+    "content": "백엔드 조회 text 항목 입력 시, 우측 x 아이콘이 뒤로 밀리는 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-08T23:14:25.024Z"
+  },
+  {
+    "id": "a0e08957-7100-4ef7-aae3-32eff7ec1fce",
+    "content": "제품설정 > 환경설정 페이지\n\"사용자 이메일 도메인 검사\" 부분에서 j 글자를 입력하면 밑부분이 짤려서 i 처럼 보인다.\n웹 전반적인 공통 현상인 듯",
+    "reporter": "박윤광",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-08T22:48:15.782Z"
+  },
+  {
+    "id": "9c3e5b39-8feb-4350-ae65-19b7129f632d",
+    "content": "이력페이지 검색조건 \"작업종류\", \"대상종류\" 스크롤 내리면 맨 밑부분이 짤려있다.\n\n계정페이지 \"계정 상세 보기\" 모달에서 \"그룹\" 스크롤을 내리면 맨 밑부분이 짤려있다. 또한 커서위치가 이상하다.",
+    "reporter": "박윤광",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-08T22:46:55.030Z"
+  },
+  {
+    "id": "cd5d4d13-2629-48b7-b1bf-702e3b51255c",
+    "content": "펜딩페이지에서 재접속 됐을때 원래 기존 페이지로 안넘어가는 현상",
+    "reporter": "송성은",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T10:15:54.466Z"
+  },
+  {
+    "id": "132e77e7-28a5-4afa-b295-00c6b7b4e59f",
+    "content": "결재문서 결재단계에 사람 3명이고\n승인이나 반려 표시가 있을때\nv 표시와 승인 마크가 겹침",
+    "reporter": "송성은",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T06:39:43.234Z"
+  },
+  {
+    "id": "419d4a16-69f3-4f86-bfde-4b806bc0fa6b",
+    "content": "세션 기록 페이지에서 녹화방송을 볼때,  우측 사이드에서 이벤트 창을 볼 수 있다. 이때 \"상태\" 컬럼의 검색아이콘이 돋보기가 아닌 깔대기 모양이다.",
+    "reporter": "박윤광",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T05:28:56.306Z",
+    "comment": "완료"
+  },
+  {
+    "id": "7d6052c1-c780-4616-8bac-811fd29f0b08",
+    "content": "사용자/노드 테이블을 가져쓰는 모달에 기본 스크롤이 생기지 않도록 개선 요청 (페이징영역확보)",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T05:12:51.634Z",
+    "comment": "조금 더 늘려서 개선은 했으나\n현재 디자인의 특성상 한페이지에 다 보여주기엔 무리가 있음\n(큰 모니터는 가능하나, 작은 모니터는 불가능)"
+  },
+  {
+    "id": "6202dfc7-d1c1-4b40-b069-8b39d379f36b",
+    "content": "프로세스 색상없는 이름에 색상 필요\nwtunnel, whttpsproxy, node, wvncproxy, waigent",
+    "reporter": "박윤광",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T05:09:32.495Z",
+    "comment": "ant 기본 제공 컬러 수(10개)로 인해 보라색으로 통일"
+  },
+  {
+    "id": "5e4473f3-4d41-4c55-8317-bf247cbeca3a",
+    "content": "1) 정책>접근제어>룰셋선택>좌측 룰셋 이름 돋보기 모양 클릭하면 검색 영역이 모달 영역을 벗어나는 것을 개선 요청\n2) 초기화/확인 버튼 중 확인 버튼 색상 처리 요청",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-05T05:04:46.029Z"
+  },
+  {
+    "id": "cb16c0a6-c8db-4862-916f-200165784275",
+    "content": "정책>접근제어>시간유형 간접선택에서 오름차순으로 sorting된 시간유형 이름을 1)내림차순 변경 2)sorting해제 하면 회색 배경이 사라지는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-05T05:03:33.506Z"
+  },
+  {
+    "id": "b972436b-4dc8-4c83-b2ad-48007ec7197c",
+    "content": "관리>프로세스>설정> wserver/wproxy/wtunnel/whttpsproxy/wvncproxy.waccess 에서 프로파일 이름 선택 select 간격 개선",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-05T04:56:18.173Z"
+  },
+  {
+    "id": "612c0963-41f3-47d7-93d7-07457c69323f",
+    "content": "테이블 컬럼에서 copy 할 수 있는 컬럼 커서 pointer 빠짐",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-05T04:53:03.198Z"
+  },
+  {
+    "id": "c9117a9a-ad54-46f8-ac79-824b5ad873f8",
+    "content": "프론트필터가 걸려있을 경우, 돋보기 모양에 표시 누락",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-05T04:51:04.393Z"
+  },
+  {
+    "id": "867af2d5-eee2-4d5f-ba9b-a51ecc985d5f",
+    "content": "이력>결재문서>대리결재요청후 요청 결과 alert이 안뜸",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-05T04:40:02.545Z"
+  },
+  {
+    "id": "31ab7781-352d-48d9-92a6-909232cb5a46",
+    "content": "이력>결재문서>대리결재에서 사용자 선택 후 리스트가 닫히지 않는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-05T04:38:28.376Z",
+    "comment": "정상 동작"
+  },
+  {
+    "id": "d9f80500-e61e-41fd-80c3-da3f714b209b",
+    "content": "\"필터 초기화\"용 아이콘과 \"새로 고침\" 아이콘이 동일하다.\n다른 모양으로 개선했으면 합니다.\n또한 차트 페이지에서는 해당 아이콘이 기존 차트를 모두 삭제하는 기능이 있어서 .. 새로고침인줄 알고 눌렸다가 실수할 수 있어 보입니다.",
+    "reporter": "박윤광",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T04:35:17.280Z",
+    "comment": "완료"
+  },
+  {
+    "id": "d19163e5-99ac-44cc-9071-f6cdb6faae4e",
+    "content": "이력>결재문서>진행함 상세정보 클릭 시 pageRreadMode is not defined 에러",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-05T04:32:43.976Z"
+  },
+  {
+    "id": "2998185d-4d38-42fc-a4a7-9e2493870620",
+    "content": "이력>결재문서>결재문서 상세보기에서 코멘트 영역이 디자인 적용 안됨(코멘트 없을 때)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T04:29:42.335Z"
+  },
+  {
+    "id": "ec009f9a-8cbc-4755-beb9-43b3448d60cb",
+    "content": "계정 비밀번호 관리대장 다운로드할 때, \n짧긴 하지만 \"다운로드 중... (Loading...)\" 다이얼로그 메시지가 나타난다.\n이때 해당 모양이 깨져있다.",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T04:28:52.638Z"
+  },
+  {
+    "id": "21000aaf-b1b8-454b-ae16-deff5041209e",
+    "content": "관리>제품설정>비밀번호 금지단어에서 -,+ 버튼 위치개선\n(다른쪽은 전부 +,- 순서인데, 이곳만 순서가 바뀌어있음)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-05T04:27:43.311Z"
+  },
+  {
+    "id": "0f21c47b-1df6-43e6-9d65-d8b479bff1ff",
+    "content": "이력 상세 array 있는 데이터 + 빠진 현상 관련 퍼블리싱 추가 작업",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T02:33:00.330Z"
+  },
+  {
+    "id": "0ec0610f-b124-49a6-af71-d908d1f1e605",
+    "content": "세션관제 \n변경전: 3X3 또는 4X4 에서 \"전체화면\" 보기를 하면 각 터미널이 해당 구역에 딱 맞게 잘 동작한다. \n변경후: 각 터미널 구역 하단에 회색 여백이 나타난다",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T02:02:13.138Z",
+    "comment": "기존 버전도 동일\n라인수가 화면크기와 딱 맞아떨어지지 않음\n해당 부분 검정색으로 덮어서 처리함."
+  },
+  {
+    "id": "f400f674-94a8-483b-bf02-943e6c43d0e3",
+    "content": "자원>노드>그룹>노드 그룹 추가>등록 팝업 디자인 미적용",
+    "reporter": "강보경",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T02:00:09.491Z"
+  },
+  {
+    "id": "d75f9998-0df1-4d92-9576-cfc97489ab95",
+    "content": "차트 이동하여 over시 dot border 안나오는 현상",
+    "reporter": "송성은",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T01:21:53.465Z"
+  },
+  {
+    "id": "c0e5aecc-faf1-4534-abaa-c68b83ec105d",
+    "content": "셀프 접속기 다운로드",
+    "reporter": "송성은",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-05T00:51:59.554Z"
+  },
+  {
+    "id": "6cfa01d5-7831-43ba-b0e7-6144e20e12f3",
+    "content": "AI 관리자 채팅창에서 AI 답변 아이콘에 테두리 생기는 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T23:49:58.208Z"
+  },
+  {
+    "id": "b3dc94c8-a6cf-461f-9a61-56075ea95df7",
+    "content": "AI 채팅창을 띄워둔 상태에서 \n1) \"도구\"를 활성화 한다.\n2) 좌측 대메뉴를 이동한다.\n\n채팅창은 잘 유지되지만, \"도구\"가 비활성화 되어버린다.",
+    "reporter": "박윤광",
+    "assignee": "이윤서",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T23:39:49.442Z"
+  },
+  {
+    "id": "27ce7770-c4c6-449d-b3e1-f9d60dad9bc0",
+    "content": "사용자역할, 노드그룹 경우\n변경전: 추가시 정적 or 동적이 결정되며, 수정시 변경이 불가능하다. \n변경후: 변경이 가능해보인다. (백앤드에서 에러 처리하긴 함)",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T23:31:48.933Z"
+  },
+  {
+    "id": "7ecd418b-1ed0-41d2-94e8-5351dbc5d11a",
+    "content": "로그인 할 때 로딩바 추가",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T23:19:17.537Z"
+  },
+  {
+    "id": "f47b94c1-5c99-4916-a352-14c3d0570653",
+    "content": "노드 상세보기 하단 버튼\n\"고급옵션\" : 기본 검은색, 마우스오버시 파란색\n\"연결테스트\" : 기본 파란색, 마우스오버시 파란색\n\n왜 다른 동작을 하도록 만들었는지? 이유가 궁금",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-04T23:16:32.515Z",
+    "comment": "'고급 옵션'은  클릭 시 팝업이 뜨는 속성이고,\n'연결테스트'는 클릭 시 바로 액션을 하기 때문에 디자인이 다른건 의도한 것 입니다."
+  },
+  {
+    "id": "38d3b665-3413-476c-941e-51c52ec7a3af",
+    "content": "\"노드 상세보기 > 고급 옵션\" 모달을 띄워 둔 상태에서\n전체 브라우저 스크롤을 움직이면, \n\n변경전 : 전체페이지만 스크롤되고 모달은 움직이지 않음 \n변경후 : 전체페이지와 고급옵션이 움직이고, 상세보기만 고정됨",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T23:15:00.451Z"
+  },
+  {
+    "id": "570883e1-eb9c-40bf-9f50-81426d9b5edb",
+    "content": "관리자 상세보기를 하면\n시간유형 입력필드가 중간쯤 1개 있고, 맨아래 1개 있음\n\n중복된 것으로 보임",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T23:05:33.304Z"
+  },
+  {
+    "id": "0726055e-249d-4bd9-aa52-670b458a3d5a",
+    "content": "관리자 페이지\n1) 시간유형이 \"직접입력\"되어 있는 관리자를 검색 (예, A관리자)\n2) A관리자 우클릭 시간유형 지정 클릭 \n\n변경전: 시간유형 \"직업입력\" 글자 위 마우스 오버시 포인터 변경됨\n변경후: 변경안됨",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T23:04:03.849Z"
+  },
+  {
+    "id": "7f0d8dc6-1308-48b7-90f4-93f47f0fbdff",
+    "content": "이력>요청>상세보기 시, array 데이터 안보이는 현상\n재현경로 : 관리자 로그인 주소 지정 이력 확인",
+    "reporter": "이윤서",
+    "assignee": "이윤서",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T07:42:43.009Z"
+  },
+  {
+    "id": "6a956cf3-d0aa-484e-94a0-3d7beae7651f",
+    "content": "이력>요청>백엔드 검색 영역> \"작업종류\", \"대상종류\" select 리스트의 가장 아래 항목이 짤리는 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T07:37:27.061Z"
+  },
+  {
+    "id": "5ea01ec2-a2ad-4c40-b4ef-f473aa37070d",
+    "content": "헤더>내정보>제품정보>라이선스 정보>등록 버튼 클릭 시, 뒤에 제품정보 모달 귀퉁이에 어두운 회색 영역이 생김",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T07:35:24.079Z",
+    "comment": "구조 변경"
+  },
+  {
+    "id": "c6ba1fa4-b608-4406-9e4e-daad80b8f2ac",
+    "content": "정책>결재라인>결재라인 상세보기에서 결재자로 설정한 사용자가 삭제 되었을 때 결재자 버튼 디자인",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T07:28:12.251Z",
+    "comment": "아이콘 컬러 변경"
+  },
+  {
+    "id": "19e83b24-03e7-41ce-9dc2-93395f201d1e",
+    "content": "전체적으로 input창 hover 시에는 테두리 색상이 생기는데, select, 캘린더(날짜선택) hover시에는 안생김",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T07:22:31.408Z",
+    "comment": "완료"
+  },
+  {
+    "id": "f5061c59-e70e-4ff0-8fbb-960a798db9a8",
+    "content": "테이블 컬럼 이름 길었을 때, ... 처리 안됨",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T07:14:18.655Z",
+    "comment": "원인 파악중"
+  },
+  {
+    "id": "d2ddff38-2be9-4fc2-b68c-e6eebc44b836",
+    "content": "테이블 프론트 필터 건 후 엑셀 다운로드 안되는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T07:09:08.870Z",
+    "comment": "기존 버전 동일"
+  },
+  {
+    "id": "baecefa2-5a9e-4fa5-92ff-a9793ec1475e",
+    "content": "정책>수명주기>추가/상세보기 시, 시작시간의 \"현재 시각\" 색상 처리",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T07:01:07.180Z"
+  },
+  {
+    "id": "efb1328b-3ee5-4073-a2d2-6fae22cbdb73",
+    "content": "정책>프로비저닝 추가/상세보기 >접근제어규칙> \"접속기 추가인증\"->임시비밀번호, \"자동로그인\"->SSH키(직접입력) 설정된 경우 라벨 옆 \"변경\" 버튼 디자인 안됨",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T06:54:15.968Z"
+  },
+  {
+    "id": "a4e14aa1-a041-4631-a4ec-1e7b861e20bb",
+    "content": "정책>프로비저닝>추가/상세에서 도움말 디자인 적용안됨",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:51:24.053Z"
+  },
+  {
+    "id": "76d2789d-378b-461e-bcfa-261739401b98",
+    "content": "정책>프로비저닝>추가/상세보기>접근제어규칙에서 \"리눅스/유닉스\" 탭을 체크>\"리눅스/유닉스 계정이름 지정\" 입력란에 입력 시, 앞에 2개 문자가 안보이는 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:38:16.097Z"
+  },
+  {
+    "id": "7e0daab4-0b7a-4c72-a678-df44a3ce8e06",
+    "content": "정책>프로비저닝>계정 및 접근제어 규칙/접근제어규칙 에서 network탭 선택 시, 프로토콜에 Network 텍스트 붙는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T06:34:44.267Z"
+  },
+  {
+    "id": "be705666-1d8f-42e2-be2d-09311804adcf",
+    "content": "멀티요청모달의 요청 결과 디자인과 이력>요청>상세보기 결과 디자인 통일",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:29:57.193Z"
+  },
+  {
+    "id": "f15976e8-ff5a-4c76-8903-c8a7d75cb6f6",
+    "content": "자원>사용자>우클릭>위임 사용자 목록에서 위임자 hover 시, 파란색 -> 보라색 변경 요청",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:28:48.429Z"
+  },
+  {
+    "id": "9fdf6cdd-e024-403e-8027-0789647b690d",
+    "content": "1) 자원>사용자>우클릭>위임 사용자 목록> 사용자 선택 시, 폴더영역 배경색상 처리 안됨\n2) 정책>결재라인>결제상세보기>결재자 폴더영역 배경색상 처리 안됨\n3) 폴더 클릭 시, 커서 모양 안바뀜",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:27:50.423Z"
+  },
+  {
+    "id": "ad809f35-e5bf-4103-af1a-cc73ecf83466",
+    "content": "정책>접근제어>룰셋 추가 시, 초기화 버튼 클릭하면 상속거부는 초기화되지 않는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:23:25.885Z"
+  },
+  {
+    "id": "3c35e950-ba4d-4687-86d4-d3743cc10b67",
+    "content": "정책>접근제어>룰셋 추가/상세보기 시, 파일전송 쓰기규칙/읽기규칙 라벨 디자인 적용 안됨(시안확인)",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:16:43.962Z"
+  },
+  {
+    "id": "11027a4f-847e-49ad-aa9d-26a9e526a19e",
+    "content": "정책>접근제어>룰셋 추가/상세보기 시, 도움말 아이콘 디자인 적용 안됨",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:15:59.240Z"
+  },
+  {
+    "id": "abbab5ba-2681-4295-8982-ffd458b31848",
+    "content": "정책>접근제어>룰셋 추가 시, 명령어규칙>옵션 리스트에서 \"녹화\" text가 항상 text 및 배경색상 적용되어있는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-04T06:13:06.154Z",
+    "comment": "원래 ant design의 모든 select는 그렇게 동작함"
+  },
+  {
+    "id": "1162ac64-f68f-4b47-9eeb-ae19c0cb351e",
+    "content": "정책>접근제어>룰셋>추가/수정 시, \"* 상속거부 체크 시, 기본룰셋의 영향을 받지 않음\" 도움말이 안보임 (모달 스크롤을 내려야 보임-> heigth 조정 필요) \n=> 사용자/역할 접근제어에도 적용 요청",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T06:09:42.753Z"
+  },
+  {
+    "id": "1eb5e8be-dc71-4459-9cda-e8b0b0901399",
+    "content": "알림/공지 > 공지에서 추가/수정 시 필수값 버튼을 눌러서 조정할 때 실제 data는 변경 되지만 ui 상으로는 값에 따라 움직이지 않는 현상이 있습니다.",
+    "reporter": "박기현",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T06:06:32.672Z"
+  },
+  {
+    "id": "26de17eb-702b-4eec-8c66-a45fedf410a5",
+    "content": "1) 정책>접근제어>사용자/역할>추가> 사용자/노드 추가 시, 폴더영역 배경색상 처리 안됨\n2) 폴더 클릭 시, 커서 모양 안바뀜",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T05:52:43.945Z"
+  },
+  {
+    "id": "6362d3e1-2513-46c2-9df1-17a5fff28a54",
+    "content": "정책>토큰>관리자/사용자, 정책>클라이언트>접속기에서 input text와 select text 폰트 색상이 다름",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T05:49:39.335Z"
+  },
+  {
+    "id": "0fd3d53a-413d-4cf6-a99f-5b7566783e4e",
+    "content": "자원>계정>노드 테이블 가로 스크롤 개선(세로 스크롤과 넓이가 안맞음. 또는 스크롤을 다른 모양으로 변경해도 됨)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T05:46:30.071Z"
+  },
+  {
+    "id": "987a6494-cd32-4645-ac8e-dcf8de518c62",
+    "content": "정책>토큰>사용자 \"고정토큰 유효기간(초)\" 도움말 아이콘 디자인 적용 안됨",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T05:41:30.099Z"
+  },
+  {
+    "id": "cd918746-0b66-4f8e-bf05-d8b96000ec99",
+    "content": "로딩바 보라계열로 변경",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T05:40:09.465Z"
+  },
+  {
+    "id": "6ba983d7-509d-4ff7-a33d-70e6ae821988",
+    "content": "정책>비밀번호>노드>상세보기 시, 금지 문자가 처음에는 파란색으로 되어있다가, 수정해야 보라색으로 변경됨",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T05:33:14.150Z"
+  },
+  {
+    "id": "7657906b-c88e-47a1-bf99-e2fe87f1fc2f",
+    "content": "정책>비밀번호>노드>추가 시, 프론트validation 적용 (필수값 없이 바로 request하지 않도록)",
+    "reporter": "이윤서",
+    "assignee": "이윤서",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T05:31:42.390Z",
+    "comment": "기존 버전 동일"
+  },
+  {
+    "id": "5f805b8f-ed1e-4438-8141-8202228bd6f5",
+    "content": "테이블 컬럼설정 > 컬럼명 hover 시, 핀 기능 제거",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T05:17:20.902Z"
+  },
+  {
+    "id": "78938fb8-a38b-4760-bc49-1979489aba51",
+    "content": "기존웹에서는 시간유형 페이지 \"요일별시간대\"를 \nControl키 누른 상태로 여러 영역을 선택할 수 있었으나, \n해당 기능이 없어짐",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-04T05:14:08.688Z",
+    "comment": "있음."
+  },
+  {
+    "id": "3be4de1f-0a34-4553-9589-1e80fb292299",
+    "content": "자원>계정>노드/계정 페이지 둘다 작업리스트 디자인(폰트) 적용 안됨 ",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T05:13:28.002Z"
+  },
+  {
+    "id": "6302a51b-4bc6-488a-98db-3abd8ca8866e",
+    "content": "정책>접근제어 페이지\n1) 새로 추가\n2) 시간유형 클릭\n   좌측 \"시간유형이름\" 상단 돋보기 아이콘에 박스배경이 없음 \n   (돋보기 아이콘 박스배경 유지여부에 따라 수정여부 결정하자)",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T05:11:29.120Z",
+    "comment": "배경 없애는 것으로 결정"
+  },
+  {
+    "id": "ca84458a-ae10-4ce6-a0c5-610fae826ec8",
+    "content": "활동감지 => 세션  => 기록 로그아웃 시간, 활동감지 => 세션 => 로그 현재시간 프론트 필터후 컬럼 표시 설정하면 에러 발생합니다.",
+    "reporter": "김우찬",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T05:10:31.791Z",
+    "comment": "기존 버전 동일",
+    "assignee": "이윤서"
+  },
+  {
+    "id": "cbd5de47-c010-4406-b9d1-ab87ff3a8974",
+    "content": "자원>계정>노드만보기/계정만보기 클릭> 다시 화살표 버튼으로 노드 또는 계정을 열려고 화살표에 hover 시, 툴팁이 그대로 남아있는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T05:08:39.326Z"
+  },
+  {
+    "id": "3ed52dc8-a200-4ce1-a60f-4ed8de663e57",
+    "content": "사이드 대메뉴 닫은 채로 클릭 시, 대메뉴 배경이 흰색으로 깜빡 하는 현상",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:59:28.285Z"
+  },
+  {
+    "id": "2884e082-cfbc-49fc-9084-cfca936a48e9",
+    "content": "자원 => 사용자(목록 탭) \"잘못된 로그인 시도 횟수\" \n자원 => 사용자(역할 탭) \"사용자 아이디 목록\" \n오름 차순, 내림차순 정렬 동작 안합니다.\n\n자원 => 계정(노드 테이블) 포트 상태 프론트 필터(FTP, TELNET) 동작 안합니다\n\n \n활동 감지 => 사용자 탭에서  로그인 시간 프론트 필터 설정후 로그아웃 시간 컬럼 표시를 on하면 에러가 발생합니다.\n활동 감지 => 관리자 탭에서  로그인 시간, HeartBeat 시간 프론트 필터 설정후 컬럼 표시 설정을 변경하면 에러가 발생합니다",
+    "reporter": "김우찬",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T04:59:11.253Z",
+    "assignee": "이윤서",
+    "comment": "기존 버전 동일"
+  },
+  {
+    "id": "127bb187-2e08-4f5f-959a-07abc8e13fd2",
+    "content": "정책>토큰>사용자 info 아이콘 변경",
+    "reporter": "강보경",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T04:56:13.517Z"
+  },
+  {
+    "id": "33bbd9f1-e552-4885-b52a-3f39b5156c46",
+    "content": "대시보드>토폴로지 >편집>보유 그룹 컬럼에서 노드 그룹의 컬러가 흰색일 경우 border 빠짐 ( 자원>노드>그룹에 \"색상\" 컬럼 참고)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:53:02.906Z"
+  },
+  {
+    "id": "177ab060-1446-422b-95b2-effba7d77091",
+    "content": "태이블 프론트 필터 text 로 조회 시, 주황색 배경색 들어가는 현상\n(여러 필터를 조회하면 마지막에 조회한 컬럼만 주황색으로 변경됨)\n=> 주황색 배경 제거 요청",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-04T04:49:32.265Z",
+    "comment": "figma 및 다른 글로벌 플랫폼도 동일하다고 함"
+  },
+  {
+    "id": "25244fdc-9b58-4dd2-920e-13a8d856ea11",
+    "content": "테이블 세팅 버튼중에 \"필터 초기화\" 버튼만 hover 시 색상 변경됨 (클릭하면 색상이 변경된 채로 유지 되었다가 다른곳 클릭 시 색상 해제됨)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:46:27.512Z",
+    "comment": "설정 아이콘 변경 예정"
+  },
+  {
+    "id": "d3513353-c809-4bfe-b2da-aa8ad8b2bcb8",
+    "content": "자원>사용자 역할/노드 그룹>우클릭> 멤버보기 시, 폴더뷰 동작 안함",
+    "reporter": "이윤서",
+    "assignee": "이윤서",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:43:11.787Z",
+    "comment": "기존 버전도 동일"
+  },
+  {
+    "id": "6353626e-caab-4277-901d-7155e409484f",
+    "content": "자원>노드 그룹> 고급> 리스트 형식에서 input 입력 시, 입력란이 과도하게 작아짐",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:33:42.040Z"
+  },
+  {
+    "id": "f1e9abcd-1fd6-47cc-8fc5-46a4f430f13d",
+    "content": "자원>노드 그룹> 고급> 리스트 형식에서 폴더 선택 시, n depth의 폴더가 보이지 않아 선택 불가",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T04:32:17.338Z",
+    "comment": "기존과 동일한 현상, 첫 진입 시 넓이 고정 필요"
+  },
+  {
+    "id": "3fc55bab-4537-4831-8b01-4f6566e32fc5",
+    "content": "자원>노드> 추가 및 상세보기 시, 노드 종류 커서 변경 (default로)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:23:22.115Z"
+  },
+  {
+    "id": "02a2ddde-6549-4f76-a8de-bf7cd1f355bd",
+    "content": "사용자/역할 접근제어 정책, 프로비저닝 정책> 접속기 추가인증 >임시비밀번호 모달 label과 input 간격 조정",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:21:21.901Z"
+  },
+  {
+    "id": "679ae9c8-adfe-4287-af81-35fd581439f2",
+    "content": "추가 및 수정할 수 있는 폼에서 프론트 validation 처리(빨간 테두리) 안됨",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:18:32.705Z"
+  },
+  {
+    "id": "02d1fdba-6ed2-4e66-b88e-360bdfbdcd93",
+    "content": "자원 => 사용자 로그인 주소 지정시 이슈\n\nIP와 MAC 둘다 지정하였을 때 MAC이 올바르지 않은 형식일 경우 에러가 표시가 안됩니다(확인 버튼 눌러도 반응이 없음)",
+    "reporter": "김우찬",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T04:12:48.878Z",
+    "assignee": "강보경",
+    "comment": "밸리데이션 빨간라인 안생기는거랑 같은 현상"
+  },
+  {
+    "id": "917271c3-e0d7-43d0-8090-65cb1ed53213",
+    "content": "자원>노드>상세보기(win/프록시) 시, WinRM 포트번호 아이콘 제거",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:11:39.364Z"
+  },
+  {
+    "id": "36518853-fce8-4cba-8247-8ca79c42a9d6",
+    "content": "자원>노드>상세보기(에이전트) 시, 에이전트 옵션 없음",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:04:14.471Z"
+  },
+  {
+    "id": "14767a37-74a6-47fe-ad2e-815cbcb789bc",
+    "content": "자원>사용자 역할>사용자 아이디목록이 0인 역할 상세보기 시 에러",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T04:03:47.799Z"
+  },
+  {
+    "id": "a7accb15-f1d8-487c-ab33-a387dbd5df19",
+    "content": "모든 row 선택 기능이 있는 테이블에서 row 선택 시 테이블 header가 한번 더 생기는 현상",
+    "reporter": "박기현",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:35:23.235Z"
+  },
+  {
+    "id": "d79134d1-a887-451c-b84c-d6eaed7d3dac",
+    "content": "자원>역할>추가/상세보기 시, 고급 버튼 클릭하면 에러",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:35:08.472Z"
+  },
+  {
+    "id": "3d3ef84c-9ac7-4829-9649-65f005934c6b",
+    "content": "자원>역할>상세보기 시, 모달 닫기 안됨",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:34:57.230Z"
+  },
+  {
+    "id": "d7be72da-ff8a-4d90-bcaf-6887f7dd8acc",
+    "content": " 접근제어 추가 시, 사용자/노드/계정 선택 모달 띄운 후 선택 하려고 할때, 마우스 커서 pointer로 변경 요청",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:34:45.485Z"
+  },
+  {
+    "id": "1af0c1d9-4292-4800-b963-30829611c479",
+    "content": "우클릭 > 멀티모달 요청 성공 후에 닫기 버튼 hover하면 닫기 text 사라지는 현상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:34:24.725Z"
+  },
+  {
+    "id": "7269a898-357a-440e-a009-04da3c28cfad",
+    "content": "자원 > 사용자 > 로그인 주소 컬럼에 IP와 MAC이 둘다 존재하고 두개 이상일 때, 미리보기 아이콘 안보임 => 로그인 주소 기본 컬럼 width 넓히기 요청",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:34:14.353Z"
+  },
+  {
+    "id": "8b26a5f8-521a-496e-ba0d-cb78d4e938c4",
+    "content": "자원 > 사용자 > 우클릭 로그인 주소 지정 시, 커서 pointer로 변경",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:34:06.049Z"
+  },
+  {
+    "id": "afdd563f-5ad9-4f4e-8a45-6753f7573039",
+    "content": "테이블 컬럼명 디자인 적용 안됨",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:33:55.932Z"
+  },
+  {
+    "id": "f804d23e-8e35-419e-bcbc-1ac625d9531b",
+    "content": "노드/사용자 폴더에서 사용자/노드 드래그 이동 시, 폴더명 파란색",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:33:42.866Z"
+  },
+  {
+    "id": "bfbf8e11-88e5-4349-b168-a3ef9a766369",
+    "content": "사용자 상세보기 시, 위임 사용자 목록 디자인, 간격 개선",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:33:29.011Z"
+  },
+  {
+    "id": "702660a5-b8a0-457d-b21c-8df358a65af7",
+    "content": "자원 > 관리자 > 우클릭 > 시간유형 지정 > 요청 > 결과 위치 개선",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:33:18.006Z"
+  },
+  {
+    "id": "a9df74eb-4558-4bda-8a05-01b68cafb335",
+    "content": "자원 > 관리자 > 우클릭 > 시간유형 지정 > 직접지정 > 시간 드래그 시, 모달 밖에 드래깅영역생김",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:33:03.388Z"
+  },
+  {
+    "id": "e9c65a98-7c86-46ed-8dc1-cdfaa59b7af8",
+    "content": "관리자 상세보기 시, 시간유형 없다면 커서 default 처리",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:32:50.628Z"
+  },
+  {
+    "id": "714881e0-7a03-4451-8d24-a9736f5fa7b3",
+    "content": "관리자 상세보기 시, 선택된 시간유형 표시 없음 및 커서 pointer상태임",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:29:34.537Z"
+  },
+  {
+    "id": "089c7ad1-1c7d-460d-9015-c83aa4cbb234",
+    "content": "관리자 상세보기 시, 관리자 역할 이름 disabled 처리",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:29:22.130Z"
+  },
+  {
+    "id": "8aebe4b8-03d4-4a09-8848-7b9006322051",
+    "content": "테이블 체크박스 선택 시, 테이블 상단에 선 생김",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:29:07.202Z"
+  },
+  {
+    "id": "b750cf7c-a698-4477-9ea1-7726dc55ee96",
+    "content": "alert의 위치가 화면을 벗어나 보임",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:28:54.444Z"
+  },
+  {
+    "id": "88a07109-d0b7-44fb-812e-aec330234f9a",
+    "content": "작업 리스트 -> 그룹화된 리스트 폰트가 다른 리스트들과 다름( 그룹의 children도 )",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:28:43.199Z",
+    "comment": "우측 작업리스트 재확인 필요"
+  },
+  {
+    "id": "3c776c24-400e-4c69-ba9c-c01a5986dcef",
+    "content": "관리자/사용자 추가 시, 비밀번호 확인 커서 pointer로 됨",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:28:27.576Z"
+  },
+  {
+    "id": "ea3b4777-3896-41de-8d39-58300ef9d3ef",
+    "content": "관리자/사용자 추가 모달 스크롤 없애기",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:28:16.923Z"
+  },
+  {
+    "id": "ac337248-f519-4d59-8bb2-902aff3860aa",
+    "content": "폴더 heigth (배경) 테이블 크기랑 맞추기",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:27:59.067Z"
+  },
+  {
+    "id": "09e268a6-1e1f-4b0f-a6fd-b86749be89ee",
+    "content": "검색 -> select 문자 아래가 더 넓어보임",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:27:44.051Z"
+  },
+  {
+    "id": "cd4e389e-882b-4534-9898-c2d93bc61ba1",
+    "content": "검색 -> 캘린더에서 날짜 기간 선택 시, 파란색",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:27:30.902Z"
+  },
+  {
+    "id": "e00e0045-e408-43b6-bc8a-d21a8314493e",
+    "content": " 방송 버튼 아이콘이 마치 누를수 없을것같은 느낌 (시안이랑 같음)",
+    "reporter": "이윤서",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:27:20.621Z"
+  },
+  {
+    "id": "6cae22c1-ec67-442c-a7bd-657a62a854b1",
+    "content": "중간관리자 로그인 -> 로그아웃 -> apadmin로그인 -> setconfig에 해당값이 true인데도 계정 비밀번호 관리대장 버튼 안보임 -> 새로고침 해야 보임",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:26:45.933Z"
+  },
+  {
+    "id": "20fef0ad-5e0e-4101-af7d-898dd284ee66",
+    "content": "apadmin로그인 -> 로그아웃 -> 중간관리자 로그인 -> \"권한이 없음\" alert",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:26:34.855Z"
+  },
+  {
+    "id": "b4bf7208-e2cf-4bda-a0ed-b836fb972505",
+    "content": "대시보드 -> 세션관제 폰트 사이즈 설정 조절색상 파랑 -> 보라 개선",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:26:08.238Z"
+  },
+  {
+    "id": "dce017b6-aadd-4479-abe6-6c15b6094c2f",
+    "content": "컬럼 설정 -> 컬럼 순서 변경 시 파란 테두리 생김",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:25:57.159Z"
+  },
+  {
+    "id": "35e22af5-e2e4-443a-9af7-4f5020f73aa2",
+    "content": "활성화 switch enable일 때, 테두리 파란색 ",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:25:45.273Z"
+  },
+  {
+    "id": "c6e6567c-d546-4305-9485-fc4251d51f0f",
+    "content": "대시보드 -> 토폴로지 설정 -> 탭추가 시, 그룹이동 아이콘 파란색임",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:25:31.474Z"
+  },
+  {
+    "id": "947fe4b2-a0ab-4c35-830d-67ce8c3efcc5",
+    "content": "대시보드 -> 토폴로지 설정 -> 탭설정 폰트 이상",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:25:17.859Z"
+  },
+  {
+    "id": "d19c1958-4f93-4050-b7db-7b9da1f50f5c",
+    "content": "대시보드 -> 토폴로지 배경 설정버튼 클릭 시, 여백",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:25:08.063Z"
+  },
+  {
+    "id": "69932705-d43f-4ea1-ab6b-d518eeb5da1f",
+    "content": "대시보드 -> 토폴로지 리스트 폰트 및 위치 개선 (폰트가 다른것같음)",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:24:46.776Z"
+  },
+  {
+    "id": "04d27779-cec8-43f5-afd1-02500e8115ee",
+    "content": "대시보드 -> 차트 다운로드 클릭 시, pdf 아래 선",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:24:35.896Z"
+  },
+  {
+    "id": "6a5efa18-3a38-4ed7-aa6f-f6b0bf3e502e",
+    "content": "대시보드 -> 차트 요소 캡쳐 시 선택된 요소 안보임",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:24:25.732Z"
+  },
+  {
+    "id": "d0e7ec70-2b0f-4231-8cad-2074e0d61054",
+    "content": "대시보드 -> 차트 순서 변경 시, 화면을 벗어나고, 왼쪽 사이드메뉴를 볼수없음",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:24:14.857Z"
+  },
+  {
+    "id": "0f840ecb-aef5-428d-a130-439a5815521c",
+    "content": "헤더 -> 메뉴설정 모달위치 개선 (너무 위로 올라가 잇어서 화면 벗어남)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:23:40.880Z"
+  },
+  {
+    "id": "7f490e19-c180-47a0-b7a3-c062e778ec9d",
+    "content": "validation 오류시, 빨간테두리랑 보라테두리가 겹침 (보라테두리 제거필요)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:23:26.529Z"
+  },
+  {
+    "id": "0b6c9e9b-b137-43d9-a519-584dd2f05fb6",
+    "content": " 헤더 -> 내정보클릭 안됨 (꼭 사람모양 아이콘을  맞춰서 클릭해야 동작)",
+    "reporter": "이윤서",
+    "assignee": "강보경",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:22:57.644Z"
+  },
+  {
+    "id": "8af2971c-8644-4834-ba98-ee774e422e7b",
+    "content": "헤더 -> 전체읽기 클릭 시 로딩바 필요해보임",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:22:47.812Z"
+  },
+  {
+    "id": "e4d976f8-9139-4a03-88d8-426ae7757dfc",
+    "content": "로딩바 디자인",
+    "reporter": "이윤서",
+    "assignee": "송성은",
+    "status": "CLOSED",
+    "createdAt": "2025-06-04T03:22:35.001Z"
+  },
+  {
+    "id": "d00602b2-5fcb-441d-a177-81dc81d2b616",
+    "content": "관리>제품설정>보안서약서\n  \"관리자콘솔\", \"사용자콘솔\"을 동시에 변경시킨 뒤, \"관리자콘솔\"만 \"수정\"클릭해보면, 엉뚱하게 \"사용자콘솔\"이 저장됨",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:21:39.696Z"
+  },
+  {
+    "id": "6b720a25-4d6a-476c-bae1-f04d98431e1b",
+    "content": "관리>관리자알림 \n  \"추가\" 후 아무 입력 없이 \"확인\" 클릭  \n    기존에는 필수입력누락시 해당 필드가 빨간테두리로 나타났으나, 현재는 아무 반응없음 ",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:21:27.012Z"
+  },
+  {
+    "id": "49d5491b-d4a7-435b-ba7f-346c6472ee94",
+    "content": "관리>유형\n  시간유형 상세보기 후 \"요일별시간대\" 영역선택시 이상한 영역이 화면에 나타남 \n  색상 선택시 파렛트 뒤에 또 다른 박스 존재 ",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:21:12.859Z"
+  },
+  {
+    "id": "c53a75ef-3f13-4a22-bd54-1b535680641f",
+    "content": "자원 >노드 페이지\n상태 프론트 필터에서 '연결' 선택했으나, 하단 '초기화' 버튼 활성화 안됨 (전반적인 현상인듯)",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:20:45.868Z"
+  },
+  {
+    "id": "d9f296c1-fb47-4b7e-9605-9baef660bcb7",
+    "content": "자원>관리자 페이지\n추가 & 작업 버튼이 기존에는 모두 파란색이나 현재는 추가만 색상처리",
+    "reporter": "박윤광",
+    "assignee": "강보경",
+    "status": "WONT_DO",
+    "createdAt": "2025-06-04T03:20:13.470Z",
+    "comment": "'추가'는 버튼, '작업은 셀렉트 박스로 분류되어 의도된 디자인입니다."
+  },
+  {
+    "id": "7728ab0c-c73b-405e-b72d-3fba352c9312",
+    "content": "차트&토폴로지&세션관제\n상단 메뉴 순서 비슷하게 통일",
+    "reporter": "박윤광",
+    "assignee": "강보경",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:18:43.210Z"
+  },
+  {
+    "id": "5fe7d7e2-2b50-4d9b-b77b-b092b3af30ec",
+    "content": "차트 페이지 아래 잘림 현상",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:18:12.009Z"
+  },
+  {
+    "id": "395181a0-6b95-419a-b280-ef6beac4e3d0",
+    "content": "차트 편집 상태에서 \"다운로드\" 버튼 메뉴 숨김 처리",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:17:39.748Z"
+  },
+  {
+    "id": "6729d042-c84b-420e-b203-fc652d6e55b8",
+    "content": "방송 가능한 경우 아이콘 색상 필요",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:16:26.753Z"
+  },
+  {
+    "id": "3ab85bfa-c783-42a0-9ed2-635c78009e02",
+    "content": "공지 팝업\n공지/알림 순서 변경",
+    "reporter": "박윤광",
+    "assignee": "송성은",
+    "status": "RESOLVED",
+    "createdAt": "2025-06-04T03:15:58.824Z"
+  }
+]

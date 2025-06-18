@@ -1,0 +1,18 @@
+
+{
+  "name": "simple-issue-tracker-server",
+  "version": "1.0.0",
+  "description": "간단한 이슈 트래커 프론트엔드 앱을 제공하는 Express 서버입니다.",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "echo '서버 설정 완료. npm start로 서버를 실행하세요.'"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

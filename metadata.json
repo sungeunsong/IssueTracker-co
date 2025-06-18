@@ -1,0 +1,6 @@
+{
+  "name": "웹 이슈 트래커",
+  "description": "React, TypeScript, Tailwind CSS로 구축된 프로젝트 이슈 생성, 관리 및 추적을 위한 웹 애플리케이션입니다.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
