@@ -7,6 +7,7 @@ import { IssueDetailsView } from "./components/IssueDetailsView";
 import type { Issue, ResolutionStatus as StatusEnum } from "./types"; // Renamed to avoid conflict
 import { ResolutionStatus, statusDisplayNames } from "./types"; // Keep for enum values, import statusDisplayNames
 import { PlusIcon } from "./components/icons/PlusIcon";
+import { FloatingAddButton } from "./components/FloatingAddButton";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -518,6 +519,7 @@ const App: React.FC = () => {
           cancelText="취소"
         />
       )}
+      <FloatingAddButton onClick={() => setShowAddIssueModal(true)} />
     </div>
   );
 };
