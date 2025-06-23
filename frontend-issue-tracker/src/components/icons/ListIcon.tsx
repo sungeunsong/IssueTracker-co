@@ -5,7 +5,7 @@ interface IconProps {
   className?: string;
 }
 
-export const PlusIcon: React.FC<IconProps> = ({ className }) => (
+export const ListIcon: React.FC<IconProps> = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
@@ -14,7 +14,6 @@ export const PlusIcon: React.FC<IconProps> = ({ className }) => (
     stroke="currentColor"
     className={className || "w-6 h-6"}
   >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
   </svg>
 );
-    

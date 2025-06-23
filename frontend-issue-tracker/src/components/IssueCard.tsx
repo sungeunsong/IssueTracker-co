@@ -1,0 +1,67 @@
+
+import React from 'react';
+import type { Issue } from '../types';
+import { statusColors, statusDisplayNames, issueTypeColors, issueTypeDisplayNames } from '../types';
+import { UserAvatarPlaceholderIcon } from './icons/UserAvatarPlaceholderIcon';
+
+interface IssueCardProps {
+  issue: Issue;
+  onClick: () => void;
+  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
+}
+
+export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStart }) => {
+  const getPriorityStyles = () => {
+    // Placeholder for priority.
+    return 'border-l-4 border-transparent';
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      draggable
+      onDragStart={onDragStart}
+      className={`bg-white rounded-md shadow-sm p-3 cursor-pointer hover:shadow-lg transition-shadow duration-150 ${getPriorityStyles()}`}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+      aria-label={`Issue: ${issue.content.substring(0, 50)}`}
+    >
+      <div className="flex justify-between items-start mb-1.5">
+        <h3 className="text-sm font-medium text-slate-800 break-words flex-1 pr-2">
+          {issue.content}
+        </h3>
+        <span
+          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${issueTypeColors[issue.type]} whitespace-nowrap`}
+          style={{ fontSize: '0.65rem' }}
+          title={`Type: ${issueTypeDisplayNames[issue.type]}`}
+        >
+          {issueTypeDisplayNames[issue.type]}
+        </span>
+      </div>
+      
+      <div className="flex items-center justify-between text-xs text-slate-500">
+        <span
+          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${statusColors[issue.status]} bg-opacity-80`}
+          style={{ fontSize: '0.65rem' }}
+          title={`Status: ${statusDisplayNames[issue.status]}`}
+        >
+          {statusDisplayNames[issue.status]}
+        </span>
+        <div className="flex items-center space-x-1">
+          {issue.assignee && (
+            <div title={`Assigned to: ${issue.assignee}`} className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center">
+              <UserAvatarPlaceholderIcon className="w-3 h-3 text-slate-500" />
+            </div>
+          )}
+          <span className="text-slate-400">ID: {issue.id.substring(0, 6)}</span>
+        </div>
+      </div>
+       {issue.comment && (
+        <p className="mt-2 text-xs text-slate-500 italic truncate" title={issue.comment}>
+          "{issue.comment}"
+        </p>
+      )}
+    </div>
+  );
+};
