@@ -1,0 +1,4 @@
+node_modules
+frontend-issue-tracker/node_modules
+dist
+*.log
