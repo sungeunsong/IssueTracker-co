@@ -1,8 +1,16 @@
 version: "3.9"
 services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+
   mongo:
     image: mongo:7
-    container_name: issuetracker-mongo
     ports:
       - "27017:27017"
     environment:
@@ -11,8 +19,7 @@ services:
       MONGO_INITDB_DATABASE: issuetracker
     volumes:
       - mongo-data:/data/db
-      - ./mongo-init:/docker-entrypoint-initdb.d/ # ← 초기화 스크립트 경로
-    restart: unless-stopped
+      - ./mongo-init:/docker-entrypoint-initdb.d/
 
 volumes:
   mongo-data:

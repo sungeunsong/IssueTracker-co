@@ -3,6 +3,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
