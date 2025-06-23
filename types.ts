@@ -11,6 +11,7 @@ export interface Issue {
   content: string;
   reporter: string;
   status: ResolutionStatus;
+  projectId: string;
   createdAt: string; // ISO date string
 }
     

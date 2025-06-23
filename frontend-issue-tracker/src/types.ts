@@ -26,7 +26,7 @@ export interface Issue {
   type: IssueType; // New
   affectsVersion?: string; // New
   fixVersion?: string; // New
-  // projectId: string; // Future: For project management
+  projectId: string;
 }
 
 export interface Project {

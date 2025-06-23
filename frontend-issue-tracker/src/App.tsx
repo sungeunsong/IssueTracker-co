@@ -27,6 +27,7 @@ export type IssueFormData = {
   type: TypeEnum; // New, mandatory
   affectsVersion?: string; // New
   fixVersion?: string; // New, only for edit
+  projectId: string;
 };
 
 export type ViewMode = 'board' | 'list';
@@ -39,6 +40,7 @@ const App: React.FC = () => {
 
   const [viewMode, setViewMode] = useState<ViewMode>('board');
   const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -56,10 +58,11 @@ const App: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<StatusEnum | 'ALL'>('ALL');
 
   const fetchIssues = useCallback(async () => {
+    if (!currentProjectId) return;
     if (issues.length === 0) setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/issues');
+      const response = await fetch(`/api/issues?projectId=${currentProjectId}`);
       if (!response.ok) {
         throw new Error(`데이터를 불러오는데 실패했습니다: ${response.statusText}`);
       }
@@ -81,10 +84,13 @@ const App: React.FC = () => {
       }
       const data: Project[] = await res.json();
       setProjects(data);
+      if (data.length > 0 && !currentProjectId) {
+        setCurrentProjectId(data[0].id);
+      }
     } catch (err) {
       console.error('프로젝트 로딩 중 오류:', err);
     }
-  }, []);
+  }, [currentProjectId]);
 
   const handleRegister = useCallback(async (username: string, password: string) => {
     setIsSubmitting(true);
@@ -131,9 +137,13 @@ const App: React.FC = () => {
 
   const handleLogout = () => setCurrentUser(null);
 
+  const handleSelectProject = (id: string) => {
+    setCurrentProjectId(id);
+  };
+
   useEffect(() => {
     fetchIssues();
-  }, [fetchIssues]);
+  }, [fetchIssues, currentProjectId]);
 
   useEffect(() => {
     fetchProjects();
@@ -169,6 +179,8 @@ const App: React.FC = () => {
     try {
       // Ensure fixVersion is not sent for new issues
       const { fixVersion, ...addData } = formData;
+      if (!currentProjectId) throw new Error('프로젝트가 선택되지 않았습니다.');
+      addData.projectId = currentProjectId;
       const response = await fetch('/api/issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -186,7 +198,7 @@ const App: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [fetchIssues]);
+  }, [fetchIssues, currentProjectId]);
 
   const handleAddProject = useCallback(async (name: string) => {
     setIsSubmitting(true);
@@ -200,7 +212,9 @@ const App: React.FC = () => {
         const errData = await response.json().catch(() => ({ message: '프로젝트 생성 실패' }));
         throw new Error(errData.message || response.statusText);
       }
+      const created: Project = await response.json();
       await fetchProjects();
+      setCurrentProjectId(created.id);
       setShowAddProjectModal(false);
     } catch (err) {
       console.error('프로젝트 생성 중 오류:', err);
@@ -356,6 +370,8 @@ const App: React.FC = () => {
         onSetViewMode={setViewMode}
         onCreateProject={() => { setShowAddProjectModal(true); setError(null); }}
         projects={projects}
+        currentProjectId={currentProjectId}
+        onSelectProject={handleSelectProject}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar
@@ -440,6 +456,8 @@ const App: React.FC = () => {
           onCancel={() => { setShowAddIssueModal(false); setError(null);}}
           isSubmitting={isSubmitting}
           submitButtonText="이슈 추가"
+          projects={projects}
+          selectedProjectId={currentProjectId}
         />
       </Modal>
 
@@ -460,6 +478,8 @@ const App: React.FC = () => {
             isSubmitting={isSubmitting}
             submitButtonText="변경사항 저장"
             isEditMode={true}
+            projects={projects}
+            selectedProjectId={selectedIssueForEdit.projectId}
           />
         </Modal>
       )}
