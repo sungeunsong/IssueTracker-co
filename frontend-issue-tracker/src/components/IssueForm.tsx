@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import type { Issue, ResolutionStatus as StatusEnum, IssueType as TypeEnum } from '../types';
+import type { Issue, ResolutionStatus as StatusEnum, IssueType as TypeEnum, Project } from '../types';
 import { ResolutionStatus, statusDisplayNames, IssueType, issueTypeDisplayNames } from '../types';
 import { PlusIcon } from './icons/PlusIcon';
 import type { IssueFormData } from '../App';
@@ -12,6 +12,8 @@ interface IssueFormProps {
   isSubmitting?: boolean;
   submitButtonText?: string;
   isEditMode?: boolean;
+  projects: Project[];
+  selectedProjectId: string | null;
 }
 
 export const IssueForm: React.FC<IssueFormProps> = ({
@@ -21,6 +23,8 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   isSubmitting,
   submitButtonText = "제출",
   isEditMode = false,
+  projects,
+  selectedProjectId,
 }) => {
   const [content, setContent] = useState('');
   const [reporter, setReporter] = useState('');
@@ -30,6 +34,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [type, setType] = useState<TypeEnum>(IssueType.TASK); // Default to TASK
   const [affectsVersion, setAffectsVersion] = useState('');
   const [fixVersion, setFixVersion] = useState('');
+  const [projectId, setProjectId] = useState<string>('');
 
   const [contentError, setContentError] = useState('');
   const [reporterError, setReporterError] = useState('');
@@ -46,6 +51,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setType(initialData.type || IssueType.TASK);
       setAffectsVersion(initialData.affectsVersion || '');
       setFixVersion(initialData.fixVersion || '');
+      setProjectId(initialData.projectId || selectedProjectId || projects[0]?.id || '');
     } else {
       // Reset form for adding new issue
       setContent('');
@@ -56,6 +62,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setType(IssueType.TASK); // Default for new issues
       setAffectsVersion('');
       setFixVersion('');
+      setProjectId(selectedProjectId || projects[0]?.id || '');
     }
      setContentError('');
      setReporterError('');
@@ -93,6 +100,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         comment: comment.trim() || undefined,
         type: type,
         affectsVersion: affectsVersion.trim() || undefined,
+        projectId,
       };
       if (isEditMode) {
         formData.status = status;
@@ -104,6 +112,23 @@ export const IssueForm: React.FC<IssueFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="issue-project" className="block text-sm font-medium text-slate-700 mb-1">
+          프로젝트 <span className="text-red-500">*</span>
+        </label>
+        <select
+          id="issue-project"
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value)}
+          className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
+          disabled={isSubmitting || isEditMode}
+          required
+        >
+          {projects.map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      </div>
       <div>
         <label htmlFor="issue-type" className="block text-sm font-medium text-slate-700 mb-1">
           업무 유형 <span className="text-red-500">*</span>

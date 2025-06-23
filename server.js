@@ -107,15 +107,17 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.get("/api/issues", async (req, res) => {
+  const { projectId } = req.query;
+  const filter = projectId ? { projectId } : {};
   const issues = await issuesCollection
-    .find()
+    .find(filter)
     .sort({ createdAt: -1 })
     .toArray();
   res.json(issues.map(mapIssue));
 });
 
 app.post("/api/issues", async (req, res) => {
-  const { content, reporter, assignee, comment, type, affectsVersion } =
+  const { content, reporter, assignee, comment, type, affectsVersion, projectId } =
     req.body;
   if (!content || !reporter) {
     return res
@@ -129,6 +131,9 @@ app.post("/api/issues", async (req, res) => {
       )}`,
     });
   }
+  if (!projectId) {
+    return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
+  }
   const newIssue = {
     content: content.trim(),
     reporter: reporter.trim(),
@@ -137,6 +142,7 @@ app.post("/api/issues", async (req, res) => {
     status: INITIAL_ISSUE_STATUS,
     type,
     affectsVersion: affectsVersion?.trim() || undefined,
+    projectId,
     fixVersion: undefined,
     createdAt: new Date().toISOString(),
   };
@@ -155,6 +161,7 @@ app.put("/api/issues/:id", async (req, res) => {
     type,
     affectsVersion,
     fixVersion,
+    projectId,
   } = req.body;
   let updateFields = {};
   if (content !== undefined) updateFields.content = content.trim();
@@ -190,6 +197,7 @@ app.put("/api/issues/:id", async (req, res) => {
   if (fixVersion !== undefined)
     updateFields.fixVersion =
       fixVersion.trim() === "" ? undefined : fixVersion.trim();
+  if (projectId !== undefined) updateFields.projectId = projectId;
 
   const result = await issuesCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
