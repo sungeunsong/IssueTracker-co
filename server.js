@@ -11,7 +11,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
-const DB_NAME = process.env.DB_NAME || "tracker";
+const DB_NAME = process.env.DB_NAME || "issuetracker";
 
 const client = new MongoClient(MONGO_URI);
 await client.connect();

@@ -1,23 +1,18 @@
-version: "3"
+version: "3.9"
 services:
   mongo:
     image: mongo:7
-    restart: always
+    container_name: issuetracker-mongo
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret123
+      MONGO_INITDB_DATABASE: issuetracker
     volumes:
       - mongo-data:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=secret
-  web:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - MONGODB_URI=mongodb://mongo:27017
-      - DB_NAME=tracker
-    depends_on:
-      - mongo
+      - ./mongo-init:/docker-entrypoint-initdb.d/ # ← 초기화 스크립트 경로
+    restart: unless-stopped
+
 volumes:
   mongo-data:
