@@ -70,31 +70,6 @@ app.post("/api/projects", async (req, res) => {
   const result = await projectsCollection.insertOne({ name: name.trim() });
   res.status(201).json({ id: result.insertedId.toString(), name: name.trim() });
 });
-
-function mapIssue(doc) {
-  const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest };
-}
-
-function mapProject(doc) {
-  const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest };
-}
-
-app.get("/api/projects", async (req, res) => {
-  const projects = await projectsCollection.find().toArray();
-  res.json(projects.map(mapProject));
-});
-
-app.post("/api/projects", async (req, res) => {
-  const { name } = req.body;
-  if (!name) {
-    return res.status(400).json({ message: "프로젝트 이름은 필수입니다." });
-  }
-  const result = await projectsCollection.insertOne({ name: name.trim() });
-  res.status(201).json({ id: result.insertedId.toString(), name: name.trim() });
-});
-
 app.post("/api/register", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
