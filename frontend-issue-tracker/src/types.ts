@@ -29,6 +29,11 @@ export interface Issue {
   // projectId: string; // Future: For project management
 }
 
+export interface Project {
+  id: string;
+  name: string;
+}
+
 export const statusColors: Record<ResolutionStatus, string> = {
   [ResolutionStatus.OPEN]: 'bg-blue-100 text-blue-800 ring-blue-600/20',
   [ResolutionStatus.IN_PROGRESS]: 'bg-yellow-100 text-yellow-800 ring-yellow-600/20',
