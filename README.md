@@ -22,3 +22,7 @@ docker-compose up --build
 ```
 
 Then open http://localhost:3000 in your browser.
+
+
+The stack initializes a MongoDB database named `tracker` on first run.
+An admin user `apadmin` with password `ehfpal!!` is created automatically.

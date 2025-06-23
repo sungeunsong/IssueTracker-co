@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "mongodb": "^6.5.0"
+    "mongodb": "^6.5.0",
+    "bcryptjs": "^2.4.3"
   },
   "engines": {
     "node": ">=14.0.0"

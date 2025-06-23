@@ -2,12 +2,44 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { MongoClient, ObjectId } from 'mongodb';
+import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+const DB_NAME = process.env.DB_NAME || 'tracker';
+
+const client = new MongoClient(MONGO_URI);
+await client.connect();
+const db = client.db(DB_NAME);
+const issuesCollection = db.collection('issues');
+const projectsCollection = db.collection('projects');
+const usersCollection = db.collection('users');
+
+const ADMIN_USERNAME = 'apadmin';
+const ADMIN_PASSWORD = 'ehfpal!!';
+
+async function ensureAdminUser() {
+  const existing = await usersCollection.findOne({ username: ADMIN_USERNAME });
+  if (!existing) {
+    const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    await usersCollection.insertOne({ username: ADMIN_USERNAME, passwordHash });
+    console.log('Default admin user created');
+  }
+}
+
+await ensureAdminUser();
+
+const INITIAL_ISSUE_STATUS = 'OPEN';
+const VALID_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'VALIDATING', 'CLOSED', 'WONT_DO'];
+const VALID_ISSUE_TYPES = ['TASK', 'BUG', 'NEW_FEATURE', 'IMPROVEMENT'];
+
+app.use(express.json());
+=======
 
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const DB_NAME = process.env.DB_NAME || 'issue_tracker_db';
@@ -46,6 +78,60 @@ app.post('/api/projects', async (req, res) => {
   }
   const result = await projectsCollection.insertOne({ name: name.trim() });
   res.status(201).json({ id: result.insertedId.toString(), name: name.trim() });
+});
+
+function mapIssue(doc) {
+  const { _id, ...rest } = doc;
+  return { id: _id.toString(), ...rest };
+}
+
+function mapProject(doc) {
+  const { _id, ...rest } = doc;
+  return { id: _id.toString(), ...rest };
+}
+
+app.get('/api/projects', async (req, res) => {
+  const projects = await projectsCollection.find().toArray();
+  res.json(projects.map(mapProject));
+});
+
+app.post('/api/projects', async (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: '프로젝트 이름은 필수입니다.' });
+  }
+  const result = await projectsCollection.insertOne({ name: name.trim() });
+  res.status(201).json({ id: result.insertedId.toString(), name: name.trim() });
+});
+
+app.post('/api/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ message: '아이디와 비밀번호는 필수입니다.' });
+  }
+  const existing = await usersCollection.findOne({ username });
+  if (existing) {
+    return res.status(409).json({ message: '이미 존재하는 사용자입니다.' });
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  await usersCollection.insertOne({ username, passwordHash });
+  res.status(201).json({ message: '등록 완료' });
+});
+
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ message: '아이디와 비밀번호는 필수입니다.' });
+  }
+  const user = await usersCollection.findOne({ username });
+  if (!user) {
+    return res.status(401).json({ message: '잘못된 사용자 이름 또는 비밀번호' });
+  }
+  const match = await bcrypt.compare(password, user.passwordHash);
+  if (!match) {
+    return res.status(401).json({ message: '잘못된 사용자 이름 또는 비밀번호' });
+  }
+  res.json({ message: '로그인 성공' });
 });
 
 app.get('/api/issues', async (req, res) => {

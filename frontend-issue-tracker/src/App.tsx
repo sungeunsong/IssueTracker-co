@@ -7,6 +7,8 @@ import { Modal } from './components/Modal';
 // import { IssueDetailsView } from './components/IssueDetailsView'; // Not used directly here
 import { Sidebar } from './components/Sidebar';
 import { ProjectForm } from './components/ProjectForm';
+import { LoginForm } from './components/LoginForm';
+import { RegisterForm } from './components/RegisterForm';
 import { TopBar } from './components/TopBar';
 import { BoardView } from './components/BoardView';
 import { IssueDetailPanel } from './components/IssueDetailPanel';
@@ -38,6 +40,9 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('board');
   const [projects, setProjects] = useState<Project[]>([]);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [selectedIssueForDetail, setSelectedIssueForDetail] = useState<Issue | null>(null);
 
   const [showAddIssueModal, setShowAddIssueModal] = useState(false);
@@ -80,6 +85,51 @@ const App: React.FC = () => {
       console.error('프로젝트 로딩 중 오류:', err);
     }
   }, []);
+
+  const handleRegister = useCallback(async (username: string, password: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ message: '회원가입 실패' }));
+        throw new Error(errData.message || res.statusText);
+      }
+      setShowRegisterModal(false);
+    } catch (err) {
+      console.error('회원가입 오류:', err);
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
+
+  const handleLogin = useCallback(async (username: string, password: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ message: '로그인 실패' }));
+        throw new Error(errData.message || res.statusText);
+      }
+      setCurrentUser(username);
+      setShowLoginModal(false);
+    } catch (err) {
+      console.error('로그인 오류:', err);
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
+
+  const handleLogout = () => setCurrentUser(null);
 
   useEffect(() => {
     fetchIssues();
@@ -316,6 +366,10 @@ const App: React.FC = () => {
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           onCreateIssue={() => { setShowAddIssueModal(true); setError(null);}}
+          currentUser={currentUser}
+          onRequestLogin={() => { setShowLoginModal(true); setError(null); }}
+          onRequestLogout={handleLogout}
+          onRequestRegister={() => { setShowRegisterModal(true); setError(null); }}
         />
         <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 p-4 sm:p-6">
           {error && (
@@ -420,6 +474,22 @@ const App: React.FC = () => {
           cancelText="취소"
         />
       )}
+
+      <Modal isOpen={showLoginModal} onClose={() => { setShowLoginModal(false); setError(null); }} title="로그인">
+        <LoginForm
+          onSubmit={handleLogin}
+          onCancel={() => { setShowLoginModal(false); setError(null); }}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
+
+      <Modal isOpen={showRegisterModal} onClose={() => { setShowRegisterModal(false); setError(null); }} title="회원가입">
+        <RegisterForm
+          onSubmit={handleRegister}
+          onCancel={() => { setShowRegisterModal(false); setError(null); }}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
     </div>
   );
 };
