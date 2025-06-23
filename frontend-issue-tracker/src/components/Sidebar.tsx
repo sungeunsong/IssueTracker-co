@@ -1,6 +1,7 @@
 
 import React from 'react';
 import type { ViewMode } from '../App';
+import type { Project } from '../types';
 import { ProjectIcon } from './icons/ProjectIcon';
 import { BoardIcon } from './icons/BoardIcon';
 import { ListIcon } from './icons/ListIcon';
@@ -11,6 +12,7 @@ interface SidebarProps {
   currentView: ViewMode;
   onSetViewMode: (viewMode: ViewMode) => void;
   onCreateProject: () => void;
+  projects: Project[];
 }
 
 interface NavItemProps {
@@ -51,7 +53,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive, onClick, href 
 };
 
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSetViewMode, onCreateProject }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSetViewMode, onCreateProject, projects }) => {
   return (
     <aside className="w-64 bg-slate-800 text-white flex flex-col flex-shrink-0 h-full">
       <div className="p-4 border-b border-slate-700">
@@ -59,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSetViewMode, on
           <div className="bg-indigo-500 p-2 rounded-md">
             <ProjectIcon className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-xl font-semibold">Project A</h1>
+          <h1 className="text-xl font-semibold">{projects[0]?.name || 'No Project'}</h1>
         </div>
       </div>
 
@@ -72,8 +74,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSetViewMode, on
         
         <div className="mb-3">
             <h2 className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">All Projects</h2>
-            {/* Placeholder for project list */}
-            <NavItem icon={<ProjectIcon className="opacity-50" />} label="Buerd" onClick={() => alert("Project Buerd (placeholder)")} />
+            {projects.length === 0 && (
+              <div className="px-3 py-1 text-sm text-slate-400">No projects</div>
+            )}
+            {projects.map((p) => (
+              <NavItem key={p.id} icon={<ProjectIcon className="opacity-50" />} label={p.name} />
+            ))}
         </div>
 
         <div>

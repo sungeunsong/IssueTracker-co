@@ -6,10 +6,13 @@ import { ConfirmationModal } from './components/ConfirmationModal';
 import { Modal } from './components/Modal';
 // import { IssueDetailsView } from './components/IssueDetailsView'; // Not used directly here
 import { Sidebar } from './components/Sidebar';
+import { ProjectForm } from './components/ProjectForm';
+import { LoginForm } from './components/LoginForm';
+import { RegisterForm } from './components/RegisterForm';
 import { TopBar } from './components/TopBar';
 import { BoardView } from './components/BoardView';
 import { IssueDetailPanel } from './components/IssueDetailPanel';
-import type { Issue, ResolutionStatus as StatusEnum, IssueType as TypeEnum } from './types';
+import type { Issue, ResolutionStatus as StatusEnum, IssueType as TypeEnum, Project } from './types';
 import { ResolutionStatus, IssueType, statusDisplayNames, boardStatuses, boardStatusToTitleMap } from './types';
 // import { PlusIcon } from './components/icons/PlusIcon'; // Not used directly here
 
@@ -35,6 +38,11 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [viewMode, setViewMode] = useState<ViewMode>('board');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [selectedIssueForDetail, setSelectedIssueForDetail] = useState<Issue | null>(null);
 
   const [showAddIssueModal, setShowAddIssueModal] = useState(false);
@@ -65,9 +73,71 @@ const App: React.FC = () => {
     }
   }, [issues.length]);
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await fetch('/api/projects');
+      if (!res.ok) {
+        throw new Error(`프로젝트 정보를 불러오는데 실패했습니다: ${res.statusText}`);
+      }
+      const data: Project[] = await res.json();
+      setProjects(data);
+    } catch (err) {
+      console.error('프로젝트 로딩 중 오류:', err);
+    }
+  }, []);
+
+  const handleRegister = useCallback(async (username: string, password: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ message: '회원가입 실패' }));
+        throw new Error(errData.message || res.statusText);
+      }
+      setShowRegisterModal(false);
+    } catch (err) {
+      console.error('회원가입 오류:', err);
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
+
+  const handleLogin = useCallback(async (username: string, password: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ message: '로그인 실패' }));
+        throw new Error(errData.message || res.statusText);
+      }
+      setCurrentUser(username);
+      setShowLoginModal(false);
+    } catch (err) {
+      console.error('로그인 오류:', err);
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
+
+  const handleLogout = () => setCurrentUser(null);
+
   useEffect(() => {
     fetchIssues();
   }, [fetchIssues]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const baseFilteredIssues = useMemo(() => {
     let tempIssues = issues;
@@ -117,6 +187,28 @@ const App: React.FC = () => {
       setIsSubmitting(false);
     }
   }, [fetchIssues]);
+
+  const handleAddProject = useCallback(async (name: string) => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ message: '프로젝트 생성 실패' }));
+        throw new Error(errData.message || response.statusText);
+      }
+      await fetchProjects();
+      setShowAddProjectModal(false);
+    } catch (err) {
+      console.error('프로젝트 생성 중 오류:', err);
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [fetchProjects]);
 
   const handleEditIssue = useCallback(async (issueId: string, formData: IssueFormData) => {
     setError(null);
@@ -262,7 +354,8 @@ const App: React.FC = () => {
       <Sidebar
         currentView={viewMode}
         onSetViewMode={setViewMode}
-        onCreateProject={() => alert('프로젝트 생성 기능은 준비 중입니다.\n이 기능은 다음 업데이트에서 제공될 예정입니다.')}
+        onCreateProject={() => { setShowAddProjectModal(true); setError(null); }}
+        projects={projects}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar
@@ -273,6 +366,10 @@ const App: React.FC = () => {
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           onCreateIssue={() => { setShowAddIssueModal(true); setError(null);}}
+          currentUser={currentUser}
+          onRequestLogin={() => { setShowLoginModal(true); setError(null); }}
+          onRequestLogout={handleLogout}
+          onRequestRegister={() => { setShowRegisterModal(true); setError(null); }}
         />
         <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 p-4 sm:p-6">
           {error && (
@@ -288,6 +385,18 @@ const App: React.FC = () => {
               </div>
             </div>
           )}
+          {projects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4">
+              <p className="text-lg">프로젝트가 없습니다. 새 프로젝트를 추가하세요.</p>
+              <button
+                onClick={() => { setShowAddProjectModal(true); setError(null); }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
+                프로젝트 생성
+              </button>
+            </div>
+          ) : (
+            <>
           {viewMode === 'board' && (
             <BoardView
               columns={boardColumns}
@@ -310,6 +419,8 @@ const App: React.FC = () => {
               />
             </div>
           )}
+            </>
+          )}
         </main>
       </div>
 
@@ -329,6 +440,14 @@ const App: React.FC = () => {
           onCancel={() => { setShowAddIssueModal(false); setError(null);}}
           isSubmitting={isSubmitting}
           submitButtonText="이슈 추가"
+        />
+      </Modal>
+
+      <Modal isOpen={showAddProjectModal} onClose={() => { setShowAddProjectModal(false); setError(null); }} title="새 프로젝트 생성">
+        <ProjectForm
+          onSubmit={handleAddProject}
+          onCancel={() => { setShowAddProjectModal(false); setError(null); }}
+          isSubmitting={isSubmitting}
         />
       </Modal>
 
@@ -355,6 +474,22 @@ const App: React.FC = () => {
           cancelText="취소"
         />
       )}
+
+      <Modal isOpen={showLoginModal} onClose={() => { setShowLoginModal(false); setError(null); }} title="로그인">
+        <LoginForm
+          onSubmit={handleLogin}
+          onCancel={() => { setShowLoginModal(false); setError(null); }}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
+
+      <Modal isOpen={showRegisterModal} onClose={() => { setShowRegisterModal(false); setError(null); }} title="회원가입">
+        <RegisterForm
+          onSubmit={handleRegister}
+          onCancel={() => { setShowRegisterModal(false); setError(null); }}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
     </div>
   );
 };

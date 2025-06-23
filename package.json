@@ -10,7 +10,9 @@
     "postinstall": "echo '서버 설정 완료. npm start로 서버를 실행하세요.'"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "mongodb": "^6.5.0",
+    "bcryptjs": "^2.4.3"
   },
   "engines": {
     "node": ">=14.0.0"

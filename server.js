@@ -1,66 +1,113 @@
-
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs/promises';
-import crypto from 'crypto';
+import { MongoClient, ObjectId } from 'mongodb';
+import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
-const ISSUES_FILE_PATH = path.join(__dirname, 'issues.json');
 
-const INITIAL_ISSUE_STATUS = "OPEN";
-const DEFAULT_ISSUE_TYPE = "TASK"; // Default if not provided, though it should be.
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+const DB_NAME = process.env.DB_NAME || 'tracker';
 
-// Valid enum values from frontend types.ts
-const VALID_STATUSES = ["OPEN", "IN_PROGRESS", "RESOLVED", "VALIDATING", "CLOSED", "WONT_DO"];
-const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
+const client = new MongoClient(MONGO_URI);
+await client.connect();
+const db = client.db(DB_NAME);
+const issuesCollection = db.collection('issues');
+const projectsCollection = db.collection('projects');
+const usersCollection = db.collection('users');
 
-async function readIssuesFromFile() {
-  try {
-    await fs.access(ISSUES_FILE_PATH);
-    const data = await fs.readFile(ISSUES_FILE_PATH, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      await fs.writeFile(ISSUES_FILE_PATH, JSON.stringify([], null, 2), 'utf-8');
-      return [];
-    }
-    console.error('Error reading issues.json:', error);
-    return [];
+const ADMIN_USERNAME = 'apadmin';
+const ADMIN_PASSWORD = 'ehfpal!!';
+
+async function ensureAdminUser() {
+  const existing = await usersCollection.findOne({ username: ADMIN_USERNAME });
+  if (!existing) {
+    const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    await usersCollection.insertOne({ username: ADMIN_USERNAME, passwordHash });
+    console.log('Default admin user created');
   }
 }
 
-async function writeIssuesToFile(issues) {
-  try {
-    await fs.writeFile(ISSUES_FILE_PATH, JSON.stringify(issues, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error writing to issues.json:', error);
-  }
-}
+await ensureAdminUser();
+
+const INITIAL_ISSUE_STATUS = 'OPEN';
+const VALID_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'VALIDATING', 'CLOSED', 'WONT_DO'];
+const VALID_ISSUE_TYPES = ['TASK', 'BUG', 'NEW_FEATURE', 'IMPROVEMENT'];
 
 app.use(express.json());
 
+function mapIssue(doc) {
+  const { _id, ...rest } = doc;
+  return { id: _id.toString(), ...rest };
+}
+
+function mapProject(doc) {
+  const { _id, ...rest } = doc;
+  return { id: _id.toString(), ...rest };
+}
+
+app.get('/api/projects', async (req, res) => {
+  const projects = await projectsCollection.find().toArray();
+  res.json(projects.map(mapProject));
+});
+
+app.post('/api/projects', async (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: '프로젝트 이름은 필수입니다.' });
+  }
+  const result = await projectsCollection.insertOne({ name: name.trim() });
+  res.status(201).json({ id: result.insertedId.toString(), name: name.trim() });
+});
+
+app.post('/api/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ message: '아이디와 비밀번호는 필수입니다.' });
+  }
+  const existing = await usersCollection.findOne({ username });
+  if (existing) {
+    return res.status(409).json({ message: '이미 존재하는 사용자입니다.' });
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  await usersCollection.insertOne({ username, passwordHash });
+  res.status(201).json({ message: '등록 완료' });
+});
+
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ message: '아이디와 비밀번호는 필수입니다.' });
+  }
+  const user = await usersCollection.findOne({ username });
+  if (!user) {
+    return res.status(401).json({ message: '잘못된 사용자 이름 또는 비밀번호' });
+  }
+  const match = await bcrypt.compare(password, user.passwordHash);
+  if (!match) {
+    return res.status(401).json({ message: '잘못된 사용자 이름 또는 비밀번호' });
+  }
+  res.json({ message: '로그인 성공' });
+});
+
 app.get('/api/issues', async (req, res) => {
-  const issues = await readIssuesFromFile();
-  res.json(issues);
+  const issues = await issuesCollection.find().sort({ createdAt: -1 }).toArray();
+  res.json(issues.map(mapIssue));
 });
 
 app.post('/api/issues', async (req, res) => {
   const { content, reporter, assignee, comment, type, affectsVersion } = req.body;
-  
   if (!content || !reporter) {
     return res.status(400).json({ message: '이슈 내용과 등록자는 필수입니다.' });
   }
   if (!type || !VALID_ISSUE_TYPES.includes(type)) {
     return res.status(400).json({ message: `유효한 업무 유형을 선택해야 합니다. 유효한 값: ${VALID_ISSUE_TYPES.join(', ')}` });
   }
-
   const newIssue = {
-    id: crypto.randomUUID(),
     content: content.trim(),
     reporter: reporter.trim(),
     assignee: assignee?.trim() || undefined,
@@ -68,67 +115,49 @@ app.post('/api/issues', async (req, res) => {
     status: INITIAL_ISSUE_STATUS,
     type,
     affectsVersion: affectsVersion?.trim() || undefined,
-    fixVersion: undefined, // fixVersion is not set on creation
+    fixVersion: undefined,
     createdAt: new Date().toISOString(),
   };
-  const issues = await readIssuesFromFile();
-  issues.unshift(newIssue);
-  await writeIssuesToFile(issues);
-  res.status(201).json(newIssue);
+  const result = await issuesCollection.insertOne(newIssue);
+  res.status(201).json({ id: result.insertedId.toString(), ...newIssue });
 });
 
 app.put('/api/issues/:id', async (req, res) => {
   const { id } = req.params;
   const { content, reporter, assignee, status, comment, type, affectsVersion, fixVersion } = req.body;
-
-  let issues = await readIssuesFromFile();
-  const issueIndex = issues.findIndex(issue => issue.id === id);
-
-  if (issueIndex === -1) {
-    return res.status(404).json({ message: '이슈를 찾을 수 없습니다.' });
-  }
-
-  const issueToUpdate = { ...issues[issueIndex] };
-
-  if (content !== undefined) issueToUpdate.content = content.trim();
-  if (reporter !== undefined) issueToUpdate.reporter = reporter.trim();
-  if (assignee !== undefined) issueToUpdate.assignee = assignee.trim() === '' ? undefined : assignee.trim();
-  if (comment !== undefined) issueToUpdate.comment = comment.trim() === '' ? undefined : comment.trim();
-  
+  let updateFields = {};
+  if (content !== undefined) updateFields.content = content.trim();
+  if (reporter !== undefined) updateFields.reporter = reporter.trim();
+  if (assignee !== undefined) updateFields.assignee = assignee.trim() === '' ? undefined : assignee.trim();
+  if (comment !== undefined) updateFields.comment = comment.trim() === '' ? undefined : comment.trim();
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
       return res.status(400).json({ message: `유효한 상태 값을 제공해야 합니다. 유효한 값: ${VALID_STATUSES.join(', ')}` });
     }
-    issueToUpdate.status = status;
+    updateFields.status = status;
   }
-
   if (type !== undefined) {
     if (!VALID_ISSUE_TYPES.includes(type)) {
       return res.status(400).json({ message: `유효한 업무 유형을 제공해야 합니다. 유효한 값: ${VALID_ISSUE_TYPES.join(', ')}` });
     }
-    issueToUpdate.type = type;
+    updateFields.type = type;
   }
-  
-  if (affectsVersion !== undefined) issueToUpdate.affectsVersion = affectsVersion.trim() === '' ? undefined : affectsVersion.trim();
-  if (fixVersion !== undefined) issueToUpdate.fixVersion = fixVersion.trim() === '' ? undefined : fixVersion.trim();
+  if (affectsVersion !== undefined) updateFields.affectsVersion = affectsVersion.trim() === '' ? undefined : affectsVersion.trim();
+  if (fixVersion !== undefined) updateFields.fixVersion = fixVersion.trim() === '' ? undefined : fixVersion.trim();
 
-
-  issues[issueIndex] = issueToUpdate;
-  await writeIssuesToFile(issues);
-  res.json(issues[issueIndex]);
+  const result = await issuesCollection.findOneAndUpdate({ _id: new ObjectId(id) }, { $set: updateFields }, { returnDocument: 'after' });
+  if (!result.value) {
+    return res.status(404).json({ message: '이슈를 찾을 수 없습니다.' });
+  }
+  res.json(mapIssue(result.value));
 });
 
 app.delete('/api/issues/:id', async (req, res) => {
   const { id } = req.params;
-  let issues = await readIssuesFromFile();
-  const initialLength = issues.length;
-  issues = issues.filter(issue => issue.id !== id);
-
-  if (issues.length === initialLength) {
+  const result = await issuesCollection.deleteOne({ _id: new ObjectId(id) });
+  if (result.deletedCount === 0) {
     return res.status(404).json({ message: '삭제할 이슈를 찾을 수 없습니다.' });
   }
-
-  await writeIssuesToFile(issues);
   res.status(204).send();
 });
 
@@ -150,6 +179,6 @@ app.get('*', (req, res) => {
 
 app.listen(port, () => {
   console.log(`웹 이슈 트래커 앱이 http://localhost:${port} 에서 실행 중입니다.`);
-  console.log(`데이터는 다음 파일에 저장됩니다: ${path.resolve(ISSUES_FILE_PATH)}`);
+  console.log(`MongoDB 연결: ${MONGO_URI}, DB: ${DB_NAME}`);
   console.log(`정적 프론트엔드 파일은 다음 경로에서 제공됩니다: ${path.resolve(frontendDistPath)}`);
 });

@@ -15,6 +15,10 @@ interface TopBarProps {
   statusFilter: ResolutionStatus | 'ALL';
   onStatusFilterChange: (status: ResolutionStatus | 'ALL') => void;
   onCreateIssue: () => void;
+  currentUser: string | null;
+  onRequestLogin: () => void;
+  onRequestLogout: () => void;
+  onRequestRegister: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -25,6 +29,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   statusFilter,
   onStatusFilterChange,
   onCreateIssue,
+  currentUser,
+  onRequestLogin,
+  onRequestLogout,
+  onRequestRegister,
 }) => {
   const navItems = [
     { id: 'board' as ViewMode, label: 'Board' },
@@ -102,13 +110,32 @@ export const TopBar: React.FC<TopBarProps> = ({
             <GlobeIcon className="h-5 w-5" />
           </button>
 
-          <button
-            type="button"
-            className="p-1.5 rounded-full text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150"
-            title="User (placeholder)"
-          >
-            <UserAvatarPlaceholderIcon className="h-6 w-6 rounded-full" />
-          </button>
+          {currentUser ? (
+            <button
+              type="button"
+              onClick={onRequestLogout}
+              className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
+            >
+              로그아웃({currentUser})
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onRequestLogin}
+                className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
+              >
+                로그인
+              </button>
+              <button
+                type="button"
+                onClick={onRequestRegister}
+                className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
+              >
+                회원가입
+              </button>
+            </>
+          )}
 
           <button
             onClick={onCreateIssue}
