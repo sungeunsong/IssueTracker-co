@@ -39,6 +39,46 @@ const VALID_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'VALIDATING', 'CLOSED
 const VALID_ISSUE_TYPES = ['TASK', 'BUG', 'NEW_FEATURE', 'IMPROVEMENT'];
 
 app.use(express.json());
+=======
+
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+const DB_NAME = process.env.DB_NAME || 'issue_tracker_db';
+
+const client = new MongoClient(MONGO_URI);
+await client.connect();
+const db = client.db(DB_NAME);
+const issuesCollection = db.collection('issues');
+const projectsCollection = db.collection('projects');
+
+const INITIAL_ISSUE_STATUS = 'OPEN';
+const VALID_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'VALIDATING', 'CLOSED', 'WONT_DO'];
+const VALID_ISSUE_TYPES = ['TASK', 'BUG', 'NEW_FEATURE', 'IMPROVEMENT'];
+
+app.use(express.json());
+
+function mapIssue(doc) {
+  const { _id, ...rest } = doc;
+  return { id: _id.toString(), ...rest };
+}
+
+function mapProject(doc) {
+  const { _id, ...rest } = doc;
+  return { id: _id.toString(), ...rest };
+}
+
+app.get('/api/projects', async (req, res) => {
+  const projects = await projectsCollection.find().toArray();
+  res.json(projects.map(mapProject));
+});
+
+app.post('/api/projects', async (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: '프로젝트 이름은 필수입니다.' });
+  }
+  const result = await projectsCollection.insertOne({ name: name.trim() });
+  res.status(201).json({ id: result.insertedId.toString(), name: name.trim() });
+});
 
 function mapIssue(doc) {
   const { _id, ...rest } = doc;
