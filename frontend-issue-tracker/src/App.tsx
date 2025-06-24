@@ -74,10 +74,28 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusEnum | "ALL">("ALL");
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await fetch("/api/users", { credentials: "include" });
+      console.log(res);
+      if (!res.ok) {
+        throw new Error(
+          `사용자 정보를 불러오는데 실패했습니다: ${res.statusText}`
+        );
+      }
+      const data: User[] = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error("사용자 로딩 중 오류:", err);
+    }
+  }, []);
+
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch("/api/current-user", { credentials: "include" });
+        const res = await fetch("/api/current-user", {
+          credentials: "include",
+        });
         if (res.ok) {
           const data = await res.json();
           setIsAuthenticated(true);
@@ -138,19 +156,6 @@ const App: React.FC = () => {
     }
   }, [currentProjectId]);
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/users", { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(`사용자 정보를 불러오는데 실패했습니다: ${res.statusText}`);
-      }
-      const data: User[] = await res.json();
-      setUsers(data);
-    } catch (err) {
-      console.error("사용자 로딩 중 오류:", err);
-    }
-  }, []);
-
   const handleRegister = useCallback(
     async (userid: string, username: string, password: string) => {
       setIsSubmitting(true);
@@ -178,37 +183,34 @@ const App: React.FC = () => {
     [fetchUsers]
   );
 
-  const handleLogin = useCallback(
-    async (userid: string, password: string) => {
-      setIsSubmitting(true);
-      try {
+  const handleLogin = useCallback(async (userid: string, password: string) => {
+    setIsSubmitting(true);
+    try {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ userid, password }),
       });
-        if (!res.ok) {
-          const errData = await res
-            .json()
-            .catch(() => ({ message: "로그인 실패" }));
-          throw new Error(errData.message || res.statusText);
-        }
-        const data = await res.json();
-        setCurrentUser(data.username);
-        setCurrentUserId(data.userid);
-        fetchUsers();
-        setShowLoginModal(false);
-        handleLoginSuccess();
-      } catch (err) {
-        console.error("로그인 오류:", err);
-        setError((err as Error).message);
-      } finally {
-        setIsSubmitting(false);
+      if (!res.ok) {
+        const errData = await res
+          .json()
+          .catch(() => ({ message: "로그인 실패" }));
+        throw new Error(errData.message || res.statusText);
       }
-    },
-    []
-  );
+      const data = await res.json();
+      setCurrentUser(data.username);
+      setCurrentUserId(data.userid);
+      fetchUsers();
+      setShowLoginModal(false);
+      handleLoginSuccess();
+    } catch (err) {
+      console.error("로그인 오류:", err);
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
 
   const handleLoginSuccess = useCallback(() => {
     setIsAuthenticated(true);
@@ -558,17 +560,12 @@ const App: React.FC = () => {
             setError(null);
           }}
           currentUser={currentUser}
-          isAdmin={currentUserId === 'apadmin'}
-          onRequestLogin={() => {
-            setShowLoginModal(true);
-            setError(null);
-          }}
+          isAdmin={currentUserId === "apadmin"}
           onRequestLogout={handleLogout}
           onRequestRegister={() => {
             setShowRegisterModal(true);
             setError(null);
           }}
-          onLogout={handleLogout} // Added
         />
         <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 p-4 sm:p-6">
           {error && (
@@ -712,15 +709,15 @@ const App: React.FC = () => {
             }
             initialData={selectedIssueForEdit}
             onCancel={handleCloseEditModal}
-          isSubmitting={isSubmitting}
-          submitButtonText="변경사항 저장"
-          isEditMode={true}
-          projects={projects}
-          selectedProjectId={selectedIssueForEdit.projectId}
-          users={users}
-          currentUserId={currentUserId}
-          currentUserName={currentUser}
-        />
+            isSubmitting={isSubmitting}
+            submitButtonText="변경사항 저장"
+            isEditMode={true}
+            projects={projects}
+            selectedProjectId={selectedIssueForEdit.projectId}
+            users={users}
+            currentUserId={currentUserId}
+            currentUserName={currentUser}
+          />
         </Modal>
       )}
 

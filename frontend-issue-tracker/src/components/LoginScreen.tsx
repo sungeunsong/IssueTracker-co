@@ -6,7 +6,7 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const [username, setUsername] = useState("");
+  const [userID, setUserID] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -17,14 +17,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username, password }),
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userid: userID, password }),
       });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({ message: '로그인 실패' }));
+        const errData = await res
+          .json()
+          .catch(() => ({ message: "로그인 실패" }));
         throw new Error(errData.message || res.statusText);
       }
       onLoginSuccess();
@@ -32,7 +34,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       setError((err as Error).message);
     } finally {
       setIsLoading(false);
-
     }
   };
 
@@ -52,20 +53,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label
-                htmlFor="username"
+                htmlFor="userid"
                 className="block text-sm font-medium text-slate-700"
               >
-                사용자 이름
+                사용자 아이디
               </label>
               <div className="mt-1">
                 <input
-                  id="username"
-                  name="username"
+                  id="userid"
+                  name="userid"
                   type="text"
-                  autoComplete="username"
+                  autoComplete="userid"
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={userID}
+                  onChange={(e) => setUserID(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="admin"
                 />
@@ -130,8 +131,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             </div>
           </form>
           <p className="mt-6 text-center text-xs text-slate-500">
-            테스트 계정: <span className="font-medium">admin</span> /{" "}
-            <span className="font-medium">password</span>
+            테스트 계정: <span className="font-medium">apadmin</span> /{" "}
+            <span className="font-medium">0000</span>
           </p>
         </div>
       </div>

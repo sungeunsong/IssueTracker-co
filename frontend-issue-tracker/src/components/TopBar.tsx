@@ -1,27 +1,24 @@
-
-import React from 'react';
-import type { ViewMode } from '../App';
-import { ResolutionStatus, statusDisplayNames } from '../types';
-import { SearchIcon } from './icons/SearchIcon';
-import { UserAvatarPlaceholderIcon } from './icons/UserAvatarPlaceholderIcon';
-import { GlobeIcon } from './icons/GlobeIcon';
-import { PlusIcon } from './icons/PlusIcon';
-import { LogoutIcon } from './icons/LogoutIcon';
+import React from "react";
+import type { ViewMode } from "../App";
+import { ResolutionStatus, statusDisplayNames } from "../types";
+import { SearchIcon } from "./icons/SearchIcon";
+import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
+import { GlobeIcon } from "./icons/GlobeIcon";
+import { PlusIcon } from "./icons/PlusIcon";
+import { LogoutIcon } from "./icons/LogoutIcon";
 
 interface TopBarProps {
   currentView: ViewMode;
   onSetViewMode: (viewMode: ViewMode) => void;
   searchTerm: string;
   onSearchTermChange: (term: string) => void;
-  statusFilter: ResolutionStatus | 'ALL';
-  onStatusFilterChange: (status: ResolutionStatus | 'ALL') => void;
+  statusFilter: ResolutionStatus | "ALL";
+  onStatusFilterChange: (status: ResolutionStatus | "ALL") => void;
   onCreateIssue: () => void;
   currentUser: string | null;
   isAdmin: boolean;
-  onRequestLogin: () => void;
   onRequestLogout: () => void;
   onRequestRegister: () => void;
-  onLogout: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -34,14 +31,12 @@ export const TopBar: React.FC<TopBarProps> = ({
   onCreateIssue,
   currentUser,
   isAdmin,
-  onRequestLogin,
   onRequestLogout,
   onRequestRegister,
-  onLogout,
 }) => {
   const navItems = [
-    { id: 'board' as ViewMode, label: 'Board' },
-    { id: 'list' as ViewMode, label: 'List' },
+    { id: "board" as ViewMode, label: "Board" },
+    { id: "list" as ViewMode, label: "List" },
   ];
 
   return (
@@ -56,12 +51,13 @@ export const TopBar: React.FC<TopBarProps> = ({
                 onClick={() => onSetViewMode(item.id)}
                 className={`
                   px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150
-                  ${currentView === item.id
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                  ${
+                    currentView === item.id
+                      ? "bg-indigo-100 text-indigo-700"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                   }
                 `}
-                aria-current={currentView === item.id ? 'page' : undefined}
+                aria-current={currentView === item.id ? "page" : undefined}
               >
                 {item.label}
               </button>
@@ -86,24 +82,30 @@ export const TopBar: React.FC<TopBarProps> = ({
               aria-label="Search issues"
             />
           </div>
-          
+
           {/* Status Filter Dropdown - simplified, consider a dedicated filter button for more complex filters */}
           <div className="relative hidden md:block">
             <select
               id="status-filter-topbar"
               value={statusFilter}
-              onChange={(e) => onStatusFilterChange(e.target.value as ResolutionStatus | 'ALL')}
+              onChange={(e) =>
+                onStatusFilterChange(e.target.value as ResolutionStatus | "ALL")
+              }
               className="block w-full pl-3 pr-8 py-2 border border-slate-300 bg-white rounded-md shadow-sm text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow duration-150 hover:shadow"
               aria-label="Filter by status"
             >
               <option value="ALL">All Statuses</option>
-              {(Object.keys(ResolutionStatus) as Array<keyof typeof ResolutionStatus>).map(key => (
-                  ResolutionStatus[key] ?
+              {(
+                Object.keys(ResolutionStatus) as Array<
+                  keyof typeof ResolutionStatus
+                >
+              ).map((key) =>
+                ResolutionStatus[key] ? (
                   <option key={key} value={ResolutionStatus[key]}>
                     {statusDisplayNames[ResolutionStatus[key]]}
                   </option>
-                  : null
-                ))}
+                ) : null
+              )}
             </select>
           </div>
 
@@ -115,8 +117,8 @@ export const TopBar: React.FC<TopBarProps> = ({
             <GlobeIcon className="h-5 w-5" />
           </button>
 
-           <button
-            onClick={onLogout} // Added
+          <button
+            onClick={onRequestLogout}
             type="button"
             className="p-1.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
             title="로그아웃"
@@ -124,32 +126,13 @@ export const TopBar: React.FC<TopBarProps> = ({
             <LogoutIcon className="h-5 w-5" />
           </button>
 
-          {currentUser ? (
-            <>
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={onRequestRegister}
-                  className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
-                >
-                  사용자 등록
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={onRequestLogout}
-                className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
-              >
-                로그아웃({currentUser})
-              </button>
-            </>
-          ) : (
+          {isAdmin && (
             <button
               type="button"
-              onClick={onRequestLogin}
+              onClick={onRequestRegister}
               className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
             >
-              로그인
+              사용자 등록
             </button>
           )}
 

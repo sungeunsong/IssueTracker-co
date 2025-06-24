@@ -1,9 +1,19 @@
-
-import React, { useState, useEffect } from 'react';
-import type { Issue, ResolutionStatus as StatusEnum, IssueType as TypeEnum, Project, User } from '../types';
-import { ResolutionStatus, statusDisplayNames, IssueType, issueTypeDisplayNames } from '../types';
-import { PlusIcon } from './icons/PlusIcon';
-import type { IssueFormData } from '../App';
+import React, { useState, useEffect } from "react";
+import type {
+  Issue,
+  ResolutionStatus as StatusEnum,
+  IssueType as TypeEnum,
+  Project,
+  User,
+} from "../types";
+import {
+  ResolutionStatus,
+  statusDisplayNames,
+  IssueType,
+  issueTypeDisplayNames,
+} from "../types";
+import { PlusIcon } from "./icons/PlusIcon";
+import type { IssueFormData } from "../App";
 
 interface IssueFormProps {
   onSubmit: (formData: IssueFormData) => Promise<void>;
@@ -32,75 +42,76 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   currentUserId,
   currentUserName,
 }) => {
-  const [content, setContent] = useState('');
-  const [reporterId, setReporterId] = useState('');
-  const [reporterName, setReporterName] = useState('');
-  const [assignee, setAssignee] = useState('');
-  const [comment, setComment] = useState('');
+  const [content, setContent] = useState("");
+  const [reporterId, setReporterId] = useState("");
+  const [reporterName, setReporterName] = useState("");
+  const [assignee, setAssignee] = useState("");
+  const [comment, setComment] = useState("");
   const [status, setStatus] = useState<StatusEnum>(ResolutionStatus.OPEN);
   const [type, setType] = useState<TypeEnum>(IssueType.TASK); // Default to TASK
-  const [affectsVersion, setAffectsVersion] = useState('');
-  const [fixVersion, setFixVersion] = useState('');
-  const [projectId, setProjectId] = useState<string>('');
+  const [affectsVersion, setAffectsVersion] = useState("");
+  const [fixVersion, setFixVersion] = useState("");
+  const [projectId, setProjectId] = useState<string>("");
 
-  const [contentError, setContentError] = useState('');
-  const [reporterError, setReporterError] = useState('');
-  const [typeError, setTypeError] = useState('');
-
+  const [contentError, setContentError] = useState("");
+  const [reporterError, setReporterError] = useState("");
+  const [typeError, setTypeError] = useState("");
 
   useEffect(() => {
     if (initialData) {
-      setContent(initialData.content || '');
-      setReporterId(initialData.reporter || '');
-      const reporterUser = users.find(u => u.userid === initialData.reporter);
-      setReporterName(reporterUser ? reporterUser.username : '');
-      setAssignee(initialData.assignee || '');
-      setComment(initialData.comment || '');
+      setContent(initialData.content || "");
+      setReporterId(initialData.reporter || "");
+      const reporterUser = users.find((u) => u.userid === initialData.reporter);
+      setReporterName(reporterUser ? reporterUser.username : "");
+      setAssignee(initialData.assignee || "");
+      setComment(initialData.comment || "");
       setStatus(initialData.status || ResolutionStatus.OPEN);
       setType(initialData.type || IssueType.TASK);
-      setAffectsVersion(initialData.affectsVersion || '');
-      setFixVersion(initialData.fixVersion || '');
-      setProjectId(initialData.projectId || selectedProjectId || projects[0]?.id || '');
+      setAffectsVersion(initialData.affectsVersion || "");
+      setFixVersion(initialData.fixVersion || "");
+      setProjectId(
+        initialData.projectId || selectedProjectId || projects[0]?.id || ""
+      );
     } else {
       // Reset form for adding new issue
-      setContent('');
-      setReporterId(currentUserId || '');
-      setReporterName(currentUserName || '');
-      setAssignee('');
-      setComment('');
+      setContent("");
+      setReporterId(currentUserId || "");
+      setReporterName(currentUserName || "");
+      setAssignee("");
+      setComment("");
       setStatus(ResolutionStatus.OPEN);
       setType(IssueType.TASK); // Default for new issues
-      setAffectsVersion('');
-      setFixVersion('');
-      setProjectId(selectedProjectId || projects[0]?.id || '');
+      setAffectsVersion("");
+      setFixVersion("");
+      setProjectId(selectedProjectId || projects[0]?.id || "");
     }
-     setContentError('');
-     setReporterError('');
-     setTypeError('');
+    setContentError("");
+    setReporterError("");
+    setTypeError("");
   }, [initialData, isEditMode, users, currentUserId, currentUserName]); // Rerun if props change
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     let isValid = true;
     if (!content.trim()) {
-      setContentError('이슈 내용은 비워둘 수 없습니다.');
+      setContentError("이슈 내용은 비워둘 수 없습니다.");
       isValid = false;
     } else {
-      setContentError('');
+      setContentError("");
     }
     if (!reporterId.trim()) {
-      setReporterError('등록자 이름은 비워둘 수 없습니다.');
+      setReporterError("등록자 이름은 비워둘 수 없습니다.");
       isValid = false;
     } else {
-      setReporterError('');
+      setReporterError("");
     }
-    if (!type) { // Should always have a value due to select default
-        setTypeError('업무 유형을 선택해주세요.');
-        isValid = false;
+    if (!type) {
+      // Should always have a value due to select default
+      setTypeError("업무 유형을 선택해주세요.");
+      isValid = false;
     } else {
-        setTypeError('');
+      setTypeError("");
     }
-
 
     if (isValid) {
       const formData: IssueFormData = {
@@ -123,7 +134,10 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="issue-project" className="block text-sm font-medium text-slate-700 mb-1">
+        <label
+          htmlFor="issue-project"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
           프로젝트 <span className="text-red-500">*</span>
         </label>
         <select
@@ -134,13 +148,18 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           disabled={isSubmitting || isEditMode}
           required
         >
-          {projects.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </select>
       </div>
       <div>
-        <label htmlFor="issue-type" className="block text-sm font-medium text-slate-700 mb-1">
+        <label
+          htmlFor="issue-type"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
           업무 유형 <span className="text-red-500">*</span>
         </label>
         <select
@@ -148,23 +167,30 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           value={type}
           onChange={(e) => {
             setType(e.target.value as TypeEnum);
-            if (typeError) setTypeError('');
+            if (typeError) setTypeError("");
           }}
-          className={`mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 ${typeError ? 'border-red-500' : 'border-slate-300'}`}
+          className={`mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 ${
+            typeError ? "border-red-500" : "border-slate-300"
+          }`}
           disabled={isSubmitting}
           required
         >
-          {(Object.keys(IssueType) as Array<keyof typeof IssueType>).map(typeKey => (
-            <option key={typeKey} value={IssueType[typeKey]}>
-              {issueTypeDisplayNames[IssueType[typeKey]]}
-            </option>
-          ))}
+          {(Object.keys(IssueType) as Array<keyof typeof IssueType>).map(
+            (typeKey) => (
+              <option key={typeKey} value={IssueType[typeKey]}>
+                {issueTypeDisplayNames[IssueType[typeKey]]}
+              </option>
+            )
+          )}
         </select>
         {typeError && <p className="mt-1 text-xs text-red-600">{typeError}</p>}
       </div>
 
       <div>
-        <label htmlFor="issue-content" className="block text-sm font-medium text-slate-700 mb-1">
+        <label
+          htmlFor="issue-content"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
           이슈 설명 <span className="text-red-500">*</span>
         </label>
         <textarea
@@ -172,19 +198,26 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           value={content}
           onChange={(e) => {
             setContent(e.target.value);
-            if (contentError && e.target.value.trim()) setContentError('');
+            if (contentError && e.target.value.trim()) setContentError("");
           }}
           rows={3}
-          className={`mt-1 block w-full shadow-sm sm:text-sm rounded-md focus:ring-indigo-500 focus:border-indigo-500 ${contentError ? 'border-red-500' : 'border-slate-300'}`}
+          className={`mt-1 block w-full shadow-sm sm:text-sm rounded-md focus:ring-indigo-500 focus:border-indigo-500 ${
+            contentError ? "border-red-500" : "border-slate-300"
+          }`}
           placeholder="이슈에 대해 자세히 설명해주세요..."
           required
           disabled={isSubmitting}
         />
-        {contentError && <p className="mt-1 text-xs text-red-600">{contentError}</p>}
+        {contentError && (
+          <p className="mt-1 text-xs text-red-600">{contentError}</p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="issue-reporter" className="block text-sm font-medium text-slate-700 mb-1">
+        <label
+          htmlFor="issue-reporter"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
           등록자 <span className="text-red-500">*</span>
         </label>
         <input
@@ -195,12 +228,17 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           className="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-slate-300 bg-slate-100"
           disabled
         />
-        {reporterError && <p className="mt-1 text-xs text-red-600">{reporterError}</p>}
+        {reporterError && (
+          <p className="mt-1 text-xs text-red-600">{reporterError}</p>
+        )}
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="issue-assignee" className="block text-sm font-medium text-slate-700 mb-1">
+          <label
+            htmlFor="issue-assignee"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
             담당자
           </label>
           <select
@@ -211,14 +249,19 @@ export const IssueForm: React.FC<IssueFormProps> = ({
             disabled={isSubmitting}
           >
             <option value="">미지정</option>
-            {users.map(u => (
-              <option key={u.userid} value={u.userid}>{u.username}</option>
+            {users.map((u) => (
+              <option key={u.userid} value={u.userid}>
+                {u.username}
+              </option>
             ))}
           </select>
         </div>
         {isEditMode && (
           <div>
-            <label htmlFor="issue-status" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="issue-status"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               상태
             </label>
             <select
@@ -228,7 +271,11 @@ export const IssueForm: React.FC<IssueFormProps> = ({
               className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
               disabled={isSubmitting}
             >
-              {(Object.keys(ResolutionStatus) as Array<keyof typeof ResolutionStatus>).map(statusKey => (
+              {(
+                Object.keys(ResolutionStatus) as Array<
+                  keyof typeof ResolutionStatus
+                >
+              ).map((statusKey) => (
                 <option key={statusKey} value={ResolutionStatus[statusKey]}>
                   {statusDisplayNames[ResolutionStatus[statusKey]]}
                 </option>
@@ -240,7 +287,10 @@ export const IssueForm: React.FC<IssueFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="issue-affectsVersion" className="block text-sm font-medium text-slate-700 mb-1">
+          <label
+            htmlFor="issue-affectsVersion"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
             영향을 받는 버전
           </label>
           <input
@@ -255,7 +305,10 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         </div>
         {isEditMode && (
           <div>
-            <label htmlFor="issue-fixVersion" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="issue-fixVersion"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               수정 버전
             </label>
             <input
@@ -272,7 +325,10 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       </div>
 
       <div>
-        <label htmlFor="issue-comment" className="block text-sm font-medium text-slate-700 mb-1">
+        <label
+          htmlFor="issue-comment"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
           코멘트
         </label>
         <textarea
@@ -303,7 +359,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150 disabled:opacity-50"
         >
           {!isEditMode && <PlusIcon className="w-4 h-4 mr-1.5 -ml-0.5" />}
-          {isSubmitting ? '저장 중...' : submitButtonText}
+          {isSubmitting ? "저장 중..." : submitButtonText}
         </button>
       </div>
     </form>
