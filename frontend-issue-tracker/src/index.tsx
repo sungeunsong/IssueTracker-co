@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App'; // Adjusted path if App.tsx is in the same src directory
+import App from './App';
+import IssueDetailPage from './IssueDetailPage';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -10,6 +12,11 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/issues/:issueKey" element={<IssueDetailPage />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );

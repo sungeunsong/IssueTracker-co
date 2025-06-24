@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 
 interface ProjectFormProps {
-  onSubmit: (name: string) => Promise<void>;
+  onSubmit: (name: string, key: string) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
 export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit, onCancel, isSubmitting }) => {
   const [name, setName] = useState('');
+  const [keyValue, setKeyValue] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -16,7 +17,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit, onCancel, is
       setError('프로젝트 이름을 입력하세요.');
       return;
     }
-    onSubmit(name.trim());
+    if (!keyValue.trim()) {
+      setError('프로젝트 키를 입력하세요.');
+      return;
+    }
+    onSubmit(name.trim(), keyValue.trim());
   };
 
   return (
@@ -35,6 +40,20 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit, onCancel, is
           required
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      </div>
+      <div>
+        <label htmlFor="project-key" className="block text-sm font-medium text-slate-700 mb-1">
+          프로젝트 키 <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="project-key"
+          type="text"
+          value={keyValue}
+          onChange={(e) => { setKeyValue(e.target.value); if (error) setError(''); }}
+          className={`mt-1 block w-full shadow-sm sm:text-sm rounded-md py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 ${error ? 'border-red-500' : 'border-slate-300'}`}
+          disabled={isSubmitting}
+          required
+        />
       </div>
       <div className="flex justify-end space-x-3">
         <button

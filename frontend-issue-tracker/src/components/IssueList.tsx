@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import type { Issue } from '../types';
 import { ResolutionStatus, statusColors, statusDisplayNames, issueTypeDisplayNames, issueTypeColors } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
@@ -154,7 +155,11 @@ export const IssueList: React.FC<IssueListProps> = ({
                 >
                   {issue.content}
                 </button>
-                <div className="text-xs text-slate-500 mt-0.5">ID: {issue.id.substring(0,8)}...</div>
+                <div className="text-xs text-slate-500 mt-0.5">
+                  <Link to={`/issues/${issue.issueKey}`} className="hover:underline">
+                    {issue.issueKey}
+                  </Link>
+                </div>
               </td>
               <td className="px-3 py-3 whitespace-nowrap">
                  <span
