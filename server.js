@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
+import session from "express-session";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -48,6 +49,24 @@ const VALID_STATUSES = [
 const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
 
 app.use(express.json());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change_this_secret",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+app.use("/api", (req, res, next) => {
+  const openPaths = ["/login", "/register", "/current-user"];
+  if (openPaths.includes(req.path)) {
+    return next();
+  }
+  if (!req.session.user) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  next();
+});
 
 function mapIssue(doc) {
   const { _id, ...rest } = doc;
@@ -119,7 +138,25 @@ app.post("/api/login", async (req, res) => {
       .status(401)
       .json({ message: "잘못된 사용자 이름 또는 비밀번호" });
   }
-  res.json({ message: "로그인 성공" });
+  req.session.user = { id: user._id.toString(), username: user.username };
+  res.json({ message: "로그인 성공", username: user.username });
+});
+
+app.post("/api/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "로그아웃 실패" });
+    }
+    res.clearCookie("connect.sid");
+    res.json({ message: "로그아웃" });
+  });
+});
+
+app.get("/api/current-user", (req, res) => {
+  if (req.session.user) {
+    return res.json({ username: req.session.user.username });
+  }
+  res.status(401).json({ message: "로그인이 필요합니다." });
 });
 
 app.get("/api/issues", async (req, res) => {

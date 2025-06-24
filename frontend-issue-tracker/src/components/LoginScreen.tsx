@@ -16,16 +16,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setError(null);
     setIsLoading(true);
 
-    // Mock API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Simple hardcoded authentication
-    if (username === "admin" && password === "password") {
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ message: '로그인 실패' }));
+        throw new Error(errData.message || res.statusText);
+      }
       onLoginSuccess();
-    } else {
-      setError("잘못된 사용자 이름 또는 비밀번호입니다.");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
+
     }
-    setIsLoading(false);
   };
 
   return (
