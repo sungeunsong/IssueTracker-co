@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import type { Issue } from '../types';
 import { statusColors, statusDisplayNames, issueTypeColors, issueTypeDisplayNames } from '../types';
 import { UserAvatarPlaceholderIcon } from './icons/UserAvatarPlaceholderIcon';
@@ -54,7 +55,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStar
               <UserAvatarPlaceholderIcon className="w-3 h-3 text-slate-500" />
             </div>
           )}
-          <span className="text-slate-400">ID: {issue.id.substring(0, 6)}</span>
+          <Link
+            to={`/issues/${issue.issueKey}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-slate-400 hover:underline"
+          >
+            {issue.issueKey}
+          </Link>
         </div>
       </div>
        {issue.comment && (

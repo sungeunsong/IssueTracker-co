@@ -17,6 +17,7 @@ export enum IssueType {
 
 export interface Issue {
   id: string;
+  issueKey: string;
   content: string;
   reporter: string;
   assignee?: string;
@@ -32,6 +33,7 @@ export interface Issue {
 export interface Project {
   id: string;
   name: string;
+  key: string;
 }
 
 export const statusColors: Record<ResolutionStatus, string> = {

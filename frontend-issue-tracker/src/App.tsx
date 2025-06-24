@@ -226,13 +226,13 @@ const App: React.FC = () => {
     }
   }, [fetchIssues, currentProjectId]);
 
-  const handleAddProject = useCallback(async (name: string) => {
+  const handleAddProject = useCallback(async (name: string, key: string) => {
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, key }),
       });
       if (!response.ok) {
         const errData = await response.json().catch(() => ({ message: '프로젝트 생성 실패' }));

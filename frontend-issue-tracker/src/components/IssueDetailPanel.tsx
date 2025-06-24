@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import type { Issue } from '../types';
 import { ResolutionStatus, statusDisplayNames, statusColors, IssueType, issueTypeDisplayNames, issueTypeColors } from '../types';
 import { PencilIcon } from './icons/PencilIcon';
@@ -57,7 +58,11 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
         <div className="mb-3">
             <h3 className="text-base font-semibold text-slate-800 mb-1 break-words">{issue.content}</h3>
-            <p className="text-xs text-slate-500">ID: {issue.id}</p>
+            <p className="text-xs text-slate-500">
+              <Link to={`/issues/${issue.issueKey}`} className="hover:underline">
+                {issue.issueKey}
+              </Link>
+            </p>
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 items-start">

@@ -8,6 +8,7 @@ export enum ResolutionStatus {
 
 export interface Issue {
   id: string;
+  issueKey: string;
   content: string;
   reporter: string;
   status: ResolutionStatus;

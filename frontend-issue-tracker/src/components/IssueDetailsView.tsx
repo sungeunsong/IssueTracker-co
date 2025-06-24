@@ -53,6 +53,7 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue }) => 
           </dd>
         </div>
         <DetailItem label="생성일시" value={formattedDate} />
+        <DetailItem label="이슈 키" value={issue.issueKey} isCode />
         <DetailItem label="고유 ID" value={issue.id} isCode />
       </dl>
     </div>
