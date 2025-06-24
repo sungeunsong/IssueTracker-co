@@ -67,20 +67,26 @@ app.get("/api/projects", async (req, res) => {
 app.post("/api/projects", async (req, res) => {
   const { name, key } = req.body;
   if (!name || !key) {
-    return res.status(400).json({ message: "프로젝트 이름과 키는 필수입니다." });
+    return res
+      .status(400)
+      .json({ message: "프로젝트 이름과 키는 필수입니다." });
   }
   const existingKey = await projectsCollection.findOne({ key: key.trim() });
   if (existingKey) {
-    return res.status(409).json({ message: "이미 존재하는 프로젝트 키입니다." });
+    return res
+      .status(409)
+      .json({ message: "이미 존재하는 프로젝트 키입니다." });
   }
   const result = await projectsCollection.insertOne({
     name: name.trim(),
     key: key.trim().toUpperCase(),
     nextIssueNumber: 1,
   });
-  res
-    .status(201)
-    .json({ id: result.insertedId.toString(), name: name.trim(), key: key.trim().toUpperCase() });
+  res.status(201).json({
+    id: result.insertedId.toString(),
+    name: name.trim(),
+    key: key.trim().toUpperCase(),
+  });
 });
 app.post("/api/register", async (req, res) => {
   const { username, password } = req.body;
@@ -136,8 +142,15 @@ app.get("/api/issues/key/:issueKey", async (req, res) => {
 });
 
 app.post("/api/issues", async (req, res) => {
-  const { content, reporter, assignee, comment, type, affectsVersion, projectId } =
-    req.body;
+  const {
+    content,
+    reporter,
+    assignee,
+    comment,
+    type,
+    affectsVersion,
+    projectId,
+  } = req.body;
   if (!content || !reporter) {
     return res
       .status(400)
@@ -153,16 +166,20 @@ app.post("/api/issues", async (req, res) => {
   if (!projectId) {
     return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
   }
+  console.log(projectId);
   const projectResult = await projectsCollection.findOneAndUpdate(
     { _id: new ObjectId(projectId) },
     { $inc: { nextIssueNumber: 1 } },
     { returnDocument: "after" }
   );
-  if (!projectResult.value) {
+  if (!projectResult) {
     return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
   }
-  const issueNumber = projectResult.value.nextIssueNumber - 1;
-  const issueKey = `${projectResult.value.key}-${String(issueNumber).padStart(4, "0")}`;
+  const issueNumber = projectResult?.nextIssueNumber - 1;
+  const issueKey = `${projectResult?.key}-${String(issueNumber).padStart(
+    4,
+    "0"
+  )}`;
 
   const newIssue = {
     content: content.trim(),
@@ -235,10 +252,10 @@ app.put("/api/issues/:id", async (req, res) => {
     { $set: updateFields },
     { returnDocument: "after" }
   );
-  if (!result.value) {
+  if (!result) {
     return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
   }
-  res.json(mapIssue(result.value));
+  res.json(mapIssue(result));
 });
 
 app.delete("/api/issues/:id", async (req, res) => {
@@ -261,6 +278,7 @@ app.get("*", (req, res) => {
   }
   const indexPath = path.join(frontendDistPath, "index.html");
   res.sendFile(indexPath, (err) => {
+    console.log(indexPath);
     if (err) {
       console.error(`Error sending index.html from ${indexPath}:`, err);
       res.status(500).json({
