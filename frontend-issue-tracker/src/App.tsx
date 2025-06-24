@@ -248,8 +248,10 @@ const App: React.FC = () => {
   }, [fetchIssues, currentProjectId]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    if (isAuthenticated) {
+      fetchProjects();
+    }
+  }, [isAuthenticated, fetchProjects]);
 
   const baseFilteredIssues = useMemo(() => {
     let tempIssues = issues;
