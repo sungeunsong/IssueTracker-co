@@ -6,6 +6,7 @@ import { SearchIcon } from './icons/SearchIcon';
 import { UserAvatarPlaceholderIcon } from './icons/UserAvatarPlaceholderIcon';
 import { GlobeIcon } from './icons/GlobeIcon';
 import { PlusIcon } from './icons/PlusIcon';
+import { LogoutIcon } from './icons/LogoutIcon';
 
 interface TopBarProps {
   currentView: ViewMode;
@@ -19,6 +20,7 @@ interface TopBarProps {
   onRequestLogin: () => void;
   onRequestLogout: () => void;
   onRequestRegister: () => void;
+  onLogout: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -33,6 +35,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onRequestLogin,
   onRequestLogout,
   onRequestRegister,
+  onLogout,
 }) => {
   const navItems = [
     { id: 'board' as ViewMode, label: 'Board' },
@@ -108,6 +111,15 @@ export const TopBar: React.FC<TopBarProps> = ({
             title="Notifications (placeholder)"
           >
             <GlobeIcon className="h-5 w-5" />
+          </button>
+
+           <button
+            onClick={onLogout} // Added
+            type="button"
+            className="p-1.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
+            title="로그아웃"
+          >
+            <LogoutIcon className="h-5 w-5" />
           </button>
 
           {currentUser ? (

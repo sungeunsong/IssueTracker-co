@@ -68,11 +68,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSetViewMode, on
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        <div className="mb-3">
+        {/* <div className="mb-3">
             <h2 className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Recent</h2>
             <NavItem icon={<BoardIcon />} label="Board" isActive={currentView === 'board'} onClick={() => onSetViewMode('board')} />
             <NavItem icon={<ListIcon />} label="Issues" isActive={currentView === 'list'} onClick={() => onSetViewMode('list')} />
-        </div>
+        </div> */}
         
         <div className="mb-3">
             <h2 className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">All Projects</h2>

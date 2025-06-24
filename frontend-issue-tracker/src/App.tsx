@@ -14,6 +14,7 @@ import { BoardView } from './components/BoardView';
 import { IssueDetailPanel } from './components/IssueDetailPanel';
 import type { Issue, ResolutionStatus as StatusEnum, IssueType as TypeEnum, Project } from './types';
 import { ResolutionStatus, IssueType, statusDisplayNames, boardStatuses, boardStatusToTitleMap } from './types';
+import { LoginScreen } from './components/LoginScreen';
 // import { PlusIcon } from './components/icons/PlusIcon'; // Not used directly here
 
 const ITEMS_PER_PAGE_LIST = 10;
@@ -33,6 +34,7 @@ export type IssueFormData = {
 export type ViewMode = 'board' | 'list';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Added
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +85,7 @@ const App: React.FC = () => {
         throw new Error(`프로젝트 정보를 불러오는데 실패했습니다: ${res.statusText}`);
       }
       const data: Project[] = await res.json();
+      console.log(data)
       setProjects(data);
       if (data.length > 0 && !currentProjectId) {
         setIssues([]);
@@ -136,7 +139,28 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleLogout = () => setCurrentUser(null);
+  const handleLoginSuccess = useCallback(() => {
+    setIsAuthenticated(true);
+    setError(null); // Clear any previous global errors
+    // Fetch initial data after login
+    fetchIssues();
+  }, [fetchIssues]);
+
+  const handleLogout = useCallback(() => {
+    setIsAuthenticated(false);
+    setIssues([]); // Clear issues data on logout
+    setSelectedIssueForDetail(null);
+    // Optionally: Clear other states like filters, search terms, etc.
+    setSearchTerm('');
+    setStatusFilter('ALL');
+    setCurrentPage(1);
+    setError(null);
+    setCurrentUser(null)
+  }, []);
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
 
   const handleSelectProject = (id: string) => {
     setIssues([]);
@@ -388,6 +412,7 @@ const App: React.FC = () => {
           onRequestLogin={() => { setShowLoginModal(true); setError(null); }}
           onRequestLogout={handleLogout}
           onRequestRegister={() => { setShowRegisterModal(true); setError(null); }}
+          onLogout={handleLogout} // Added
         />
         <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 p-4 sm:p-6">
           {error && (
