@@ -18,8 +18,5 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: secret123
       MONGO_INITDB_DATABASE: issuetracker
     volumes:
-      - mongo-data:/data/db
+      - /mongo-data:/data/db
       - ./mongo-init:/docker-entrypoint-initdb.d/
-
-volumes:
-  mongo-data:
