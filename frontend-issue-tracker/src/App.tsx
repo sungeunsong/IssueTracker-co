@@ -71,6 +71,22 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusEnum | "ALL">("ALL");
 
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/current-user", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          setIsAuthenticated(true);
+          setCurrentUser(data.username);
+        }
+      } catch (err) {
+        console.error("세션 확인 오류:", err);
+      }
+    };
+    checkSession();
+  }, []);
+
   const fetchIssues = useCallback(async () => {
     console.log("currentProjectId", currentProjectId);
     console.log("isLoading", isLoading);
@@ -147,19 +163,22 @@ const App: React.FC = () => {
     async (username: string, password: string) => {
       setIsSubmitting(true);
       try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        });
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, password }),
+      });
         if (!res.ok) {
           const errData = await res
             .json()
             .catch(() => ({ message: "로그인 실패" }));
           throw new Error(errData.message || res.statusText);
         }
-        setCurrentUser(username);
+        const data = await res.json();
+        setCurrentUser(data.username);
         setShowLoginModal(false);
+        handleLoginSuccess();
       } catch (err) {
         console.error("로그인 오류:", err);
         setError((err as Error).message);
@@ -177,16 +196,21 @@ const App: React.FC = () => {
     fetchIssues();
   }, [fetchIssues]);
 
-  const handleLogout = useCallback(() => {
-    setIsAuthenticated(false);
-    setIssues([]); // Clear issues data on logout
-    setSelectedIssueForDetail(null);
-    // Optionally: Clear other states like filters, search terms, etc.
-    setSearchTerm("");
-    setStatusFilter("ALL");
-    setCurrentPage(1);
-    setError(null);
-    setCurrentUser(null);
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch("/api/logout", { method: "POST", credentials: "include" });
+    } catch (err) {
+      console.error("로그아웃 오류:", err);
+    } finally {
+      setIsAuthenticated(false);
+      setIssues([]);
+      setSelectedIssueForDetail(null);
+      setSearchTerm("");
+      setStatusFilter("ALL");
+      setCurrentPage(1);
+      setError(null);
+      setCurrentUser(null);
+    }
   }, []);
 
   const handleSelectProject = (id: string) => {
