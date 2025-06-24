@@ -23,14 +23,19 @@ const issuesCollection = db.collection("issues");
 const projectsCollection = db.collection("projects");
 const usersCollection = db.collection("users");
 
-const ADMIN_USERNAME = "apadmin";
+const ADMIN_USERID = "apadmin";
+const ADMIN_USERNAME = "관리자";
 const ADMIN_PASSWORD = "0000";
 
 async function ensureAdminUser() {
-  const existing = await usersCollection.findOne({ username: ADMIN_USERNAME });
+  const existing = await usersCollection.findOne({ userid: ADMIN_USERID });
   if (!existing) {
     const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-    await usersCollection.insertOne({ username: ADMIN_USERNAME, passwordHash });
+    await usersCollection.insertOne({
+      userid: ADMIN_USERID,
+      username: ADMIN_USERNAME,
+      passwordHash,
+    });
     console.log("Default admin user created");
   }
 }
@@ -108,25 +113,27 @@ app.post("/api/projects", async (req, res) => {
   });
 });
 app.post("/api/register", async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ message: "아이디와 비밀번호는 필수입니다." });
+  const { userid, username, password } = req.body;
+  if (!userid || !username || !password) {
+    return res
+      .status(400)
+      .json({ message: "아이디, 이름, 비밀번호는 필수입니다." });
   }
-  const existing = await usersCollection.findOne({ username });
+  const existing = await usersCollection.findOne({ userid });
   if (existing) {
     return res.status(409).json({ message: "이미 존재하는 사용자입니다." });
   }
   const passwordHash = await bcrypt.hash(password, 10);
-  await usersCollection.insertOne({ username, passwordHash });
+  await usersCollection.insertOne({ userid, username, passwordHash });
   res.status(201).json({ message: "등록 완료" });
 });
 
 app.post("/api/login", async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
+  const { userid, password } = req.body;
+  if (!userid || !password) {
     return res.status(400).json({ message: "아이디와 비밀번호는 필수입니다." });
   }
-  const user = await usersCollection.findOne({ username });
+  const user = await usersCollection.findOne({ userid });
   if (!user) {
     return res
       .status(401)
@@ -138,8 +145,15 @@ app.post("/api/login", async (req, res) => {
       .status(401)
       .json({ message: "잘못된 사용자 이름 또는 비밀번호" });
   }
-  req.session.user = { id: user._id.toString(), username: user.username };
-  res.json({ message: "로그인 성공", username: user.username });
+  req.session.user = {
+    userid: user.userid,
+    username: user.username,
+  };
+  res.json({
+    message: "로그인 성공",
+    userid: user.userid,
+    username: user.username,
+  });
 });
 
 app.post("/api/logout", (req, res) => {
@@ -154,9 +168,19 @@ app.post("/api/logout", (req, res) => {
 
 app.get("/api/current-user", (req, res) => {
   if (req.session.user) {
-    return res.json({ username: req.session.user.username });
+    return res.json({
+      userid: req.session.user.userid,
+      username: req.session.user.username,
+    });
   }
   res.status(401).json({ message: "로그인이 필요합니다." });
+});
+
+app.get("/api/users", async (req, res) => {
+  const users = await usersCollection
+    .find({}, { projection: { userid: 1, username: 1, _id: 0 } })
+    .toArray();
+  res.json(users);
 });
 
 app.get("/api/issues", async (req, res) => {

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { Issue } from '../types';
+import type { Issue, User } from '../types';
 import { ResolutionStatus, statusColors, statusDisplayNames, issueTypeDisplayNames, issueTypeColors } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PencilIcon } from './icons/PencilIcon';
@@ -17,6 +17,7 @@ interface IssueListProps {
   totalIssues: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
+  users: User[];
 }
 
 export const IssueList: React.FC<IssueListProps> = ({
@@ -29,6 +30,7 @@ export const IssueList: React.FC<IssueListProps> = ({
   totalIssues,
   itemsPerPage,
   onPageChange,
+  users,
 }) => {
   const totalPages = Math.ceil(totalIssues / itemsPerPage);
 
@@ -176,9 +178,9 @@ export const IssueList: React.FC<IssueListProps> = ({
                 </span>
               </td>
               <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-700">
-                {issue.assignee || <span className="text-slate-400 italic">미지정</span>}
+                {issue.assignee ? (users.find(u => u.userid === issue.assignee)?.username || issue.assignee) : <span className="text-slate-400 italic">미지정</span>}
               </td>
-              <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-700">{issue.reporter}</td>
+              <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-700">{users.find(u => u.userid === issue.reporter)?.username || issue.reporter}</td>
               <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{issue.affectsVersion || '-'}</td>
               <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{issue.fixVersion || '-'}</td>
               <td className="px-3 py-3 whitespace-nowrap text-sm font-medium">

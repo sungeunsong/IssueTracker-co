@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import type { Issue, ResolutionStatus as StatusEnum, IssueType as TypeEnum, Project } from '../types';
+import type { Issue, ResolutionStatus as StatusEnum, IssueType as TypeEnum, Project, User } from '../types';
 import { ResolutionStatus, statusDisplayNames, IssueType, issueTypeDisplayNames } from '../types';
 import { PlusIcon } from './icons/PlusIcon';
 import type { IssueFormData } from '../App';
@@ -14,6 +14,9 @@ interface IssueFormProps {
   isEditMode?: boolean;
   projects: Project[];
   selectedProjectId: string | null;
+  users: User[];
+  currentUserId: string | null;
+  currentUserName: string | null;
 }
 
 export const IssueForm: React.FC<IssueFormProps> = ({
@@ -25,9 +28,13 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   isEditMode = false,
   projects,
   selectedProjectId,
+  users,
+  currentUserId,
+  currentUserName,
 }) => {
   const [content, setContent] = useState('');
-  const [reporter, setReporter] = useState('');
+  const [reporterId, setReporterId] = useState('');
+  const [reporterName, setReporterName] = useState('');
   const [assignee, setAssignee] = useState('');
   const [comment, setComment] = useState('');
   const [status, setStatus] = useState<StatusEnum>(ResolutionStatus.OPEN);
@@ -44,7 +51,9 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   useEffect(() => {
     if (initialData) {
       setContent(initialData.content || '');
-      setReporter(initialData.reporter || '');
+      setReporterId(initialData.reporter || '');
+      const reporterUser = users.find(u => u.userid === initialData.reporter);
+      setReporterName(reporterUser ? reporterUser.username : '');
       setAssignee(initialData.assignee || '');
       setComment(initialData.comment || '');
       setStatus(initialData.status || ResolutionStatus.OPEN);
@@ -55,7 +64,8 @@ export const IssueForm: React.FC<IssueFormProps> = ({
     } else {
       // Reset form for adding new issue
       setContent('');
-      setReporter('');
+      setReporterId(currentUserId || '');
+      setReporterName(currentUserName || '');
       setAssignee('');
       setComment('');
       setStatus(ResolutionStatus.OPEN);
@@ -67,7 +77,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
      setContentError('');
      setReporterError('');
      setTypeError('');
-  }, [initialData, isEditMode]); // Rerun if isEditMode changes, e.g. modal reused
+  }, [initialData, isEditMode, users, currentUserId, currentUserName]); // Rerun if props change
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -78,7 +88,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
     } else {
       setContentError('');
     }
-    if (!reporter.trim()) {
+    if (!reporterId.trim()) {
       setReporterError('등록자 이름은 비워둘 수 없습니다.');
       isValid = false;
     } else {
@@ -95,7 +105,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
     if (isValid) {
       const formData: IssueFormData = {
         content: content.trim(),
-        reporter: reporter.trim(),
+        reporter: reporterId.trim(),
         assignee: assignee.trim() || undefined,
         comment: comment.trim() || undefined,
         type: type,
@@ -180,15 +190,10 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         <input
           type="text"
           id="issue-reporter"
-          value={reporter}
-          onChange={(e) => {
-            setReporter(e.target.value);
-            if (reporterError && e.target.value.trim()) setReporterError('');
-          }}
-          className={`mt-1 block w-full shadow-sm sm:text-sm rounded-md focus:ring-indigo-500 focus:border-indigo-500 ${reporterError ? 'border-red-500' : 'border-slate-300'}`}
-          placeholder="이름 또는 식별자"
-          required
-          disabled={isSubmitting}
+          value={reporterName}
+          readOnly
+          className="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-slate-300 bg-slate-100"
+          disabled
         />
         {reporterError && <p className="mt-1 text-xs text-red-600">{reporterError}</p>}
       </div>
@@ -198,15 +203,18 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           <label htmlFor="issue-assignee" className="block text-sm font-medium text-slate-700 mb-1">
             담당자
           </label>
-          <input
-            type="text"
+          <select
             id="issue-assignee"
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
-            className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="담당자 이름 (선택)"
+            className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
             disabled={isSubmitting}
-          />
+          >
+            <option value="">미지정</option>
+            {users.map(u => (
+              <option key={u.userid} value={u.userid}>{u.username}</option>
+            ))}
+          </select>
         </div>
         {isEditMode && (
           <div>

@@ -30,6 +30,11 @@ export interface Issue {
   projectId: string;
 }
 
+export interface User {
+  userid: string;
+  username: string;
+}
+
 export interface Project {
   id: string;
   name: string;

@@ -17,6 +17,7 @@ interface TopBarProps {
   onStatusFilterChange: (status: ResolutionStatus | 'ALL') => void;
   onCreateIssue: () => void;
   currentUser: string | null;
+  isAdmin: boolean;
   onRequestLogin: () => void;
   onRequestLogout: () => void;
   onRequestRegister: () => void;
@@ -32,6 +33,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onStatusFilterChange,
   onCreateIssue,
   currentUser,
+  isAdmin,
   onRequestLogin,
   onRequestLogout,
   onRequestRegister,
@@ -123,30 +125,32 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
 
           {currentUser ? (
-            <button
-              type="button"
-              onClick={onRequestLogout}
-              className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
-            >
-              로그아웃({currentUser})
-            </button>
-          ) : (
             <>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={onRequestRegister}
+                  className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
+                >
+                  사용자 등록
+                </button>
+              )}
               <button
                 type="button"
-                onClick={onRequestLogin}
+                onClick={onRequestLogout}
                 className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
               >
-                로그인
-              </button>
-              <button
-                type="button"
-                onClick={onRequestRegister}
-                className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
-              >
-                회원가입
+                로그아웃({currentUser})
               </button>
             </>
+          ) : (
+            <button
+              type="button"
+              onClick={onRequestLogin}
+              className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
+            >
+              로그인
+            </button>
           )}
 
           <button

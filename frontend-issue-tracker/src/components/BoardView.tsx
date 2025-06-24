@@ -1,15 +1,16 @@
 
 import React from 'react';
-import type { Issue, BoardColumn, ResolutionStatus } from '../types';
+import type { Issue, BoardColumn, ResolutionStatus, User } from '../types';
 import { IssueCard } from './IssueCard';
 
 interface BoardViewProps {
   columns: BoardColumn[];
   onSelectIssue: (issue: Issue) => void;
   onUpdateStatus: (issueId: string, newStatus: ResolutionStatus) => void; // For D&D or quick actions
+  users: User[];
 }
 
-export const BoardView: React.FC<BoardViewProps> = ({ columns, onSelectIssue, onUpdateStatus }) => {
+export const BoardView: React.FC<BoardViewProps> = ({ columns, onSelectIssue, onUpdateStatus, users }) => {
   if (!columns || columns.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 text-slate-500">
@@ -62,6 +63,7 @@ export const BoardView: React.FC<BoardViewProps> = ({ columns, onSelectIssue, on
                   issue={issue}
                   onClick={() => onSelectIssue(issue)}
                   onDragStart={(e) => handleDragStart(e, issue.id)}
+                  users={users}
                 />
               ))
             )}

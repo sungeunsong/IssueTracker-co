@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { Issue } from '../types';
+import type { Issue, User } from '../types';
 import { statusColors, statusDisplayNames, issueTypeColors, issueTypeDisplayNames } from '../types';
 import { UserAvatarPlaceholderIcon } from './icons/UserAvatarPlaceholderIcon';
 
@@ -9,9 +9,10 @@ interface IssueCardProps {
   issue: Issue;
   onClick: () => void;
   onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
+  users: User[];
 }
 
-export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStart }) => {
+export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStart, users }) => {
   const getPriorityStyles = () => {
     // Placeholder for priority.
     return 'border-l-4 border-transparent';
@@ -51,7 +52,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStar
         </span>
         <div className="flex items-center space-x-1">
           {issue.assignee && (
-            <div title={`Assigned to: ${issue.assignee}`} className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center">
+            <div title={`Assigned to: ${users.find(u => u.userid === issue.assignee)?.username || issue.assignee}`} className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center">
               <UserAvatarPlaceholderIcon className="w-3 h-3 text-slate-500" />
             </div>
           )}
