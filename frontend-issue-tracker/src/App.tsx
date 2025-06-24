@@ -74,7 +74,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [issues.length]);
+  }, [currentProjectId, issues.length]);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -85,6 +85,7 @@ const App: React.FC = () => {
       const data: Project[] = await res.json();
       setProjects(data);
       if (data.length > 0 && !currentProjectId) {
+        setIssues([]);
         setCurrentProjectId(data[0].id);
       }
     } catch (err) {
@@ -138,6 +139,7 @@ const App: React.FC = () => {
   const handleLogout = () => setCurrentUser(null);
 
   const handleSelectProject = (id: string) => {
+    setIssues([]);
     setCurrentProjectId(id);
   };
 
