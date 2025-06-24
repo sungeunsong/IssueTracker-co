@@ -1,10 +1,11 @@
 
 import React from 'react';
-import type { Issue } from '../types';
+import type { Issue, User } from '../types';
 import { statusDisplayNames, statusColors } from '../types';
 
 interface IssueDetailsViewProps {
   issue: Issue;
+  users?: User[];
 }
 
 interface DetailItemProps {
@@ -25,7 +26,7 @@ const DetailItem: React.FC<DetailItemProps> = ({ label, value, isCode, isPreLine
   </div>
 );
 
-export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue }) => {
+export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users }) => {
   const formattedDate = new Date(issue.createdAt).toLocaleString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -39,8 +40,8 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue }) => 
     <div className="space-y-6">
       <dl className="space-y-4">
         <DetailItem label="이슈 설명" value={issue.content} isPreLine={true} />
-        <DetailItem label="등록자" value={issue.reporter} />
-        <DetailItem label="담당자" value={issue.assignee || undefined} />
+        <DetailItem label="등록자" value={users?.find(u => u.userid === issue.reporter)?.username || issue.reporter} />
+        <DetailItem label="담당자" value={issue.assignee ? (users?.find(u => u.userid === issue.assignee)?.username || issue.assignee) : undefined} />
         <DetailItem label="코멘트" value={issue.comment || undefined} isPreLine={true} />
         <div>
           <dt className="text-sm font-medium text-slate-500">상태</dt>

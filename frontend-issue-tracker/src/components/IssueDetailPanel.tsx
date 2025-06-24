@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { Issue } from '../types';
+import type { Issue, User } from '../types';
 import { ResolutionStatus, statusDisplayNames, statusColors, IssueType, issueTypeDisplayNames, issueTypeColors } from '../types';
 import { PencilIcon } from './icons/PencilIcon';
 import { TrashIcon } from './icons/TrashIcon';
@@ -13,6 +13,7 @@ interface IssueDetailPanelProps {
   onEditIssue: (issue: Issue) => void;
   onDeleteIssue: (issueId: string) => void;
   onUpdateStatus: (issueId: string, newStatus: ResolutionStatus) => void;
+  users: User[];
 }
 
 const DetailItem: React.FC<{ label: string; value?: string | React.ReactNode; className?: string; isPreLine?: boolean }> = 
@@ -31,6 +32,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
   onEditIssue,
   onDeleteIssue,
   onUpdateStatus,
+  users,
 }) => {
   const formattedDate = new Date(issue.createdAt).toLocaleString('ko-KR', {
     year: 'numeric',
@@ -93,8 +95,8 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                 </span>
             }
           />
-          <DetailItem label="Reporter" value={issue.reporter} />
-          <DetailItem label="Assignee" value={issue.assignee} />
+          <DetailItem label="Reporter" value={users.find(u => u.userid === issue.reporter)?.username || issue.reporter} />
+          <DetailItem label="Assignee" value={issue.assignee ? (users.find(u => u.userid === issue.assignee)?.username || issue.assignee) : undefined} />
           <DetailItem label="Affects Version" value={issue.affectsVersion} />
           <DetailItem label="Fix Version" value={issue.fixVersion} />
           <DetailItem label="Created At" value={formattedDate} className="col-span-2"/>

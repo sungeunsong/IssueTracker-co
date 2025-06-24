@@ -16,6 +16,7 @@ import type {
   ResolutionStatus as StatusEnum,
   IssueType as TypeEnum,
   Project,
+  User,
 } from "./types";
 import {
   ResolutionStatus,
@@ -57,6 +58,8 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedIssueForDetail, setSelectedIssueForDetail] =
     useState<Issue | null>(null);
 
@@ -79,13 +82,15 @@ const App: React.FC = () => {
           const data = await res.json();
           setIsAuthenticated(true);
           setCurrentUser(data.username);
+          setCurrentUserId(data.userid);
+          fetchUsers();
         }
       } catch (err) {
         console.error("세션 확인 오류:", err);
       }
     };
     checkSession();
-  }, []);
+  }, [fetchUsers]);
 
   const fetchIssues = useCallback(async () => {
     console.log("currentProjectId", currentProjectId);
@@ -133,14 +138,27 @@ const App: React.FC = () => {
     }
   }, [currentProjectId]);
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await fetch("/api/users", { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`사용자 정보를 불러오는데 실패했습니다: ${res.statusText}`);
+      }
+      const data: User[] = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error("사용자 로딩 중 오류:", err);
+    }
+  }, []);
+
   const handleRegister = useCallback(
-    async (username: string, password: string) => {
+    async (userid: string, username: string, password: string) => {
       setIsSubmitting(true);
       try {
         const res = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ userid, username, password }),
         });
         if (!res.ok) {
           const errData = await res
@@ -149,6 +167,7 @@ const App: React.FC = () => {
           throw new Error(errData.message || res.statusText);
         }
         setShowRegisterModal(false);
+        fetchUsers();
       } catch (err) {
         console.error("회원가입 오류:", err);
         setError((err as Error).message);
@@ -156,18 +175,18 @@ const App: React.FC = () => {
         setIsSubmitting(false);
       }
     },
-    []
+    [fetchUsers]
   );
 
   const handleLogin = useCallback(
-    async (username: string, password: string) => {
+    async (userid: string, password: string) => {
       setIsSubmitting(true);
       try {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ userid, password }),
       });
         if (!res.ok) {
           const errData = await res
@@ -177,6 +196,8 @@ const App: React.FC = () => {
         }
         const data = await res.json();
         setCurrentUser(data.username);
+        setCurrentUserId(data.userid);
+        fetchUsers();
         setShowLoginModal(false);
         handleLoginSuccess();
       } catch (err) {
@@ -210,6 +231,8 @@ const App: React.FC = () => {
       setCurrentPage(1);
       setError(null);
       setCurrentUser(null);
+      setCurrentUserId(null);
+      setUsers([]);
     }
   }, []);
 
@@ -535,6 +558,7 @@ const App: React.FC = () => {
             setError(null);
           }}
           currentUser={currentUser}
+          isAdmin={currentUserId === 'apadmin'}
           onRequestLogin={() => {
             setShowLoginModal(true);
             setError(null);
@@ -599,6 +623,7 @@ const App: React.FC = () => {
                   columns={boardColumns}
                   onSelectIssue={handleSelectIssueForDetail}
                   onUpdateStatus={updateIssueStatus}
+                  users={users}
                 />
               )}
               {viewMode === "list" && (
@@ -613,6 +638,7 @@ const App: React.FC = () => {
                     totalIssues={baseFilteredIssues.length}
                     itemsPerPage={ITEMS_PER_PAGE_LIST}
                     onPageChange={handlePageChange}
+                    users={users}
                   />
                 </div>
               )}
@@ -628,6 +654,7 @@ const App: React.FC = () => {
           onEditIssue={() => handleOpenEditModal(selectedIssueForDetail)}
           onDeleteIssue={() => requestDeleteIssue(selectedIssueForDetail.id)}
           onUpdateStatus={updateIssueStatus}
+          users={users}
         />
       )}
 
@@ -649,6 +676,9 @@ const App: React.FC = () => {
           submitButtonText="이슈 추가"
           projects={projects}
           selectedProjectId={currentProjectId}
+          users={users}
+          currentUserId={currentUserId}
+          currentUserName={currentUser}
         />
       </Modal>
 
@@ -682,12 +712,15 @@ const App: React.FC = () => {
             }
             initialData={selectedIssueForEdit}
             onCancel={handleCloseEditModal}
-            isSubmitting={isSubmitting}
-            submitButtonText="변경사항 저장"
-            isEditMode={true}
-            projects={projects}
-            selectedProjectId={selectedIssueForEdit.projectId}
-          />
+          isSubmitting={isSubmitting}
+          submitButtonText="변경사항 저장"
+          isEditMode={true}
+          projects={projects}
+          selectedProjectId={selectedIssueForEdit.projectId}
+          users={users}
+          currentUserId={currentUserId}
+          currentUserName={currentUser}
+        />
         </Modal>
       )}
 
