@@ -155,8 +155,9 @@ export const IssueList: React.FC<IssueListProps> = ({
                   className="text-sm text-indigo-600 hover:text-indigo-800 font-medium text-left focus:outline-none hover:underline"
                   title="상세 보기"
                 >
-                  {issue.content}
+                  {issue.title}
                 </button>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{issue.content}</p>
                 <div className="text-xs text-slate-500 mt-0.5">
                   <Link to={`/issues/${issue.issueKey}`} className="hover:underline">
                     {issue.issueKey}
@@ -189,7 +190,7 @@ export const IssueList: React.FC<IssueListProps> = ({
                       value={issue.status}
                       onChange={(e) => handleStatusChange(issue.id, e)}
                       className="text-xs rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-1 pl-2 pr-7"
-                      aria-label={`${issue.content.substring(0,15)} 상태 변경`}
+                      aria-label={`${issue.title} 상태 변경`}
                     >
                       {(Object.keys(ResolutionStatus) as Array<keyof typeof ResolutionStatus>).map(statusKey => (
                         ResolutionStatus[statusKey] ?
@@ -202,7 +203,7 @@ export const IssueList: React.FC<IssueListProps> = ({
                    <button
                     onClick={() => onViewIssue(issue)}
                     className="text-slate-500 hover:text-indigo-600 transition-colors p-1 rounded hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    aria-label={`이슈 상세 보기: ${issue.content.substring(0,15)}`}
+                    aria-label={`이슈 상세 보기: ${issue.title}`}
                     title="상세 보기"
                   >
                     <EyeIcon className="w-4 h-4" />
@@ -210,7 +211,7 @@ export const IssueList: React.FC<IssueListProps> = ({
                   <button
                     onClick={() => onEditIssue(issue)}
                     className="text-slate-500 hover:text-indigo-600 transition-colors p-1 rounded hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    aria-label={`이슈 수정: ${issue.content.substring(0,15)}`}
+                    aria-label={`이슈 수정: ${issue.title}`}
                     title="수정"
                   >
                     <PencilIcon className="w-4 h-4" />
@@ -218,7 +219,7 @@ export const IssueList: React.FC<IssueListProps> = ({
                   <button
                     onClick={() => onDeleteIssue(issue.id)}
                     className="text-slate-500 hover:text-red-600 transition-colors p-1 rounded hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-red-500"
-                    aria-label={`이슈 삭제: ${issue.content.substring(0,15)}`}
+                    aria-label={`이슈 삭제: ${issue.title}`}
                     title="삭제"
                   >
                     <TrashIcon className="w-4 h-4" />

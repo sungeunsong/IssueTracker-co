@@ -45,7 +45,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
   return (
     <aside className="w-96 bg-white border-l border-slate-200 flex flex-col flex-shrink-0 h-full shadow-lg">
       <div className="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-        <h2 className="text-lg font-semibold text-slate-800 truncate" title={issue.content}>
+        <h2 className="text-lg font-semibold text-slate-800 truncate" title={issue.title}>
           Issue Details
         </h2>
         <button
@@ -59,7 +59,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
         <div className="mb-3">
-            <h3 className="text-base font-semibold text-slate-800 mb-1 break-words">{issue.content}</h3>
+            <h3 className="text-base font-semibold text-slate-800 mb-1 break-words">{issue.title}</h3>
             <p className="text-xs text-slate-500">
               <Link to={`/issues/${issue.issueKey}`} className="hover:underline">
                 {issue.issueKey}
@@ -103,6 +103,22 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
         </div>
         
         <DetailItem label="Description" value={issue.content} isPreLine={true} className="pt-2 border-t border-slate-100" />
+        {issue.attachments && issue.attachments.length > 0 && (
+          <div className="space-y-1">
+            <dt className="text-sm font-medium text-slate-500">Attachments</dt>
+            <dd className="mt-1 text-sm text-slate-900">
+              <ul className="list-disc list-inside space-y-1">
+                {issue.attachments.map((a, idx) => (
+                  <li key={idx}>
+                    <a href={`/uploads/${a.filename}`} className="text-indigo-600 hover:underline" download>
+                      {a.originalName}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
         <DetailItem label="Comments" value={issue.comment || "No comments yet."} isPreLine={true}/>
 
         <div className="mt-4 pt-4 border-t border-slate-100">

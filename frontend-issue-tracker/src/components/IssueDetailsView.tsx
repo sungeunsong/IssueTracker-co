@@ -38,6 +38,7 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
 
   return (
     <div className="space-y-6">
+      <h2 className="text-lg font-semibold">{issue.title}</h2>
       <dl className="space-y-4">
         <DetailItem label="이슈 설명" value={issue.content} isPreLine={true} />
         <DetailItem label="등록자" value={users?.find(u => u.userid === issue.reporter)?.username || issue.reporter} />
@@ -54,6 +55,22 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
           </dd>
         </div>
         <DetailItem label="생성일시" value={formattedDate} />
+        {issue.attachments && issue.attachments.length > 0 && (
+          <DetailItem
+            label="첨부 파일"
+            value={
+              <ul className="list-disc list-inside space-y-1">
+                {issue.attachments.map((a, idx) => (
+                  <li key={idx}>
+                    <a href={`/uploads/${a.filename}`} download className="text-indigo-600 hover:underline">
+                      {a.originalName}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            }
+          />
+        )}
         <DetailItem label="이슈 키" value={issue.issueKey} isCode />
         <DetailItem label="고유 ID" value={issue.id} isCode />
       </dl>
