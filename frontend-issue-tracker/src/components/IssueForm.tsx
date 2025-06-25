@@ -43,6 +43,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   currentUserName,
 }) => {
   const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
   const [reporterId, setReporterId] = useState("");
   const [reporterName, setReporterName] = useState("");
   const [assignee, setAssignee] = useState("");
@@ -52,13 +53,16 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [affectsVersion, setAffectsVersion] = useState("");
   const [fixVersion, setFixVersion] = useState("");
   const [projectId, setProjectId] = useState<string>("");
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   const [contentError, setContentError] = useState("");
+  const [titleError, setTitleError] = useState("");
   const [reporterError, setReporterError] = useState("");
   const [typeError, setTypeError] = useState("");
 
   useEffect(() => {
     if (initialData) {
+      setTitle(initialData.title || "");
       setContent(initialData.content || "");
       setReporterId(initialData.reporter || "");
       const reporterUser = users.find((u) => u.userid === initialData.reporter);
@@ -74,6 +78,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       );
     } else {
       // Reset form for adding new issue
+      setTitle("");
       setContent("");
       setReporterId(currentUserId || "");
       setReporterName(currentUserName || "");
@@ -86,6 +91,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setProjectId(selectedProjectId || projects[0]?.id || "");
     }
     setContentError("");
+    setTitleError("");
     setReporterError("");
     setTypeError("");
   }, [initialData, isEditMode, users, currentUserId, currentUserName]); // Rerun if props change
@@ -93,6 +99,12 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     let isValid = true;
+    if (!title.trim()) {
+      setTitleError("이슈 제목은 비워둘 수 없습니다.");
+      isValid = false;
+    } else {
+      setTitleError("");
+    }
     if (!content.trim()) {
       setContentError("이슈 내용은 비워둘 수 없습니다.");
       isValid = false;
@@ -115,6 +127,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
 
     if (isValid) {
       const formData: IssueFormData = {
+        title: title.trim(),
         content: content.trim(),
         reporter: reporterId.trim(),
         assignee: assignee.trim() || undefined,
@@ -122,6 +135,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         type: type,
         affectsVersion: affectsVersion.trim() || undefined,
         projectId,
+        attachments,
       };
       if (isEditMode) {
         formData.status = status;
@@ -154,6 +168,32 @@ export const IssueForm: React.FC<IssueFormProps> = ({
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label
+          htmlFor="issue-title"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
+          제목 <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="issue-title"
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            if (titleError && e.target.value.trim()) setTitleError("");
+          }}
+          className={`mt-1 block w-full shadow-sm sm:text-sm rounded-md focus:ring-indigo-500 focus:border-indigo-500 ${
+            titleError ? "border-red-500" : "border-slate-300"
+          }`}
+          required
+          disabled={isSubmitting}
+        />
+        {titleError && (
+          <p className="mt-1 text-xs text-red-600">{titleError}</p>
+        )}
       </div>
       <div>
         <label
@@ -338,6 +378,20 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           rows={2}
           className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           placeholder="추가 코멘트 (선택)"
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="issue-files" className="block text-sm font-medium text-slate-700 mb-1">
+          첨부 파일
+        </label>
+        <input
+          id="issue-files"
+          type="file"
+          multiple
+          onChange={(e) => setAttachments(Array.from(e.target.files || []))}
+          className="mt-1 block w-full text-sm text-slate-700"
           disabled={isSubmitting}
         />
       </div>

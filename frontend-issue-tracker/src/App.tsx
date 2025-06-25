@@ -31,6 +31,7 @@ import { LoginScreen } from "./components/LoginScreen";
 const ITEMS_PER_PAGE_LIST = 10;
 
 export type IssueFormData = {
+  title: string;
   content: string;
   reporter: string;
   assignee?: string;
@@ -40,6 +41,7 @@ export type IssueFormData = {
   affectsVersion?: string; // New
   fixVersion?: string; // New, only for edit
   projectId: string;
+  attachments?: File[];
 };
 
 export type ViewMode = "board" | "list";
@@ -288,6 +290,7 @@ const App: React.FC = () => {
       const lowerSearchTerm = searchTerm.toLowerCase();
       tempIssues = tempIssues.filter(
         (issue) =>
+          issue.title.toLowerCase().includes(lowerSearchTerm) ||
           issue.content.toLowerCase().includes(lowerSearchTerm) ||
           issue.reporter.toLowerCase().includes(lowerSearchTerm) ||
           (issue.assignee &&
@@ -313,15 +316,20 @@ const App: React.FC = () => {
       setError(null);
       setIsSubmitting(true);
       try {
-        // Ensure fixVersion is not sent for new issues
-        const { fixVersion, ...addData } = formData;
+        const { fixVersion, attachments, ...addData } = formData;
         if (!currentProjectId)
           throw new Error("프로젝트가 선택되지 않았습니다.");
         addData.projectId = currentProjectId;
+        const body = new FormData();
+        Object.entries(addData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            body.append(key, String(value));
+          }
+        });
+        (attachments || []).forEach((file) => body.append("files", file));
         const response = await fetch("/api/issues", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addData),
+          body,
         });
         if (!response.ok) {
           const errorData = await response
@@ -381,10 +389,15 @@ const App: React.FC = () => {
       setError(null);
       setIsSubmitting(true);
       try {
+        const { attachments, ...rest } = formData;
+        const body = new FormData();
+        Object.entries(rest).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) body.append(k, String(v));
+        });
+        (attachments || []).forEach((f) => body.append("files", f));
         const response = await fetch(`/api/issues/${issueId}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body,
         });
         if (!response.ok) {
           const errorData = await response
@@ -755,7 +768,7 @@ const App: React.FC = () => {
           message={`정말로 이슈 "${
             issues
               .find((i) => i.id === issueToDelete)
-              ?.content.substring(0, 30) ?? "선택된 이슈"
+              ?.title.substring(0, 30) ?? "선택된 이슈"
           }..."을(를) 삭제하시겠습니까?`}
           onConfirm={confirmDeleteIssue}
           onCancel={cancelDeleteIssue}

@@ -8,6 +8,8 @@ services:
       - mongo
     env_file:
       - .env
+    volumes:
+      - ./uploads:/app/uploads
 
   mongo:
     image: mongo:7

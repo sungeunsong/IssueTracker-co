@@ -4,6 +4,8 @@ import { fileURLToPath } from "url";
 import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 import session from "express-session";
+import multer from "multer";
+import fs from "fs";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -15,6 +17,19 @@ const port = process.env.PORT || 3000;
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const DB_NAME = process.env.DB_NAME || "issuetracker";
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, "uploads");
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+const storage = multer.diskStorage({
+  destination: UPLOAD_DIR,
+  filename: (req, file, cb) => {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
 
 const client = new MongoClient(MONGO_URI);
 await client.connect();
@@ -61,6 +76,7 @@ app.use(
     saveUninitialized: false,
   })
 );
+app.use("/uploads", express.static(UPLOAD_DIR));
 
 app.use("/api", (req, res, next) => {
   const openPaths = ["/login", "/register", "/current-user"];
@@ -202,8 +218,9 @@ app.get("/api/issues/key/:issueKey", async (req, res) => {
   res.json(mapIssue(issue));
 });
 
-app.post("/api/issues", async (req, res) => {
+app.post("/api/issues", upload.array("files"), async (req, res) => {
   const {
+    title,
     content,
     reporter,
     assignee,
@@ -212,10 +229,10 @@ app.post("/api/issues", async (req, res) => {
     affectsVersion,
     projectId,
   } = req.body;
-  if (!content || !reporter) {
+  if (!title || !content || !reporter) {
     return res
       .status(400)
-      .json({ message: "이슈 내용과 등록자는 필수입니다." });
+      .json({ message: "제목, 내용과 등록자는 필수입니다." });
   }
   if (!type || !VALID_ISSUE_TYPES.includes(type)) {
     return res.status(400).json({
@@ -243,6 +260,7 @@ app.post("/api/issues", async (req, res) => {
   )}`;
 
   const newIssue = {
+    title: title.trim(),
     content: content.trim(),
     reporter: reporter.trim(),
     assignee: assignee?.trim() || undefined,
@@ -254,14 +272,19 @@ app.post("/api/issues", async (req, res) => {
     issueKey,
     fixVersion: undefined,
     createdAt: new Date().toISOString(),
+    attachments: (req.files || []).map((f) => ({
+      filename: f.filename,
+      originalName: f.originalname,
+    })),
   };
   const result = await issuesCollection.insertOne(newIssue);
   res.status(201).json({ id: result.insertedId.toString(), ...newIssue });
 });
 
-app.put("/api/issues/:id", async (req, res) => {
+app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   const { id } = req.params;
   const {
+    title,
     content,
     reporter,
     assignee,
@@ -273,6 +296,7 @@ app.put("/api/issues/:id", async (req, res) => {
     projectId,
   } = req.body;
   let updateFields = {};
+  if (title !== undefined) updateFields.title = title.trim();
   if (content !== undefined) updateFields.content = content.trim();
   if (reporter !== undefined) updateFields.reporter = reporter.trim();
   if (assignee !== undefined)
@@ -307,10 +331,21 @@ app.put("/api/issues/:id", async (req, res) => {
     updateFields.fixVersion =
       fixVersion.trim() === "" ? undefined : fixVersion.trim();
   if (projectId !== undefined) updateFields.projectId = projectId;
+  const updateOperation = { $set: updateFields };
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    updateOperation.$push = {
+      attachments: {
+        $each: req.files.map((f) => ({
+          filename: f.filename,
+          originalName: f.originalname,
+        })),
+      },
+    };
+  }
 
   const result = await issuesCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
-    { $set: updateFields },
+    updateOperation,
     { returnDocument: "after" }
   );
   if (!result) {

@@ -18,6 +18,7 @@ export enum IssueType {
 export interface Issue {
   id: string;
   issueKey: string;
+  title: string;
   content: string;
   reporter: string;
   assignee?: string;
@@ -28,6 +29,12 @@ export interface Issue {
   affectsVersion?: string; // New
   fixVersion?: string; // New
   projectId: string;
+  attachments?: Attachment[];
+}
+
+export interface Attachment {
+  filename: string;
+  originalName: string;
 }
 
 export interface User {

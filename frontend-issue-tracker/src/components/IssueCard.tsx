@@ -27,11 +27,11 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStar
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
-      aria-label={`Issue: ${issue.content.substring(0, 50)}`}
+      aria-label={`Issue: ${issue.title}`}
     >
       <div className="flex justify-between items-start mb-1.5">
         <h3 className="text-sm font-medium text-slate-800 break-words flex-1 pr-2">
-          {issue.content}
+          {issue.title}
         </h3>
         <span
           className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${issueTypeColors[issue.type]} whitespace-nowrap`}
@@ -42,6 +42,9 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStar
         </span>
       </div>
       
+      <p className="text-xs text-slate-500 mb-1 break-words line-clamp-2">
+        {issue.content}
+      </p>
       <div className="flex items-center justify-between text-xs text-slate-500">
         <span
           className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${statusColors[issue.status]} bg-opacity-80`}
