@@ -102,9 +102,16 @@ const App: React.FC = () => {
           setCurrentUser(data.username);
           setCurrentUserId(data.userid);
           fetchUsers();
+        } else {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          setCurrentUser(null);
+          setCurrentUserId(null);
         }
       } catch (err) {
         console.error("세션 확인 오류:", err);
+        setIsAuthenticated(false);
+          setIsLoading(false);
       }
     };
     checkSession();
