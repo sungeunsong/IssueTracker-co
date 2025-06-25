@@ -111,14 +111,12 @@ const App: React.FC = () => {
   }, [fetchUsers]);
 
   const fetchIssues = useCallback(async () => {
-    console.log("currentProjectId", currentProjectId);
-    console.log("isLoading", isLoading);
     if (!currentProjectId) {
       setIsLoading(false);
       return;
     }
-    if (issues.length === 0) setIsLoading(true);
     setError(null);
+    setIsLoading(true);
     try {
       const response = await fetch(`/api/issues?projectId=${currentProjectId}`);
       if (!response.ok) {
@@ -134,7 +132,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentProjectId, issues.length]);
+  }, [currentProjectId]);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -145,16 +143,12 @@ const App: React.FC = () => {
         );
       }
       const data: Project[] = await res.json();
-      console.log(data);
       setProjects(data);
-      if (data.length > 0 && !currentProjectId) {
-        setIssues([]);
-        setCurrentProjectId(data[0].id);
-      }
     } catch (err) {
       console.error("프로젝트 로딩 중 오류:", err);
+      setProjects([]);
     }
-  }, [currentProjectId]);
+  }, []);
 
   const handleRegister = useCallback(
     async (userid: string, username: string, password: string) => {
@@ -183,41 +177,57 @@ const App: React.FC = () => {
     [fetchUsers]
   );
 
-  const handleLogin = useCallback(async (userid: string, password: string) => {
-    setIsSubmitting(true);
+  const handleLoginSuccess = useCallback(async () => {
+    setError(null); // 이전 오류 메시지 제거
     try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch("/api/current-user", {
         credentials: "include",
-        body: JSON.stringify({ userid, password }),
       });
-      if (!res.ok) {
-        const errData = await res
-          .json()
-          .catch(() => ({ message: "로그인 실패" }));
-        throw new Error(errData.message || res.statusText);
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentUser(data.username);
+        setCurrentUserId(data.userid);
+        await fetchUsers();
+        setIsAuthenticated(true); // 이 상태 변경이 프로젝트 및 이슈 로딩을 트리거합니다.
+      } else {
+        setIsAuthenticated(false);
+        throw new Error("로그인 후 사용자 정보를 가져오는데 실패했습니다.");
       }
-      const data = await res.json();
-      setCurrentUser(data.username);
-      setCurrentUserId(data.userid);
-      fetchUsers();
-      setShowLoginModal(false);
-      handleLoginSuccess();
     } catch (err) {
-      console.error("로그인 오류:", err);
+      console.error("로그인 성공 후 처리 오류:", err);
       setError((err as Error).message);
-    } finally {
-      setIsSubmitting(false);
+      setIsAuthenticated(false);
     }
-  }, []);
+  }, [fetchUsers]);
 
-  const handleLoginSuccess = useCallback(() => {
-    setIsAuthenticated(true);
-    setError(null); // Clear any previous global errors
-    // Fetch initial data after login
-    fetchIssues();
-  }, [fetchIssues]);
+  const handleLogin = useCallback(
+    async (userid: string, password: string) => {
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ userid, password }),
+        });
+        if (!res.ok) {
+          const errData = await res
+            .json()
+            .catch(() => ({ message: "로그인 실패" }));
+          throw new Error(errData.message || res.statusText);
+        }
+        setShowLoginModal(false);
+        await handleLoginSuccess();
+      } catch (err) {
+        console.error("로그인 오류:", err);
+        setError((err as Error).message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [handleLoginSuccess]
+  );
 
   const handleLogout = useCallback(async () => {
     try {
@@ -244,14 +254,23 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchIssues();
-  }, [fetchIssues, currentProjectId]);
-
-  useEffect(() => {
     if (isAuthenticated) {
       fetchProjects();
     }
   }, [isAuthenticated, fetchProjects]);
+
+  // 프로젝트 목록이 로드된 후, 현재 선택된 프로젝트가 없다면 첫 번째 프로젝트를 자동으로 선택합니다.
+  useEffect(() => {
+    if (projects.length > 0 && !currentProjectId) {
+      setCurrentProjectId(projects[0].id);
+    }
+  }, [projects, currentProjectId]);
+
+  useEffect(() => {
+    if (currentProjectId && isAuthenticated) {
+      fetchIssues();
+    }
+  }, [currentProjectId, fetchIssues, isAuthenticated]);
 
   const baseFilteredIssues = useMemo(() => {
     let tempIssues = issues;
