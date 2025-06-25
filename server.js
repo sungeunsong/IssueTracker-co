@@ -76,7 +76,7 @@ app.use(
     saveUninitialized: false,
   })
 );
-app.use("/uploads", express.static(UPLOAD_DIR));
+app.use("/uploads", express.static(UPLOAD_DIR, { fallthrough: false }));
 
 app.use("/api", (req, res, next) => {
   const openPaths = ["/login", "/register", "/current-user"];

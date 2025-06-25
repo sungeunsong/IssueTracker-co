@@ -62,7 +62,11 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
               <ul className="list-disc list-inside space-y-1">
                 {issue.attachments.map((a, idx) => (
                   <li key={idx}>
-                    <a href={`/uploads/${a.filename}`} download className="text-indigo-600 hover:underline">
+                    <a
+                      href={`/uploads/${a.filename}`}
+                      download={a.originalName}
+                      className="text-indigo-600 hover:underline"
+                    >
                       {a.originalName}
                     </a>
                   </li>

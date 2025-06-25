@@ -110,7 +110,11 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
               <ul className="list-disc list-inside space-y-1">
                 {issue.attachments.map((a, idx) => (
                   <li key={idx}>
-                    <a href={`/uploads/${a.filename}`} className="text-indigo-600 hover:underline" download>
+                    <a
+                      href={`/uploads/${a.filename}`}
+                      className="text-indigo-600 hover:underline"
+                      download={a.originalName}
+                    >
                       {a.originalName}
                     </a>
                   </li>
