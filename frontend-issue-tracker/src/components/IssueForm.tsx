@@ -13,6 +13,7 @@ import {
   issueTypeDisplayNames,
 } from "../types";
 import { PlusIcon } from "./icons/PlusIcon";
+import { RichTextEditor } from "./RichTextEditor";
 import type { IssueFormData } from "../App";
 
 interface IssueFormProps {
@@ -233,20 +234,12 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         >
           이슈 설명 <span className="text-red-500">*</span>
         </label>
-        <textarea
-          id="issue-content"
+        <RichTextEditor
           value={content}
-          onChange={(e) => {
-            setContent(e.target.value);
-            if (contentError && e.target.value.trim()) setContentError("");
+          onChange={(val) => {
+            setContent(val);
+            if (contentError && val.trim()) setContentError("");
           }}
-          rows={3}
-          className={`mt-1 block w-full shadow-sm sm:text-sm rounded-md focus:ring-indigo-500 focus:border-indigo-500 ${
-            contentError ? "border-red-500" : "border-slate-300"
-          }`}
-          placeholder="이슈에 대해 자세히 설명해주세요..."
-          required
-          disabled={isSubmitting}
         />
         {contentError && (
           <p className="mt-1 text-xs text-red-600">{contentError}</p>
