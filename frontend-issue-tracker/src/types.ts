@@ -40,6 +40,7 @@ export interface Attachment {
 export interface User {
   userid: string;
   username: string;
+  isAdmin?: boolean;
 }
 
 export interface Project {
