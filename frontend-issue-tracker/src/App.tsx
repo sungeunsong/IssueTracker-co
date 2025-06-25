@@ -61,6 +61,7 @@ const App: React.FC = () => {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedIssueForDetail, setSelectedIssueForDetail] =
     useState<Issue | null>(null);
@@ -103,17 +104,20 @@ const App: React.FC = () => {
           setIsAuthenticated(true);
           setCurrentUser(data.username);
           setCurrentUserId(data.userid);
+          setIsAdmin(!!data.isAdmin);
           fetchUsers();
         } else {
           setIsAuthenticated(false);
           setIsLoading(false);
           setCurrentUser(null);
           setCurrentUserId(null);
+          setIsAdmin(false);
         }
       } catch (err) {
         console.error("세션 확인 오류:", err);
         setIsAuthenticated(false);
-          setIsLoading(false);
+        setIsLoading(false);
+        setIsAdmin(false);
       }
     };
     checkSession();
@@ -196,16 +200,19 @@ const App: React.FC = () => {
         const data = await res.json();
         setCurrentUser(data.username);
         setCurrentUserId(data.userid);
+        setIsAdmin(!!data.isAdmin);
         await fetchUsers();
         setIsAuthenticated(true); // 이 상태 변경이 프로젝트 및 이슈 로딩을 트리거합니다.
       } else {
         setIsAuthenticated(false);
+        setIsAdmin(false);
         throw new Error("로그인 후 사용자 정보를 가져오는데 실패했습니다.");
       }
     } catch (err) {
       console.error("로그인 성공 후 처리 오류:", err);
       setError((err as Error).message);
       setIsAuthenticated(false);
+      setIsAdmin(false);
     }
   }, [fetchUsers]);
 
@@ -253,6 +260,7 @@ const App: React.FC = () => {
       setError(null);
       setCurrentUser(null);
       setCurrentUserId(null);
+      setIsAdmin(false);
       setUsers([]);
     }
   }, []);
@@ -601,7 +609,7 @@ const App: React.FC = () => {
             setError(null);
           }}
           currentUser={currentUser}
-          isAdmin={currentUserId === "apadmin"}
+          isAdmin={isAdmin}
           onRequestLogout={handleLogout}
           onRequestRegister={() => {
             setShowRegisterModal(true);

@@ -50,6 +50,7 @@ async function ensureAdminUser() {
       userid: ADMIN_USERID,
       username: ADMIN_USERNAME,
       passwordHash,
+      isAdmin: true,
     });
     console.log("Default admin user created");
   }
@@ -79,7 +80,7 @@ app.use(
 app.use("/uploads", express.static(UPLOAD_DIR, { fallthrough: false }));
 
 app.use("/api", (req, res, next) => {
-  const openPaths = ["/login", "/register", "/current-user"];
+  const openPaths = ["/login", "/current-user"];
   if (openPaths.includes(req.path)) {
     return next();
   }
@@ -129,6 +130,9 @@ app.post("/api/projects", async (req, res) => {
   });
 });
 app.post("/api/register", async (req, res) => {
+  if (!req.session.user || !req.session.user.isAdmin) {
+    return res.status(403).json({ message: "관리자만 사용자 등록이 가능합니다." });
+  }
   const { userid, username, password } = req.body;
   if (!userid || !username || !password) {
     return res
@@ -140,7 +144,7 @@ app.post("/api/register", async (req, res) => {
     return res.status(409).json({ message: "이미 존재하는 사용자입니다." });
   }
   const passwordHash = await bcrypt.hash(password, 10);
-  await usersCollection.insertOne({ userid, username, passwordHash });
+  await usersCollection.insertOne({ userid, username, passwordHash, isAdmin: false });
   res.status(201).json({ message: "등록 완료" });
 });
 
@@ -164,11 +168,13 @@ app.post("/api/login", async (req, res) => {
   req.session.user = {
     userid: user.userid,
     username: user.username,
+    isAdmin: user.isAdmin || false,
   };
   res.json({
     message: "로그인 성공",
     userid: user.userid,
     username: user.username,
+    isAdmin: user.isAdmin || false,
   });
 });
 
@@ -187,6 +193,7 @@ app.get("/api/current-user", (req, res) => {
     return res.json({
       userid: req.session.user.userid,
       username: req.session.user.username,
+      isAdmin: req.session.user.isAdmin || false,
     });
   }
   res.status(401).json({ message: "로그인이 필요합니다." });
@@ -194,7 +201,7 @@ app.get("/api/current-user", (req, res) => {
 
 app.get("/api/users", async (req, res) => {
   const users = await usersCollection
-    .find({}, { projection: { userid: 1, username: 1, _id: 0 } })
+    .find({}, { projection: { userid: 1, username: 1, isAdmin: 1, _id: 0 } })
     .toArray();
   res.json(users);
 });
