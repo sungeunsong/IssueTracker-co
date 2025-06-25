@@ -274,7 +274,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     createdAt: new Date().toISOString(),
     attachments: (req.files || []).map((f) => ({
       filename: f.filename,
-      originalName: f.originalname,
+      originalName: Buffer.from(f.originalname, "latin1").toString("utf8"),
     })),
   };
   const result = await issuesCollection.insertOne(newIssue);
