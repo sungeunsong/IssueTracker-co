@@ -2,6 +2,7 @@
 import React from 'react';
 import type { Issue, User } from '../types';
 import { statusDisplayNames, statusColors } from '../types';
+import { RichTextViewer } from './RichTextViewer';
 
 interface IssueDetailsViewProps {
   issue: Issue;
@@ -58,7 +59,10 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
     <div className="space-y-6">
       <h2 className="text-lg font-semibold">{issue.title}</h2>
       <dl className="space-y-4">
-        <DetailItem label="이슈 설명" value={issue.content} isPreLine={true} />
+        <DetailItem
+          label="이슈 설명"
+          value={<RichTextViewer value={issue.content} />}
+        />
         <DetailItem label="등록자" value={users?.find(u => u.userid === issue.reporter)?.username || issue.reporter} />
         <DetailItem label="담당자" value={issue.assignee ? (users?.find(u => u.userid === issue.assignee)?.username || issue.assignee) : undefined} />
         <DetailItem label="코멘트" value={issue.comment || undefined} isPreLine={true} />
