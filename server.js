@@ -58,6 +58,29 @@ async function ensureAdminUser() {
 
 await ensureAdminUser();
 
+async function migrateIssues() {
+  const cursor = issuesCollection.find({
+    $or: [{ updatedAt: { $exists: false } }, { resolvedAt: { $exists: false } }],
+  });
+  for await (const doc of cursor) {
+    const updates = {};
+    if (!doc.updatedAt) {
+      updates.updatedAt = doc.createdAt || new Date().toISOString();
+    }
+    if (
+      !doc.resolvedAt &&
+      ["RESOLVED", "CLOSED", "WONT_DO"].includes(doc.status)
+    ) {
+      updates.resolvedAt = updates.updatedAt || doc.updatedAt || doc.createdAt;
+    }
+    if (Object.keys(updates).length > 0) {
+      await issuesCollection.updateOne({ _id: doc._id }, { $set: updates });
+    }
+  }
+}
+
+await migrateIssues();
+
 const INITIAL_ISSUE_STATUS = "OPEN";
 const VALID_STATUSES = [
   "OPEN",
@@ -91,8 +114,14 @@ app.use("/api", (req, res, next) => {
 });
 
 function mapIssue(doc) {
-  const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest };
+  const { _id, createdAt, updatedAt, resolvedAt, ...rest } = doc;
+  return {
+    id: _id.toString(),
+    createdAt,
+    updatedAt: updatedAt || createdAt,
+    resolvedAt,
+    ...rest,
+  };
 }
 
 function mapProject(doc) {
@@ -279,6 +308,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     issueKey,
     fixVersion: undefined,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     attachments: (req.files || []).map((f) => ({
       filename: f.filename,
       originalName: Buffer.from(f.originalname, "latin1").toString("utf8"),
@@ -320,6 +350,9 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       });
     }
     updateFields.status = status;
+    if (["RESOLVED", "CLOSED", "WONT_DO"].includes(status)) {
+      updateFields.resolvedAt = new Date().toISOString();
+    }
   }
   if (type !== undefined) {
     if (!VALID_ISSUE_TYPES.includes(type)) {
@@ -338,6 +371,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     updateFields.fixVersion =
       fixVersion.trim() === "" ? undefined : fixVersion.trim();
   if (projectId !== undefined) updateFields.projectId = projectId;
+  updateFields.updatedAt = new Date().toISOString();
   const updateOperation = { $set: updateFields };
   if (req.files && Array.isArray(req.files) && req.files.length > 0) {
     updateOperation.$push = {

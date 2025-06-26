@@ -35,6 +35,24 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
     minute: '2-digit',
     second: '2-digit',
   });
+  const formattedUpdated = new Date(issue.updatedAt).toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const formattedResolved = issue.resolvedAt
+    ? new Date(issue.resolvedAt).toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : null;
 
   return (
     <div className="space-y-6">
@@ -55,6 +73,8 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
           </dd>
         </div>
         <DetailItem label="생성일시" value={formattedDate} />
+        <DetailItem label="수정일시" value={formattedUpdated} />
+        {formattedResolved && <DetailItem label="해결일시" value={formattedResolved} />}
         {issue.attachments && issue.attachments.length > 0 && (
           <DetailItem
             label="첨부 파일"
