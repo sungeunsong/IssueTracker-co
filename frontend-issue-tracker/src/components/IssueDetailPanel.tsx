@@ -57,6 +57,22 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
     hour: "2-digit",
     minute: "2-digit",
   });
+  const formattedUpdated = new Date(issue.updatedAt).toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const formattedResolved = issue.resolvedAt
+    ? new Date(issue.resolvedAt).toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
 
   return (
     <aside className="w-96 bg-white border-l border-slate-200 flex flex-col flex-shrink-0 h-full shadow-lg">
@@ -155,6 +171,18 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
             value={formattedDate}
             className="col-span-2"
           />
+          <DetailItem
+            label="수정일시"
+            value={formattedUpdated}
+            className="col-span-2"
+          />
+          {formattedResolved && (
+            <DetailItem
+              label="해결일시"
+              value={formattedResolved}
+              className="col-span-2"
+            />
+          )}
         </div>
 
         <DetailItem

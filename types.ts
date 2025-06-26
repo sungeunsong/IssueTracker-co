@@ -14,5 +14,7 @@ export interface Issue {
   status: ResolutionStatus;
   projectId: string;
   createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  resolvedAt?: string; // ISO date string when issue is resolved/closed
 }
     

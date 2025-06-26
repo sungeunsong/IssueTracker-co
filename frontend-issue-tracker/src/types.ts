@@ -25,6 +25,8 @@ export interface Issue {
   comment?: string;
   status: ResolutionStatus;
   createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  resolvedAt?: string; // ISO date string when issue is resolved/closed
   type: IssueType; // New
   affectsVersion?: string; // New
   fixVersion?: string; // New
