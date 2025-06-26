@@ -12,6 +12,7 @@ import {
 import { PencilIcon } from "./icons/PencilIcon";
 import { TrashIcon } from "./icons/TrashIcon";
 import { XIcon } from "./icons/XIcon";
+import { RichTextViewer } from "./RichTextViewer";
 
 interface IssueDetailPanelProps {
   issue: Issue;
@@ -187,8 +188,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
 
         <DetailItem
           label="설명"
-          value={issue.content}
-          isPreLine={true}
+          value={<RichTextViewer value={issue.content} />}
           className="pt-2 border-t border-slate-100"
         />
         {issue.attachments && issue.attachments.length > 0 && (
