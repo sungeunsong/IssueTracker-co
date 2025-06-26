@@ -21,12 +21,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         height: "300px",
         initialEditType: mode,
         previewStyle: "vertical",
+        initialValue: value || "",
       });
       editorRef.current.on("change", () => {
         const md = editorRef.current.getMarkdown();
         onChange(md);
       });
-      editorRef.current.setMarkdown(value || "");
     }
     return () => {
       if (editorRef.current) {
@@ -37,7 +37,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, []);
 
   useEffect(() => {
-    if (editorRef.current) {
+    if (editorRef.current && editorRef.current.getMarkdown() !== value) {
       editorRef.current.setMarkdown(value || "");
     }
   }, [value]);
