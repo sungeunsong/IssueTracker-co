@@ -16,5 +16,14 @@ export interface Issue {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   resolvedAt?: string; // ISO date string when issue is resolved/closed
+  history?: IssueHistoryEntry[];
+}
+
+export interface IssueHistoryEntry {
+  userId: string;
+  action: string;
+  timestamp: string;
+  changes?: string[];
+  comment?: string;
 }
     

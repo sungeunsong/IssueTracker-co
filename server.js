@@ -114,13 +114,14 @@ app.use("/api", (req, res, next) => {
 });
 
 function mapIssue(doc) {
-  const { _id, createdAt, updatedAt, resolvedAt, comments = [], ...rest } = doc;
+  const { _id, createdAt, updatedAt, resolvedAt, comments = [], history = [], ...rest } = doc;
   return {
     id: _id.toString(),
     createdAt,
     updatedAt: updatedAt || createdAt,
     resolvedAt,
     comments,
+    history,
     ...rest,
   };
 }
@@ -324,6 +325,13 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
             },
           ]
         : [],
+    history: [
+      {
+        userId: reporter.trim(),
+        action: "created",
+        timestamp: new Date().toISOString(),
+      },
+    ],
   };
   const result = await issuesCollection.insertOne(newIssue);
   res.status(201).json({ id: result.insertedId.toString(), ...newIssue });
@@ -383,15 +391,19 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       fixVersion.trim() === "" ? undefined : fixVersion.trim();
   if (projectId !== undefined) updateFields.projectId = projectId;
   updateFields.updatedAt = new Date().toISOString();
-  const updateOperation = { $set: updateFields };
+  const historyEntry = {
+    userId: req.session.user.userid,
+    action: "updated",
+    timestamp: new Date().toISOString(),
+    changes: Object.keys(updateFields),
+  };
+  const updateOperation = { $set: updateFields, $push: { history: historyEntry } };
   if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-    updateOperation.$push = {
-      attachments: {
-        $each: req.files.map((f) => ({
-          filename: f.filename,
-          originalName: f.originalname,
-        })),
-      },
+    updateOperation.$push.attachments = {
+      $each: req.files.map((f) => ({
+        filename: f.filename,
+        originalName: f.originalname,
+      })),
     };
   }
 
@@ -422,7 +434,18 @@ app.post("/api/issues/:id/comments", async (req, res) => {
   };
   const result = await issuesCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
-    { $push: { comments: comment }, $set: { updatedAt: new Date().toISOString() } },
+    {
+      $push: {
+        comments: comment,
+        history: {
+          userId: comment.userId,
+          action: "commented",
+          timestamp: comment.createdAt,
+          comment: comment.text,
+        },
+      },
+      $set: { updatedAt: new Date().toISOString() },
+    },
     { returnDocument: "after" }
   );
   if (!result) {

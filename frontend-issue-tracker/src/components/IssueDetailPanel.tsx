@@ -14,6 +14,8 @@ import { TrashIcon } from "./icons/TrashIcon";
 import { XIcon } from "./icons/XIcon";
 import { RichTextViewer } from "./RichTextViewer";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
+import { HistoryIcon } from "./icons/HistoryIcon";
+import { IssueHistoryModal } from "./IssueHistoryModal";
 
 interface IssueDetailPanelProps {
   issue: Issue;
@@ -56,6 +58,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
 }) => {
   const [newComment, setNewComment] = useState("");
   const [localIssue, setLocalIssue] = useState(issue);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     setLocalIssue(issue);
@@ -85,6 +88,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
     : null;
 
   return (
+    <>
     <aside className="w-96 bg-white border-l border-slate-200 flex flex-col flex-shrink-0 h-full shadow-lg">
       <div className="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
         <h2
@@ -93,13 +97,22 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
         >
           Issue Details
         </h2>
-        <button
-          onClick={onClose}
-          className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
-          aria-label="Close detail panel"
-        >
-          <XIcon className="w-5 h-5" />
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setShowHistory(true)}
+            className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
+            aria-label="Show history"
+          >
+            <HistoryIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
+            aria-label="Close detail panel"
+          >
+            <XIcon className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
@@ -307,5 +320,12 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
         </button>
       </div>
     </aside>
+    <IssueHistoryModal
+      isOpen={showHistory}
+      onClose={() => setShowHistory(false)}
+      history={localIssue.history || []}
+      users={users}
+    />
+    </>
   );
 };
