@@ -5,6 +5,7 @@ import type {
   IssueType as TypeEnum,
   Project,
   User,
+  Version,
 } from "../types";
 import {
   ResolutionStatus,
@@ -55,6 +56,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [fixVersion, setFixVersion] = useState("");
   const [projectId, setProjectId] = useState<string>("");
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [versions, setVersions] = useState<Version[]>([]);
 
   const [contentError, setContentError] = useState("");
   const [titleError, setTitleError] = useState("");
@@ -96,6 +98,17 @@ export const IssueForm: React.FC<IssueFormProps> = ({
     setReporterError("");
     setTypeError("");
   }, [initialData, isEditMode, users, currentUserId, currentUserName]); // Rerun if props change
+
+  useEffect(() => {
+    if (projectId) {
+      fetch(`/api/projects/${projectId}/versions`)
+        .then((res) => res.ok ? res.json() : [])
+        .then((data) => setVersions(data as Version[]))
+        .catch(() => setVersions([]));
+    } else {
+      setVersions([]);
+    }
+  }, [projectId]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -326,15 +339,20 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           >
             영향을 받는 버전
           </label>
-          <input
-            type="text"
+          <select
             id="issue-affectsVersion"
             value={affectsVersion}
             onChange={(e) => setAffectsVersion(e.target.value)}
-            className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="예: 1.0.0 (선택)"
+            className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
             disabled={isSubmitting}
-          />
+          >
+            <option value="">선택 없음</option>
+            {versions.map((v) => (
+              <option key={v.id} value={v.name}>
+                {v.name}
+              </option>
+            ))}
+          </select>
         </div>
         {isEditMode && (
           <div>
@@ -344,15 +362,20 @@ export const IssueForm: React.FC<IssueFormProps> = ({
             >
               수정 버전
             </label>
-            <input
-              type="text"
+            <select
               id="issue-fixVersion"
               value={fixVersion}
               onChange={(e) => setFixVersion(e.target.value)}
-              className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="예: 1.0.1 (선택)"
+              className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
               disabled={isSubmitting}
-            />
+            >
+              <option value="">선택 없음</option>
+              {versions.map((v) => (
+                <option key={v.id} value={v.name}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
           </div>
         )}
       </div>

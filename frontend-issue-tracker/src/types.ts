@@ -123,3 +123,15 @@ export const boardStatusToTitleMap: Record<ResolutionStatus, string> = {
   [ResolutionStatus.CLOSED]: statusDisplayNames[ResolutionStatus.CLOSED],
   [ResolutionStatus.WONT_DO]: statusDisplayNames[ResolutionStatus.WONT_DO],
 };
+
+export interface Version {
+  id: string;
+  projectId: string;
+  name: string;
+  startDate?: string;
+  releaseDate?: string;
+  leader: string;
+  description?: string;
+  released: boolean;
+}
+
