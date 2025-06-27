@@ -87,10 +87,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="w-64 bg-slate-800 text-white flex flex-col flex-shrink-0 h-full">
       <div className="p-4 border-b border-slate-700">
-        <div className="flex items-center space-x-3">
-          <div className="bg-indigo-500 p-2 rounded-md">
-            <ProjectIcon className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-indigo-500 p-2 rounded-md">
+              <ProjectIcon className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold">
+              {projects.find((p) => p.id === currentProjectId)?.name ||
+                "No Project"}
+            </h1>
           </div>
+
           <h1 className="text-xl font-semibold">
             {projects.find((p) => p.id === currentProjectId)?.name || "No Project"}
           </h1>
