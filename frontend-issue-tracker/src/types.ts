@@ -33,6 +33,7 @@ export interface Issue {
   fixVersion?: string; // New
   projectId: string;
   attachments?: Attachment[];
+  history?: IssueHistoryEntry[];
 }
 
 export interface Attachment {
@@ -44,6 +45,14 @@ export interface IssueComment {
   userId: string;
   text: string;
   createdAt: string;
+}
+
+export interface IssueHistoryEntry {
+  userId: string;
+  action: string;
+  timestamp: string;
+  changes?: string[];
+  comment?: string;
 }
 
 export interface User {
