@@ -272,10 +272,9 @@ const App: React.FC = () => {
     setCurrentProjectId(id);
   };
 
-  const handleOpenProjectSettings = () => {
-    if (!currentProjectId) return;
-    const project = projects.find((p) => p.id === currentProjectId);
-    navigate(`/projects/${currentProjectId}/settings`, {
+  const handleOpenProjectSettings = (pid: string) => {
+    const project = projects.find((p) => p.id === pid);
+    navigate(`/projects/${pid}/settings`, {
       state: { projectName: project?.name },
     });
   };
