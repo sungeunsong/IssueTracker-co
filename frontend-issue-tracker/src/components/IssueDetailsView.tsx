@@ -65,7 +65,43 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
         />
         <DetailItem label="등록자" value={users?.find(u => u.userid === issue.reporter)?.username || issue.reporter} />
         <DetailItem label="담당자" value={issue.assignee ? (users?.find(u => u.userid === issue.assignee)?.username || issue.assignee) : undefined} />
-        <DetailItem label="코멘트" value={issue.comment || undefined} isPreLine={true} />
+        {issue.comments && issue.comments.length > 0 && (
+          <div>
+            <dt className="text-sm font-medium text-slate-500">코멘트</dt>
+            <dd className="mt-1 space-y-3">
+              {issue.comments.map((c, idx) => {
+                const user = users?.find((u) => u.userid === c.userId);
+                const parts = c.text.split(/(@\w+)/g);
+                const formatted = new Date(c.createdAt).toLocaleString("ko-KR", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+                return (
+                  <div key={idx} className="text-sm">
+                    <p className="font-medium">
+                      {user ? user.username : c.userId}
+                      <span className="ml-2 text-xs text-slate-400">{formatted}</span>
+                    </p>
+                    <p className="whitespace-pre-wrap">
+                      {parts.map((p, i) =>
+                        p.startsWith("@") ? (
+                          <span key={i} className="text-indigo-600 font-semibold">
+                            {p}
+                          </span>
+                        ) : (
+                          <span key={i}>{p}</span>
+                        )
+                      )}
+                    </p>
+                  </div>
+                );
+              })}
+            </dd>
+          </div>
+        )}
         <div>
           <dt className="text-sm font-medium text-slate-500">상태</dt>
           <dd className="mt-1">
