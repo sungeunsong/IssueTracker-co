@@ -53,6 +53,8 @@ export interface IssueHistoryEntry {
   timestamp: string;
   changes?: string[];
   comment?: string;
+  fromStatus?: ResolutionStatus;
+  toStatus?: ResolutionStatus;
 }
 
 export interface User {

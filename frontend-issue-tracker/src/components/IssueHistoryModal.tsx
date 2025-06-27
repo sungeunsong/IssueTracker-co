@@ -1,5 +1,5 @@
 import React from 'react';
-import { IssueHistoryEntry, User } from '../types';
+import { IssueHistoryEntry, User, statusDisplayNames } from '../types';
 import { Modal } from './Modal';
 
 interface Props {
@@ -20,10 +20,12 @@ export const IssueHistoryModal: React.FC<Props> = ({ isOpen, onClose, history, u
       minute: '2-digit',
     });
     let actionText = entry.action;
-    if (entry.action === 'updated' && entry.changes && entry.changes.length > 0) {
+    if (entry.action === 'updated' && entry.fromStatus && entry.toStatus) {
+      actionText = `상태 변경: ${statusDisplayNames[entry.fromStatus]} → ${statusDisplayNames[entry.toStatus]}`;
+    } else if (entry.action === 'updated' && entry.changes && entry.changes.length > 0) {
       actionText = `updated ${entry.changes.join(', ')}`;
     } else if (entry.action === 'commented') {
-      actionText = 'added a comment';
+      actionText = `commented: ${entry.comment}`;
     }
     return (
       <li key={idx} className="text-sm">

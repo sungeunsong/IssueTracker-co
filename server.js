@@ -339,6 +339,10 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
 
 app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   const { id } = req.params;
+  const existing = await issuesCollection.findOne({ _id: new ObjectId(id) });
+  if (!existing) {
+    return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
+  }
   const {
     title,
     content,
@@ -352,6 +356,9 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     projectId,
   } = req.body;
   let updateFields = {};
+  let statusChanged = false;
+  let fromStatus;
+  let toStatus;
   if (title !== undefined) updateFields.title = title.trim();
   if (content !== undefined) updateFields.content = content.trim();
   if (reporter !== undefined) updateFields.reporter = reporter.trim();
@@ -369,6 +376,11 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       });
     }
     updateFields.status = status;
+    if (existing.status !== status) {
+      statusChanged = true;
+      fromStatus = existing.status;
+      toStatus = status;
+    }
     if (["RESOLVED", "CLOSED", "WONT_DO"].includes(status)) {
       updateFields.resolvedAt = new Date().toISOString();
     }
@@ -397,6 +409,10 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     timestamp: new Date().toISOString(),
     changes: Object.keys(updateFields),
   };
+  if (statusChanged) {
+    historyEntry.fromStatus = fromStatus;
+    historyEntry.toStatus = toStatus;
+  }
   const updateOperation = { $set: updateFields, $push: { history: historyEntry } };
   if (req.files && Array.isArray(req.files) && req.files.length > 0) {
     updateOperation.$push.attachments = {
