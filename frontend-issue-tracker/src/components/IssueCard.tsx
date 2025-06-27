@@ -1,9 +1,13 @@
-
-import React from 'react';
-import { Link } from 'react-router-dom';
-import type { Issue, User } from '../types';
-import { statusColors, statusDisplayNames, issueTypeColors, issueTypeDisplayNames } from '../types';
-import { UserAvatarPlaceholderIcon } from './icons/UserAvatarPlaceholderIcon';
+import React from "react";
+import { Link } from "react-router-dom";
+import type { Issue, User } from "../types";
+import {
+  statusColors,
+  statusDisplayNames,
+  issueTypeColors,
+  issueTypeDisplayNames,
+} from "../types";
+import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 
 interface IssueCardProps {
   issue: Issue;
@@ -12,10 +16,15 @@ interface IssueCardProps {
   users: User[];
 }
 
-export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStart, users }) => {
+export const IssueCard: React.FC<IssueCardProps> = ({
+  issue,
+  onClick,
+  onDragStart,
+  users,
+}) => {
   const getPriorityStyles = () => {
     // Placeholder for priority.
-    return 'border-l-4 border-transparent';
+    return "border-l-4 border-transparent";
   };
 
   return (
@@ -26,7 +35,9 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStar
       className={`bg-white rounded-md shadow-sm p-3 cursor-pointer hover:shadow-lg transition-shadow duration-150 ${getPriorityStyles()}`}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick();
+      }}
       aria-label={`Issue: ${issue.title}`}
     >
       <div className="flex justify-between items-start mb-1.5">
@@ -34,28 +45,38 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStar
           {issue.title}
         </h3>
         <span
-          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${issueTypeColors[issue.type]} whitespace-nowrap`}
-          style={{ fontSize: '0.65rem' }}
+          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${
+            issueTypeColors[issue.type]
+          } whitespace-nowrap`}
+          style={{ fontSize: "0.65rem" }}
           title={`Type: ${issueTypeDisplayNames[issue.type]}`}
         >
           {issueTypeDisplayNames[issue.type]}
         </span>
       </div>
-      
+
       <p className="text-xs text-slate-500 mb-1 break-words line-clamp-2">
         {issue.content}
       </p>
       <div className="flex items-center justify-between text-xs text-slate-500">
         <span
-          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${statusColors[issue.status]} bg-opacity-80`}
-          style={{ fontSize: '0.65rem' }}
+          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${
+            statusColors[issue.status]
+          } bg-opacity-80`}
+          style={{ fontSize: "0.65rem" }}
           title={`Status: ${statusDisplayNames[issue.status]}`}
         >
           {statusDisplayNames[issue.status]}
         </span>
         <div className="flex items-center space-x-1">
           {issue.assignee && (
-            <div title={`Assigned to: ${users.find(u => u.userid === issue.assignee)?.username || issue.assignee}`} className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center">
+            <div
+              title={`Assigned to: ${
+                users.find((u) => u.userid === issue.assignee)?.username ||
+                issue.assignee
+              }`}
+              className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center"
+            >
               <UserAvatarPlaceholderIcon className="w-3 h-3 text-slate-500" />
             </div>
           )}
@@ -68,14 +89,6 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStar
           </Link>
         </div>
       </div>
-      {issue.comments && issue.comments.length > 0 && (
-        <p
-          className="mt-2 text-xs text-slate-500 italic truncate"
-          title={issue.comments[0].text}
-        >
-          "{issue.comments[0].text}"
-        </p>
-      )}
     </div>
   );
 };
