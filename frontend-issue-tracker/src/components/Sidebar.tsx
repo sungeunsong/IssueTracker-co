@@ -6,6 +6,7 @@ import { BoardIcon } from "./icons/BoardIcon";
 import { ListIcon } from "./icons/ListIcon";
 import { FilterIcon } from "./icons/FilterIcon";
 import { PlusCircleIcon } from "./icons/PlusCircleIcon";
+import { SettingsIcon } from "./icons/SettingsIcon";
 
 interface SidebarProps {
   currentView: ViewMode;
@@ -14,6 +15,8 @@ interface SidebarProps {
   projects: Project[];
   currentProjectId: string | null;
   onSelectProject: (id: string) => void;
+  isAdmin: boolean;
+  onOpenProjectSettings: (id: string) => void;
 }
 
 interface NavItemProps {
@@ -78,6 +81,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   projects,
   currentProjectId,
   onSelectProject,
+  isAdmin,
+  onOpenProjectSettings,
 }) => {
   return (
     <aside className="w-64 bg-slate-800 text-white flex flex-col flex-shrink-0 h-full">
@@ -87,8 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <ProjectIcon className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-xl font-semibold">
-            {projects.find((p) => p.id === currentProjectId)?.name ||
-              "No Project"}
+            {projects.find((p) => p.id === currentProjectId)?.name || "No Project"}
           </h1>
         </div>
       </div>
@@ -102,13 +106,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="px-3 py-1 text-sm text-slate-400">No projects</div>
           )}
           {projects.map((p) => (
-            <NavItem
-              key={p.id}
-              icon={<ProjectIcon className="opacity-50" />}
-              label={p.name}
-              isActive={p.id === currentProjectId}
-              onClick={() => onSelectProject(p.id)}
-            />
+            <div key={p.id} className="flex items-center justify-between group">
+              <div className="flex-1">
+                <NavItem
+                  icon={<ProjectIcon className="opacity-50" />}
+                  label={p.name}
+                  isActive={p.id === currentProjectId}
+                  onClick={() => onSelectProject(p.id)}
+                />
+              </div>
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenProjectSettings(p.id);
+                  }}
+                  className="ml-2 text-slate-400 hover:text-white invisible group-hover:visible"
+                  title="프로젝트 설정"
+                >
+                  <SettingsIcon className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           ))}
         </div>
 
