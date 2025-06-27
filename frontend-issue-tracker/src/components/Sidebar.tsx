@@ -6,6 +6,7 @@ import { BoardIcon } from "./icons/BoardIcon";
 import { ListIcon } from "./icons/ListIcon";
 import { FilterIcon } from "./icons/FilterIcon";
 import { PlusCircleIcon } from "./icons/PlusCircleIcon";
+import { SettingsIcon } from "./icons/SettingsIcon";
 
 interface SidebarProps {
   currentView: ViewMode;
@@ -14,6 +15,8 @@ interface SidebarProps {
   projects: Project[];
   currentProjectId: string | null;
   onSelectProject: (id: string) => void;
+  isAdmin: boolean;
+  onOpenProjectSettings: () => void;
 }
 
 interface NavItemProps {
@@ -78,18 +81,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   projects,
   currentProjectId,
   onSelectProject,
+  isAdmin,
+  onOpenProjectSettings,
 }) => {
   return (
     <aside className="w-64 bg-slate-800 text-white flex flex-col flex-shrink-0 h-full">
       <div className="p-4 border-b border-slate-700">
-        <div className="flex items-center space-x-3">
-          <div className="bg-indigo-500 p-2 rounded-md">
-            <ProjectIcon className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-indigo-500 p-2 rounded-md">
+              <ProjectIcon className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold">
+              {projects.find((p) => p.id === currentProjectId)?.name ||
+                "No Project"}
+            </h1>
           </div>
-          <h1 className="text-xl font-semibold">
-            {projects.find((p) => p.id === currentProjectId)?.name ||
-              "No Project"}
-          </h1>
+          {isAdmin && currentProjectId && (
+            <button
+              onClick={onOpenProjectSettings}
+              className="text-slate-300 hover:text-white"
+              title="프로젝트 설정"
+            >
+              <SettingsIcon className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 

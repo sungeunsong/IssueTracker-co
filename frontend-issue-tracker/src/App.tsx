@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { IssueForm } from "./components/IssueForm";
 import { IssueList } from "./components/IssueList";
 import { ConfirmationModal } from "./components/ConfirmationModal";
@@ -47,6 +48,7 @@ export type IssueFormData = {
 export type ViewMode = "board" | "list";
 
 const App: React.FC = () => {
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Added
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -268,6 +270,14 @@ const App: React.FC = () => {
   const handleSelectProject = (id: string) => {
     setIssues([]);
     setCurrentProjectId(id);
+  };
+
+  const handleOpenProjectSettings = () => {
+    if (!currentProjectId) return;
+    const project = projects.find((p) => p.id === currentProjectId);
+    navigate(`/projects/${currentProjectId}/settings`, {
+      state: { projectName: project?.name },
+    });
   };
 
   useEffect(() => {
@@ -605,6 +615,8 @@ const App: React.FC = () => {
         projects={projects}
         currentProjectId={currentProjectId}
         onSelectProject={handleSelectProject}
+        isAdmin={isAdmin}
+        onOpenProjectSettings={handleOpenProjectSettings}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar
