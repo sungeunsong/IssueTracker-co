@@ -25,6 +25,7 @@ interface NavItemProps {
   isActive?: boolean;
   onClick?: () => void;
   href?: string; // For potential future actual navigation
+  actions?: React.ReactNode;
 }
 
 const NavItem: React.FC<NavItemProps> = ({
@@ -33,16 +34,18 @@ const NavItem: React.FC<NavItemProps> = ({
   isActive,
   onClick,
   href,
+  actions,
 }) => {
   const baseClasses =
-    "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium cursor-pointer transition-colors duration-150";
+    "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium cursor-pointer transition-colors duration-150 group";
   const activeClasses = "bg-slate-700 text-white";
   const inactiveClasses = "text-slate-300 hover:bg-slate-700 hover:text-white";
 
   const content = (
     <>
       <span className="w-5 h-5">{icon}</span>
-      <span>{label}</span>
+      <span className="flex-1">{label}</span>
+      {actions}
     </>
   );
 
@@ -106,28 +109,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="px-3 py-1 text-sm text-slate-400">No projects</div>
           )}
           {projects.map((p) => (
-            <div key={p.id} className="flex items-center justify-between group">
-              <div className="flex-1">
-                <NavItem
-                  icon={<ProjectIcon className="opacity-50" />}
-                  label={p.name}
-                  isActive={p.id === currentProjectId}
-                  onClick={() => onSelectProject(p.id)}
-                />
-              </div>
-              {isAdmin && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenProjectSettings(p.id);
-                  }}
-                  className="ml-2 text-slate-400 hover:text-white invisible group-hover:visible"
-                  title="프로젝트 설정"
-                >
-                  <SettingsIcon className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            <NavItem
+              key={p.id}
+              icon={<ProjectIcon className="opacity-50" />}
+              label={p.name}
+              isActive={p.id === currentProjectId}
+              onClick={() => onSelectProject(p.id)}
+              actions={
+                isAdmin && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenProjectSettings(p.id);
+                    }}
+                    className="ml-2 text-slate-400 hover:text-white invisible group-hover:visible"
+                    title="프로젝트 설정"
+                  >
+                    <SettingsIcon className="w-4 h-4" />
+                  </button>
+                )
+              }
+            />
           ))}
         </div>
 
