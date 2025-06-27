@@ -92,15 +92,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="bg-indigo-500 p-2 rounded-md">
               <ProjectIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-xl font-semibold">
-              {projects.find((p) => p.id === currentProjectId)?.name ||
-                "No Project"}
-            </h1>
+            <h1 className="text-xl font-semibold">이슈트래커</h1>
           </div>
-
-          <h1 className="text-xl font-semibold">
-            {projects.find((p) => p.id === currentProjectId)?.name || "No Project"}
-          </h1>
         </div>
       </div>
 
