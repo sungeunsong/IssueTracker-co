@@ -37,6 +37,7 @@ const db = client.db(DB_NAME);
 const issuesCollection = db.collection("issues");
 const projectsCollection = db.collection("projects");
 const usersCollection = db.collection("users");
+const versionsCollection = db.collection("versions");
 
 const ADMIN_USERID = "apadmin";
 const ADMIN_USERNAME = "관리자";
@@ -128,6 +129,11 @@ function mapIssue(doc) {
 
 function mapProject(doc) {
   const { _id, nextIssueNumber, ...rest } = doc;
+  return { id: _id.toString(), ...rest };
+}
+
+function mapVersion(doc) {
+  const { _id, ...rest } = doc;
   return { id: _id.toString(), ...rest };
 }
 
@@ -235,6 +241,67 @@ app.get("/api/users", async (req, res) => {
     .find({}, { projection: { userid: 1, username: 1, isAdmin: 1, _id: 0 } })
     .toArray();
   res.json(users);
+});
+
+app.get("/api/projects/:projectId/versions", async (req, res) => {
+  const { projectId } = req.params;
+  const versions = await versionsCollection
+    .find({ projectId })
+    .sort({ createdAt: -1 })
+    .toArray();
+  res.json(versions.map(mapVersion));
+});
+
+app.post("/api/projects/:projectId/versions", async (req, res) => {
+  const { projectId } = req.params;
+  const { name, startDate, releaseDate, leader, description } = req.body;
+  if (!name || !leader) {
+    return res.status(400).json({ message: "이름과 추진자는 필수입니다." });
+  }
+  const doc = {
+    projectId,
+    name: name.trim(),
+    startDate: startDate || undefined,
+    releaseDate: releaseDate || undefined,
+    leader,
+    description: description?.trim() || undefined,
+    released: false,
+    createdAt: new Date().toISOString(),
+  };
+  const result = await versionsCollection.insertOne(doc);
+  res.status(201).json({ id: result.insertedId.toString(), ...doc });
+});
+
+app.put("/api/versions/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, startDate, releaseDate, leader, description, released } =
+    req.body;
+  const update = { updatedAt: new Date().toISOString() };
+  if (name !== undefined) update.name = name.trim();
+  if (startDate !== undefined) update.startDate = startDate;
+  if (releaseDate !== undefined) update.releaseDate = releaseDate;
+  if (leader !== undefined) update.leader = leader;
+  if (description !== undefined)
+    update.description = description.trim() === "" ? undefined : description.trim();
+  if (released !== undefined) update.released = released;
+  const result = await versionsCollection.findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: update },
+    { returnDocument: "after" }
+  );
+  if (!result) {
+    return res.status(404).json({ message: "버전을 찾을 수 없습니다." });
+  }
+  res.json(mapVersion(result));
+});
+
+app.delete("/api/versions/:id", async (req, res) => {
+  const { id } = req.params;
+  const result = await versionsCollection.deleteOne({ _id: new ObjectId(id) });
+  if (result.deletedCount === 0) {
+    return res.status(404).json({ message: "삭제할 버전을 찾을 수 없습니다." });
+  }
+  res.status(204).send();
 });
 
 app.get("/api/issues", async (req, res) => {
