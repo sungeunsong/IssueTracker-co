@@ -114,12 +114,13 @@ app.use("/api", (req, res, next) => {
 });
 
 function mapIssue(doc) {
-  const { _id, createdAt, updatedAt, resolvedAt, ...rest } = doc;
+  const { _id, createdAt, updatedAt, resolvedAt, comments = [], ...rest } = doc;
   return {
     id: _id.toString(),
     createdAt,
     updatedAt: updatedAt || createdAt,
     resolvedAt,
+    comments,
     ...rest,
   };
 }
@@ -313,6 +314,16 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
       filename: f.filename,
       originalName: Buffer.from(f.originalname, "latin1").toString("utf8"),
     })),
+    comments:
+      comment && comment.trim()
+        ? [
+            {
+              userId: reporter.trim(),
+              text: comment.trim(),
+              createdAt: new Date().toISOString(),
+            },
+          ]
+        : [],
   };
   const result = await issuesCollection.insertOne(newIssue);
   res.status(201).json({ id: result.insertedId.toString(), ...newIssue });
@@ -387,6 +398,31 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   const result = await issuesCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
     updateOperation,
+    { returnDocument: "after" }
+  );
+  if (!result) {
+    return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
+  }
+  res.json(mapIssue(result));
+});
+
+app.post("/api/issues/:id/comments", async (req, res) => {
+  const { id } = req.params;
+  const { text } = req.body;
+  if (!text || !text.trim()) {
+    return res.status(400).json({ message: "댓글 내용은 비워둘 수 없습니다." });
+  }
+  if (!req.session.user) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  const comment = {
+    userId: req.session.user.userid,
+    text: text.trim(),
+    createdAt: new Date().toISOString(),
+  };
+  const result = await issuesCollection.findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $push: { comments: comment }, $set: { updatedAt: new Date().toISOString() } },
     { returnDocument: "after" }
   );
   if (!result) {

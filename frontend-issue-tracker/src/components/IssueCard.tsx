@@ -68,9 +68,12 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onClick, onDragStar
           </Link>
         </div>
       </div>
-       {issue.comment && (
-        <p className="mt-2 text-xs text-slate-500 italic truncate" title={issue.comment}>
-          "{issue.comment}"
+      {issue.comments && issue.comments.length > 0 && (
+        <p
+          className="mt-2 text-xs text-slate-500 italic truncate"
+          title={issue.comments[0].text}
+        >
+          "{issue.comments[0].text}"
         </p>
       )}
     </div>

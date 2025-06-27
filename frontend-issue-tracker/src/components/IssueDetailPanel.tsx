@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { Issue, User } from "../types";
 import {
@@ -13,6 +13,7 @@ import { PencilIcon } from "./icons/PencilIcon";
 import { TrashIcon } from "./icons/TrashIcon";
 import { XIcon } from "./icons/XIcon";
 import { RichTextViewer } from "./RichTextViewer";
+import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 
 interface IssueDetailPanelProps {
   issue: Issue;
@@ -21,6 +22,7 @@ interface IssueDetailPanelProps {
   onDeleteIssue: (issueId: string) => void;
   onUpdateStatus: (issueId: string, newStatus: ResolutionStatus) => void;
   users: User[];
+  onIssueUpdated: (issue: Issue) => void;
 }
 
 const DetailItem: React.FC<{
@@ -50,7 +52,14 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
   onDeleteIssue,
   onUpdateStatus,
   users,
+  onIssueUpdated,
 }) => {
+  const [newComment, setNewComment] = useState("");
+  const [localIssue, setLocalIssue] = useState(issue);
+
+  useEffect(() => {
+    setLocalIssue(issue);
+  }, [issue]);
   const formattedDate = new Date(issue.createdAt).toLocaleString("ko-KR", {
     year: "numeric",
     month: "long",
@@ -211,19 +220,73 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
             </dd>
           </div>
         )}
-        <DetailItem
-          label="코멘트"
-          value={issue.comment || "No comments yet."}
-          isPreLine={true}
-        />
+        {localIssue.comments && localIssue.comments.length > 0 && (
+          <div className="space-y-4">
+            {localIssue.comments.map((c, idx) => {
+              const user = users.find((u) => u.userid === c.userId);
+              const formatted = new Date(c.createdAt).toLocaleString("ko-KR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              const parts = c.text.split(/(@\w+)/g);
+              return (
+                <div key={idx} className="flex space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
+                    <UserAvatarPlaceholderIcon className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-slate-700">
+                        {user ? user.username : c.userId}
+                      </span>
+                      <span className="text-xs text-slate-400">{formatted}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-800 whitespace-pre-wrap">
+                      {parts.map((p, i) =>
+                        p.startsWith("@") ? (
+                          <span key={i} className="text-indigo-600 font-semibold">
+                            {p}
+                          </span>
+                        ) : (
+                          <span key={i}>{p}</span>
+                        )
+                      )}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="mt-4 pt-4 border-t border-slate-100">
           <textarea
             className="w-full text-sm p-2 border border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
             rows={2}
-            placeholder="Add a comment... (UI only)"
+            placeholder="Add a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
           />
-          <button className="mt-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
+          <button
+            onClick={async () => {
+              if (!newComment.trim()) return;
+              const res = await fetch(`/api/issues/${issue.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: newComment }),
+              });
+              if (res.ok) {
+                const data: Issue = await res.json();
+                setLocalIssue(data);
+                onIssueUpdated(data);
+                setNewComment("");
+              }
+            }}
+            className="mt-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+          >
             Add Comment
           </button>
         </div>

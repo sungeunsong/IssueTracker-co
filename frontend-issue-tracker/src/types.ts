@@ -23,6 +23,7 @@ export interface Issue {
   reporter: string;
   assignee?: string;
   comment?: string;
+  comments?: IssueComment[];
   status: ResolutionStatus;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
@@ -37,6 +38,12 @@ export interface Issue {
 export interface Attachment {
   filename: string;
   originalName: string;
+}
+
+export interface IssueComment {
+  userId: string;
+  text: string;
+  createdAt: string;
 }
 
 export interface User {

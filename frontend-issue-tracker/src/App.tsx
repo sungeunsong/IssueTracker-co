@@ -493,6 +493,16 @@ const App: React.FC = () => {
     [issues, selectedIssueForDetail]
   );
 
+  const handleIssueUpdated = useCallback(
+    (updated: Issue) => {
+      setIssues((prev) =>
+        prev.map((i) => (i.id === updated.id ? updated : i))
+      );
+      setSelectedIssueForDetail(updated);
+    },
+    []
+  );
+
   const requestDeleteIssue = useCallback((issueId: string) => {
     setIssueToDelete(issueId);
     setShowDeleteModal(true);
@@ -701,6 +711,7 @@ const App: React.FC = () => {
           onDeleteIssue={() => requestDeleteIssue(selectedIssueForDetail.id)}
           onUpdateStatus={updateIssueStatus}
           users={users}
+          onIssueUpdated={handleIssueUpdated}
         />
       )}
 
