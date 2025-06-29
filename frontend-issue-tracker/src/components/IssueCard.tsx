@@ -6,6 +6,7 @@ import {
   statusDisplayNames,
   issueTypeColors,
   issueTypeDisplayNames,
+  issuePriorityColors,
 } from "../types";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 
@@ -23,8 +24,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   users,
 }) => {
   const getPriorityStyles = () => {
-    // Placeholder for priority.
-    return "border-l-4 border-transparent";
+    return `border-l-4 ${issuePriorityColors[issue.priority]}`;
   };
 
   return (

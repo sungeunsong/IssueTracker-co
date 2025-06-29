@@ -15,6 +15,14 @@ export enum IssueType {
   IMPROVEMENT = "IMPROVEMENT",
 }
 
+export enum IssuePriority {
+  HIGHEST = "HIGHEST",
+  HIGH = "HIGH",
+  MEDIUM = "MEDIUM",
+  LOW = "LOW",
+  LOWEST = "LOWEST",
+}
+
 export interface Issue {
   id: string;
   issueKey: string;
@@ -29,6 +37,7 @@ export interface Issue {
   updatedAt: string; // ISO date string
   resolvedAt?: string; // ISO date string when issue is resolved/closed
   type: IssueType; // New
+  priority: IssuePriority;
   affectsVersion?: string; // New
   fixVersion?: string; // New
   projectId: string;
@@ -99,6 +108,22 @@ export const issueTypeColors: Record<IssueType, string> = {
   [IssueType.BUG]: 'bg-red-100 text-red-800 ring-red-600/20',
   [IssueType.NEW_FEATURE]: 'bg-lime-100 text-lime-800 ring-lime-600/20',
   [IssueType.IMPROVEMENT]: 'bg-amber-100 text-amber-800 ring-amber-600/20',
+};
+
+export const issuePriorityDisplayNames: Record<IssuePriority, string> = {
+  [IssuePriority.HIGHEST]: 'Highest',
+  [IssuePriority.HIGH]: 'High',
+  [IssuePriority.MEDIUM]: 'Medium',
+  [IssuePriority.LOW]: 'Low',
+  [IssuePriority.LOWEST]: 'Lowest',
+};
+
+export const issuePriorityColors: Record<IssuePriority, string> = {
+  [IssuePriority.HIGHEST]: 'border-red-500',
+  [IssuePriority.HIGH]: 'border-orange-500',
+  [IssuePriority.MEDIUM]: 'border-yellow-500',
+  [IssuePriority.LOW]: 'border-green-500',
+  [IssuePriority.LOWEST]: 'border-blue-500',
 };
 
 

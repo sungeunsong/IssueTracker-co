@@ -3,6 +3,7 @@ import type {
   Issue,
   ResolutionStatus as StatusEnum,
   IssueType as TypeEnum,
+  IssuePriority as PriorityEnum,
   Project,
   User,
   Version,
@@ -12,6 +13,8 @@ import {
   statusDisplayNames,
   IssueType,
   issueTypeDisplayNames,
+  IssuePriority,
+  issuePriorityDisplayNames,
 } from "../types";
 import { PlusIcon } from "./icons/PlusIcon";
 import { RichTextEditor } from "./RichTextEditor";
@@ -52,6 +55,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState<StatusEnum>(ResolutionStatus.OPEN);
   const [type, setType] = useState<TypeEnum>(IssueType.TASK); // Default to TASK
+  const [priority, setPriority] = useState<PriorityEnum>(PriorityEnum.MEDIUM);
   const [affectsVersion, setAffectsVersion] = useState("");
   const [fixVersion, setFixVersion] = useState("");
   const [projectId, setProjectId] = useState<string>("");
@@ -74,6 +78,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setComment(initialData.comment || "");
       setStatus(initialData.status || ResolutionStatus.OPEN);
       setType(initialData.type || IssueType.TASK);
+      setPriority(initialData.priority || PriorityEnum.MEDIUM);
       setAffectsVersion(initialData.affectsVersion || "");
       setFixVersion(initialData.fixVersion || "");
       setProjectId(
@@ -89,6 +94,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setComment("");
       setStatus(ResolutionStatus.OPEN);
       setType(IssueType.TASK); // Default for new issues
+      setPriority(PriorityEnum.MEDIUM);
       setAffectsVersion("");
       setFixVersion("");
       setProjectId(selectedProjectId || projects[0]?.id || "");
@@ -147,6 +153,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         assignee: assignee.trim() || undefined,
         comment: comment.trim() || undefined,
         type: type,
+        priority: priority,
         affectsVersion: affectsVersion.trim() || undefined,
         projectId,
         attachments,
@@ -238,6 +245,31 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           )}
         </select>
         {typeError && <p className="mt-1 text-xs text-red-600">{typeError}</p>}
+      </div>
+
+      <div>
+        <label
+          htmlFor="issue-priority"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
+          우선순위 <span className="text-red-500">*</span>
+        </label>
+        <select
+          id="issue-priority"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as PriorityEnum)}
+          className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
+          disabled={isSubmitting}
+          required
+        >
+          {(Object.keys(IssuePriority) as Array<keyof typeof IssuePriority>).map(
+            (pKey) => (
+              <option key={pKey} value={IssuePriority[pKey]}>
+                {issuePriorityDisplayNames[IssuePriority[pKey]]}
+              </option>
+            )
+          )}
+        </select>
       </div>
 
       <div>
