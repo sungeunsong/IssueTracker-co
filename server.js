@@ -74,6 +74,9 @@ async function migrateIssues() {
     ) {
       updates.resolvedAt = updates.updatedAt || doc.updatedAt || doc.createdAt;
     }
+    if (!doc.priority) {
+      updates.priority = DEFAULT_PRIORITY;
+    }
     if (Object.keys(updates).length > 0) {
       await issuesCollection.updateOne({ _id: doc._id }, { $set: updates });
     }
@@ -92,6 +95,14 @@ const VALID_STATUSES = [
   "WONT_DO",
 ];
 const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
+const VALID_PRIORITIES = [
+  "HIGHEST",
+  "HIGH",
+  "MEDIUM",
+  "LOW",
+  "LOWEST",
+];
+const DEFAULT_PRIORITY = "MEDIUM";
 
 app.use(express.json());
 app.use(
@@ -331,6 +342,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     assignee,
     comment,
     type,
+    priority,
     affectsVersion,
     projectId,
   } = req.body;
@@ -346,6 +358,8 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
       )}`,
     });
   }
+  const issuePriority =
+    priority && VALID_PRIORITIES.includes(priority) ? priority : DEFAULT_PRIORITY;
   if (!projectId) {
     return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
   }
@@ -372,6 +386,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     comment: comment?.trim() || undefined,
     status: INITIAL_ISSUE_STATUS,
     type,
+    priority: issuePriority,
     affectsVersion: affectsVersion?.trim() || undefined,
     projectId,
     issueKey,
@@ -418,6 +433,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     status,
     comment,
     type,
+    priority,
     affectsVersion,
     fixVersion,
     projectId,
@@ -461,6 +477,16 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       });
     }
     updateFields.type = type;
+  }
+  if (priority !== undefined) {
+    if (!VALID_PRIORITIES.includes(priority)) {
+      return res.status(400).json({
+        message: `유효한 우선순위를 제공해야 합니다. 유효한 값: ${VALID_PRIORITIES.join(
+          ", "
+        )}`,
+      });
+    }
+    updateFields.priority = priority;
   }
   if (affectsVersion !== undefined)
     updateFields.affectsVersion =

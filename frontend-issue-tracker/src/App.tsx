@@ -16,12 +16,14 @@ import type {
   Issue,
   ResolutionStatus as StatusEnum,
   IssueType as TypeEnum,
+  IssuePriority as PriorityEnum,
   Project,
   User,
 } from "./types";
 import {
   ResolutionStatus,
   IssueType,
+  IssuePriority,
   statusDisplayNames,
   boardStatuses,
   boardStatusToTitleMap,
@@ -39,6 +41,7 @@ export type IssueFormData = {
   comment?: string;
   status?: StatusEnum; // Only for edit
   type: TypeEnum; // New, mandatory
+  priority: PriorityEnum;
   affectsVersion?: string; // New
   fixVersion?: string; // New, only for edit
   projectId: string;

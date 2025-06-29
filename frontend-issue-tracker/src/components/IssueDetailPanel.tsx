@@ -8,6 +8,7 @@ import {
   IssueType,
   issueTypeDisplayNames,
   issueTypeColors,
+  issuePriorityDisplayNames,
 } from "../types";
 import { PencilIcon } from "./icons/PencilIcon";
 import { TrashIcon } from "./icons/TrashIcon";
@@ -170,6 +171,10 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                 {issueTypeDisplayNames[issue.type]}
               </span>
             }
+          />
+          <DetailItem
+            label="우선순위"
+            value={issuePriorityDisplayNames[issue.priority]}
           />
           <DetailItem
             label="등록자"
