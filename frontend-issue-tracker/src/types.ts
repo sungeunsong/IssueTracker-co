@@ -1,12 +1,13 @@
 
-export enum ResolutionStatus {
-  OPEN = "OPEN",
-  IN_PROGRESS = "IN_PROGRESS",
-  RESOLVED = "RESOLVED", // Represents "수정 완료"
-  VALIDATING = "VALIDATING", // New "검증" status
-  CLOSED = "CLOSED",
-  WONT_DO = "WONT_DO",
-}
+export type ResolutionStatus = string;
+export const DEFAULT_STATUSES: ResolutionStatus[] = [
+  "OPEN",
+  "IN_PROGRESS",
+  "RESOLVED",
+  "VALIDATING",
+  "CLOSED",
+  "WONT_DO",
+];
 
 export enum IssueType {
   TASK = "TASK",
@@ -15,13 +16,14 @@ export enum IssueType {
   IMPROVEMENT = "IMPROVEMENT",
 }
 
-export enum IssuePriority {
-  HIGHEST = "HIGHEST",
-  HIGH = "HIGH",
-  MEDIUM = "MEDIUM",
-  LOW = "LOW",
-  LOWEST = "LOWEST",
-}
+export type IssuePriority = string;
+export const DEFAULT_PRIORITIES: IssuePriority[] = [
+  "HIGHEST",
+  "HIGH",
+  "MEDIUM",
+  "LOW",
+  "LOWEST",
+];
 
 export interface Issue {
   id: string;
@@ -76,25 +78,28 @@ export interface Project {
   id: string;
   name: string;
   key: string;
+  statuses?: ResolutionStatus[];
+  priorities?: IssuePriority[];
 }
 
-export const statusColors: Record<ResolutionStatus, string> = {
-  [ResolutionStatus.OPEN]: 'bg-blue-100 text-blue-800 ring-blue-600/20',
-  [ResolutionStatus.IN_PROGRESS]: 'bg-yellow-100 text-yellow-800 ring-yellow-600/20',
-  [ResolutionStatus.RESOLVED]: 'bg-teal-100 text-teal-800 ring-teal-600/20',
-  [ResolutionStatus.VALIDATING]: 'bg-purple-100 text-purple-800 ring-purple-600/20',
-  [ResolutionStatus.CLOSED]: 'bg-slate-100 text-slate-800 ring-slate-600/20',
-  [ResolutionStatus.WONT_DO]: 'bg-gray-100 text-gray-800 ring-gray-600/20',
+export const statusColors: Record<string, string> = {
+  OPEN: 'bg-blue-100 text-blue-800 ring-blue-600/20',
+  IN_PROGRESS: 'bg-yellow-100 text-yellow-800 ring-yellow-600/20',
+  RESOLVED: 'bg-teal-100 text-teal-800 ring-teal-600/20',
+  VALIDATING: 'bg-purple-100 text-purple-800 ring-purple-600/20',
+  CLOSED: 'bg-slate-100 text-slate-800 ring-slate-600/20',
+  WONT_DO: 'bg-gray-100 text-gray-800 ring-gray-600/20',
 };
 
-export const statusDisplayNames: Record<ResolutionStatus, string> = {
-  [ResolutionStatus.OPEN]: "열림",
-  [ResolutionStatus.IN_PROGRESS]: "수정 중",
-  [ResolutionStatus.RESOLVED]: "수정 완료",
-  [ResolutionStatus.VALIDATING]: "검증",
-  [ResolutionStatus.CLOSED]: "닫힘",
-  [ResolutionStatus.WONT_DO]: "원치 않음",
+export const statusDisplayNames: Record<string, string> = {
+  OPEN: '열림',
+  IN_PROGRESS: '수정 중',
+  RESOLVED: '수정 완료',
+  VALIDATING: '검증',
+  CLOSED: '닫힘',
+  WONT_DO: '원치 않음',
 };
+export const getStatusDisplayName = (s: string) => statusDisplayNames[s] || s;
 
 export const issueTypeDisplayNames: Record<IssueType, string> = {
   [IssueType.TASK]: "작업",
@@ -110,21 +115,23 @@ export const issueTypeColors: Record<IssueType, string> = {
   [IssueType.IMPROVEMENT]: 'bg-amber-100 text-amber-800 ring-amber-600/20',
 };
 
-export const issuePriorityDisplayNames: Record<IssuePriority, string> = {
-  [IssuePriority.HIGHEST]: 'Highest',
-  [IssuePriority.HIGH]: 'High',
-  [IssuePriority.MEDIUM]: 'Medium',
-  [IssuePriority.LOW]: 'Low',
-  [IssuePriority.LOWEST]: 'Lowest',
+export const issuePriorityDisplayNames: Record<string, string> = {
+  HIGHEST: 'Highest',
+  HIGH: 'High',
+  MEDIUM: 'Medium',
+  LOW: 'Low',
+  LOWEST: 'Lowest',
 };
 
-export const issuePriorityColors: Record<IssuePriority, string> = {
-  [IssuePriority.HIGHEST]: 'border-red-500',
-  [IssuePriority.HIGH]: 'border-orange-500',
-  [IssuePriority.MEDIUM]: 'border-yellow-500',
-  [IssuePriority.LOW]: 'border-green-500',
-  [IssuePriority.LOWEST]: 'border-blue-500',
+export const issuePriorityColors: Record<string, string> = {
+  HIGHEST: 'border-red-500',
+  HIGH: 'border-orange-500',
+  MEDIUM: 'border-yellow-500',
+  LOW: 'border-green-500',
+  LOWEST: 'border-blue-500',
 };
+export const getPriorityDisplayName = (p: string) =>
+  issuePriorityDisplayNames[p] || p;
 
 
 export interface BoardColumn {
@@ -133,20 +140,20 @@ export interface BoardColumn {
   issues: Issue[];
 }
 
-export const boardStatuses: ResolutionStatus[] = [
-  ResolutionStatus.OPEN,
-  ResolutionStatus.IN_PROGRESS,
-  ResolutionStatus.RESOLVED,
-  ResolutionStatus.VALIDATING,
+export const DEFAULT_BOARD_STATUSES: ResolutionStatus[] = [
+  "OPEN",
+  "IN_PROGRESS",
+  "RESOLVED",
+  "VALIDATING",
 ];
 
-export const boardStatusToTitleMap: Record<ResolutionStatus, string> = {
-  [ResolutionStatus.OPEN]: statusDisplayNames[ResolutionStatus.OPEN],
-  [ResolutionStatus.IN_PROGRESS]: statusDisplayNames[ResolutionStatus.IN_PROGRESS],
-  [ResolutionStatus.RESOLVED]: statusDisplayNames[ResolutionStatus.RESOLVED],
-  [ResolutionStatus.VALIDATING]: statusDisplayNames[ResolutionStatus.VALIDATING],
-  [ResolutionStatus.CLOSED]: statusDisplayNames[ResolutionStatus.CLOSED],
-  [ResolutionStatus.WONT_DO]: statusDisplayNames[ResolutionStatus.WONT_DO],
+export const boardStatusToTitleMap: Record<string, string> = {
+  OPEN: statusDisplayNames["OPEN"],
+  IN_PROGRESS: statusDisplayNames["IN_PROGRESS"],
+  RESOLVED: statusDisplayNames["RESOLVED"],
+  VALIDATING: statusDisplayNames["VALIDATING"],
+  CLOSED: statusDisplayNames["CLOSED"],
+  WONT_DO: statusDisplayNames["WONT_DO"],
 };
 
 export interface Version {

@@ -27,7 +27,7 @@ export const IssueHistoryModal: React.FC<Props> = ({ isOpen, onClose, history, u
       actionLabel = "이슈 생성";
     } else if (entry.action === "updated" && entry.fromStatus && entry.toStatus) {
       actionLabel = "상태 변경됨";
-      detailText = `${statusDisplayNames[entry.fromStatus]} → ${statusDisplayNames[entry.toStatus]}`;
+      detailText = `${statusDisplayNames[entry.fromStatus] || entry.fromStatus} → ${statusDisplayNames[entry.toStatus] || entry.toStatus}`;
     } else if (entry.action === "updated") {
       actionLabel = "업데이트됨";
       if (entry.changes && entry.changes.length > 0) {
