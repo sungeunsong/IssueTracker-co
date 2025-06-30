@@ -45,12 +45,12 @@ const ADMIN_PASSWORD = "0000";
 
 const INITIAL_ISSUE_STATUS = "OPEN";
 const DEFAULT_STATUSES = [
-  "OPEN",
-  "IN_PROGRESS",
-  "RESOLVED",
-  "VALIDATING",
-  "CLOSED",
-  "WONT_DO",
+  { id: "OPEN", name: "열림" },
+  { id: "IN_PROGRESS", name: "수정 중" },
+  { id: "RESOLVED", name: "수정 완료" },
+  { id: "VALIDATING", name: "검증" },
+  { id: "CLOSED", name: "닫힘" },
+  { id: "WONT_DO", name: "원치 않음" },
 ];
 const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
 const DEFAULT_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
@@ -78,7 +78,17 @@ async function migrateProjects() {
   });
   for await (const proj of cursor) {
     const update = {};
-    if (!proj.statuses) update.statuses = DEFAULT_STATUSES;
+    if (!proj.statuses) {
+      update.statuses = DEFAULT_STATUSES;
+    } else if (
+      Array.isArray(proj.statuses) &&
+      typeof proj.statuses[0] === "string"
+    ) {
+      update.statuses = proj.statuses.map((s) => {
+        const found = DEFAULT_STATUSES.find((d) => d.id === s);
+        return found || { id: s, name: s };
+      });
+    }
     if (!proj.priorities) update.priorities = DEFAULT_PRIORITIES;
     if (Object.keys(update).length > 0) {
       await projectsCollection.updateOne({ _id: proj._id }, { $set: update });
@@ -442,7 +452,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     reporter: reporter.trim(),
     assignee: assignee?.trim() || undefined,
     comment: comment?.trim() || undefined,
-    status: projectResult.statuses?.[0] || INITIAL_ISSUE_STATUS,
+    status: projectResult.statuses?.[0]?.id || INITIAL_ISSUE_STATUS,
     type,
     priority: issuePriority,
     affectsVersion: affectsVersion?.trim() || undefined,
@@ -515,8 +525,10 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (comment !== undefined)
     updateFields.comment = comment.trim() === "" ? undefined : comment.trim();
   if (status !== undefined) {
-    if (!project.statuses || !project.statuses.includes(status)) {
-      return res.status(400).json({ message: "유효한 상태 값을 제공해야 합니다." });
+    if (!project.statuses || !project.statuses.some((s) => s.id === status)) {
+      return res
+        .status(400)
+        .json({ message: "유효한 상태 값을 제공해야 합니다." });
     }
     updateFields.status = status;
     if (existing.status !== status) {

@@ -22,8 +22,6 @@ import type {
 } from "./types";
 import {
   IssueType,
-  boardStatusToTitleMap,
-  DEFAULT_BOARD_STATUSES,
   DEFAULT_STATUSES,
   DEFAULT_PRIORITIES,
 } from "./types";
@@ -588,11 +586,11 @@ const App: React.FC = () => {
   );
 
   const boardColumns = useMemo(() => {
-    const statuses = currentProject?.statuses || DEFAULT_BOARD_STATUSES;
-    return statuses.map((status) => ({
-      id: status,
-      title: boardStatusToTitleMap[status] || status,
-      issues: baseFilteredIssues.filter((issue) => issue.status === status),
+    const statuses = currentProject?.statuses || DEFAULT_STATUSES;
+    return statuses.map((s) => ({
+      id: s.id,
+      title: s.name,
+      issues: baseFilteredIssues.filter((issue) => issue.status === s.id),
     }));
   }, [baseFilteredIssues, currentProject]);
 

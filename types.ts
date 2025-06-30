@@ -1,9 +1,9 @@
 
-export enum ResolutionStatus {
-  OPEN = "OPEN",
-  IN_PROGRESS = "IN_PROGRESS",
-  RESOLVED = "RESOLVED",
-  CLOSED = "CLOSED",
+export type ResolutionStatus = string;
+
+export interface StatusOption {
+  id: string;
+  name: string;
 }
 
 export interface Issue {

@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { DEFAULT_STATUSES, DEFAULT_PRIORITIES } from '../types';
+import { DEFAULT_STATUSES, DEFAULT_PRIORITIES, StatusOption } from '../types';
 
 interface Props {
   projectId: string;
 }
 
 const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
-  const [statuses, setStatuses] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<StatusOption[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
-  const [newStatus, setNewStatus] = useState('');
+  const [newStatus, setNewStatus] = useState<StatusOption>({ id: '', name: '' });
   const [newPriority, setNewPriority] = useState('');
 
   useEffect(() => {
@@ -42,11 +42,28 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
           {statuses.map((s, idx) => (
             <li key={idx} className="flex space-x-2">
               <input
-                value={s}
+                value={s.id}
                 onChange={(e) =>
-                  setStatuses(statuses.map((v, i) => (i === idx ? e.target.value : v)))
+                  setStatuses(
+                    statuses.map((v, i) =>
+                      i === idx ? { ...v, id: e.target.value } : v
+                    )
+                  )
+                }
+                className="border border-slate-300 rounded px-2 py-1 w-32"
+                placeholder="Key"
+              />
+              <input
+                value={s.name}
+                onChange={(e) =>
+                  setStatuses(
+                    statuses.map((v, i) =>
+                      i === idx ? { ...v, name: e.target.value } : v
+                    )
+                  )
                 }
                 className="border border-slate-300 rounded px-2 py-1 flex-1"
+                placeholder="Name"
               />
               <button
                 onClick={() => setStatuses(statuses.filter((_, i) => i !== idx))}
@@ -59,16 +76,24 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
         </ul>
         <div className="mt-2 flex space-x-2">
           <input
-            value={newStatus}
-            onChange={(e) => setNewStatus(e.target.value)}
+            value={newStatus.id}
+            onChange={(e) => setNewStatus({ ...newStatus, id: e.target.value })}
+            className="border border-slate-300 rounded px-2 py-1 w-32"
+            placeholder="Key"
+          />
+          <input
+            value={newStatus.name}
+            onChange={(e) =>
+              setNewStatus({ ...newStatus, name: e.target.value })
+            }
             className="border border-slate-300 rounded px-2 py-1 flex-1"
-            placeholder="새 상태"
+            placeholder="Name"
           />
           <button
             onClick={() => {
-              if (newStatus.trim()) {
-                setStatuses([...statuses, newStatus.trim()]);
-                setNewStatus('');
+              if (newStatus.id.trim() && newStatus.name.trim()) {
+                setStatuses([...statuses, { ...newStatus }]);
+                setNewStatus({ id: '', name: '' });
               }
             }}
             className="px-3 py-1 bg-slate-200 rounded"

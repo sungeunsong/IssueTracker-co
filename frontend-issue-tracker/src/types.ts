@@ -1,12 +1,18 @@
 
 export type ResolutionStatus = string;
-export const DEFAULT_STATUSES: ResolutionStatus[] = [
-  "OPEN",
-  "IN_PROGRESS",
-  "RESOLVED",
-  "VALIDATING",
-  "CLOSED",
-  "WONT_DO",
+
+export interface StatusOption {
+  id: string;
+  name: string;
+}
+
+export const DEFAULT_STATUSES: StatusOption[] = [
+  { id: "OPEN", name: "열림" },
+  { id: "IN_PROGRESS", name: "수정 중" },
+  { id: "RESOLVED", name: "수정 완료" },
+  { id: "VALIDATING", name: "검증" },
+  { id: "CLOSED", name: "닫힘" },
+  { id: "WONT_DO", name: "원치 않음" },
 ];
 
 export enum IssueType {
@@ -78,7 +84,7 @@ export interface Project {
   id: string;
   name: string;
   key: string;
-  statuses?: ResolutionStatus[];
+  statuses?: StatusOption[];
   priorities?: IssuePriority[];
 }
 
@@ -90,16 +96,6 @@ export const statusColors: Record<string, string> = {
   CLOSED: 'bg-slate-100 text-slate-800 ring-slate-600/20',
   WONT_DO: 'bg-gray-100 text-gray-800 ring-gray-600/20',
 };
-
-export const statusDisplayNames: Record<string, string> = {
-  OPEN: '열림',
-  IN_PROGRESS: '수정 중',
-  RESOLVED: '수정 완료',
-  VALIDATING: '검증',
-  CLOSED: '닫힘',
-  WONT_DO: '원치 않음',
-};
-export const getStatusDisplayName = (s: string) => statusDisplayNames[s] || s;
 
 export const issueTypeDisplayNames: Record<IssueType, string> = {
   [IssueType.TASK]: "작업",
@@ -139,22 +135,6 @@ export interface BoardColumn {
   title: string;
   issues: Issue[];
 }
-
-export const DEFAULT_BOARD_STATUSES: ResolutionStatus[] = [
-  "OPEN",
-  "IN_PROGRESS",
-  "RESOLVED",
-  "VALIDATING",
-];
-
-export const boardStatusToTitleMap: Record<string, string> = {
-  OPEN: statusDisplayNames["OPEN"],
-  IN_PROGRESS: statusDisplayNames["IN_PROGRESS"],
-  RESOLVED: statusDisplayNames["RESOLVED"],
-  VALIDATING: statusDisplayNames["VALIDATING"],
-  CLOSED: statusDisplayNames["CLOSED"],
-  WONT_DO: statusDisplayNames["WONT_DO"],
-};
 
 export interface Version {
   id: string;

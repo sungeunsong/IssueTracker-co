@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import type { Issue, User } from "../types";
 import type {
   ResolutionStatus,
+  StatusOption,
 } from "../types";
 import {
-  statusDisplayNames,
   statusColors,
   IssueType,
   issueTypeDisplayNames,
@@ -28,7 +28,7 @@ interface IssueDetailPanelProps {
   onUpdateStatus: (issueId: string, newStatus: ResolutionStatus) => void;
   users: User[];
   onIssueUpdated: (issue: Issue) => void;
-  statuses: ResolutionStatus[];
+  statuses: StatusOption[];
 }
 
 const DetailItem: React.FC<{
@@ -147,8 +147,12 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                 aria-label="Update issue status"
               >
                 {statuses.map((s) => (
-                  <option key={s} value={s} className="bg-white text-slate-800">
-                    {statusDisplayNames[s] || s}
+                  <option
+                    key={s.id}
+                    value={s.id}
+                    className="bg-white text-slate-800"
+                  >
+                    {s.name}
                   </option>
                 ))}
               </select>
