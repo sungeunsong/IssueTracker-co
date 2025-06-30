@@ -7,7 +7,6 @@ import type {
   Project,
   User,
   Version,
-  StatusOption,
 } from "../types";
 import {
   IssueType,
@@ -30,7 +29,7 @@ interface IssueFormProps {
   users: User[];
   currentUserId: string | null;
   currentUserName: string | null;
-  statuses: StatusOption[];
+  statuses: string[];
   priorities: PriorityEnum[];
 }
 
@@ -54,7 +53,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [assignee, setAssignee] = useState("");
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState<StatusEnum>(
-    statuses[0] ? statuses[0].id : ""
+    statuses[0] ? statuses[0] : ""
   );
   const [type, setType] = useState<TypeEnum>(IssueType.TASK); // Default to TASK
   const [priority, setPriority] = useState<PriorityEnum>(priorities[0]);
@@ -78,7 +77,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(reporterUser ? reporterUser.username : "");
       setAssignee(initialData.assignee || "");
       setComment(initialData.comment || "");
-      setStatus(initialData.status || (statuses[0]?.id || ""));
+      setStatus(initialData.status || (statuses[0] || ""));
       setType(initialData.type || IssueType.TASK);
       setPriority(initialData.priority || priorities[0]);
       setAffectsVersion(initialData.affectsVersion || "");
@@ -94,7 +93,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(currentUserName || "");
       setAssignee("");
       setComment("");
-      setStatus(statuses[0]?.id || "");
+      setStatus(statuses[0] || "");
       setType(IssueType.TASK); // Default for new issues
       setPriority(priorities[0]);
       setAffectsVersion("");
@@ -350,8 +349,8 @@ export const IssueForm: React.FC<IssueFormProps> = ({
               disabled={isSubmitting}
             >
               {statuses.map((st) => (
-                <option key={st.id} value={st.id}>
-                  {st.name}
+                <option key={st} value={st}>
+                  {st}
                 </option>
               ))}
             </select>

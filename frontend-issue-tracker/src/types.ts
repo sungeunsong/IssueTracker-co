@@ -1,19 +1,6 @@
 
 export type ResolutionStatus = string;
 
-export interface StatusOption {
-  id: string;
-  name: string;
-}
-
-export const DEFAULT_STATUSES: StatusOption[] = [
-  { id: "OPEN", name: "열림" },
-  { id: "IN_PROGRESS", name: "수정 중" },
-  { id: "RESOLVED", name: "수정 완료" },
-  { id: "VALIDATING", name: "검증" },
-  { id: "CLOSED", name: "닫힘" },
-  { id: "WONT_DO", name: "원치 않음" },
-];
 
 export enum IssueType {
   TASK = "TASK",
@@ -84,17 +71,17 @@ export interface Project {
   id: string;
   name: string;
   key: string;
-  statuses?: StatusOption[];
+  statuses?: string[];
   priorities?: IssuePriority[];
 }
 
 export const statusColors: Record<string, string> = {
-  OPEN: 'bg-blue-100 text-blue-800 ring-blue-600/20',
-  IN_PROGRESS: 'bg-yellow-100 text-yellow-800 ring-yellow-600/20',
-  RESOLVED: 'bg-teal-100 text-teal-800 ring-teal-600/20',
-  VALIDATING: 'bg-purple-100 text-purple-800 ring-purple-600/20',
-  CLOSED: 'bg-slate-100 text-slate-800 ring-slate-600/20',
-  WONT_DO: 'bg-gray-100 text-gray-800 ring-gray-600/20',
+  '열림': 'bg-blue-100 text-blue-800 ring-blue-600/20',
+  '수정 중': 'bg-yellow-100 text-yellow-800 ring-yellow-600/20',
+  '수정 완료': 'bg-teal-100 text-teal-800 ring-teal-600/20',
+  '검증': 'bg-purple-100 text-purple-800 ring-purple-600/20',
+  '닫힘': 'bg-slate-100 text-slate-800 ring-slate-600/20',
+  '원치 않음': 'bg-gray-100 text-gray-800 ring-gray-600/20',
 };
 
 export const issueTypeDisplayNames: Record<IssueType, string> = {

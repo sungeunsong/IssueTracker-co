@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { Issue, User } from "../types";
-import type {
-  ResolutionStatus,
-  StatusOption,
-} from "../types";
+import type { ResolutionStatus } from "../types";
 import {
   statusColors,
   IssueType,
@@ -28,7 +25,7 @@ interface IssueDetailPanelProps {
   onUpdateStatus: (issueId: string, newStatus: ResolutionStatus) => void;
   users: User[];
   onIssueUpdated: (issue: Issue) => void;
-  statuses: StatusOption[];
+  statuses: string[];
 }
 
 const DetailItem: React.FC<{
@@ -148,11 +145,11 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
               >
                 {statuses.map((s) => (
                   <option
-                    key={s.id}
-                    value={s.id}
+                    key={s}
+                    value={s}
                     className="bg-white text-slate-800"
                   >
-                    {s.name}
+                    {s}
                   </option>
                 ))}
               </select>
