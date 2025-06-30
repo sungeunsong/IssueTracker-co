@@ -526,8 +526,18 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (assignee !== undefined)
     updateFields.assignee =
       assignee.trim() === "" ? undefined : assignee.trim();
-  if (comment !== undefined)
-    updateFields.comment = comment.trim() === "" ? undefined : comment.trim();
+  let commentEntry;
+  if (comment !== undefined) {
+    const trimmed = comment.trim();
+    updateFields.comment = trimmed === "" ? undefined : trimmed;
+    if (trimmed) {
+      commentEntry = {
+        userId: req.session.user.userid,
+        text: trimmed,
+        createdAt: new Date().toISOString(),
+      };
+    }
+  }
   if (resolution !== undefined)
     updateFields.resolution =
       resolution.trim() === "" ? undefined : resolution.trim();
@@ -585,6 +595,9 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     $set: updateFields,
     $push: { history: historyEntry },
   };
+  if (commentEntry) {
+    updateOperation.$push.comments = commentEntry;
+  }
   if (req.files && Array.isArray(req.files) && req.files.length > 0) {
     updateOperation.$push.attachments = {
       $each: req.files.map((f) => ({
