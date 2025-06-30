@@ -17,6 +17,11 @@ export const DEFAULT_PRIORITIES: IssuePriority[] = [
   "LOW",
   "LOWEST",
 ];
+export const DEFAULT_RESOLUTIONS: string[] = [
+  "완료",
+  "원하지 않음",
+  "재현 불가",
+];
 
 export interface Issue {
   id: string;
@@ -31,6 +36,7 @@ export interface Issue {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   resolvedAt?: string; // ISO date string when issue is resolved/closed
+  resolution?: string;
   type: IssueType; // New
   priority: IssuePriority;
   affectsVersion?: string; // New
@@ -73,6 +79,7 @@ export interface Project {
   key: string;
   statuses?: string[];
   priorities?: IssuePriority[];
+  resolutions?: string[];
 }
 
 export const statusColors: Record<string, string> = {

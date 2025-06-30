@@ -55,6 +55,7 @@ const DEFAULT_STATUSES = [
 const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
 const DEFAULT_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
 const DEFAULT_PRIORITY = "MEDIUM";
+const DEFAULT_RESOLUTIONS = ["완료", "원하지 않음", "재현 불가"];
 
 async function ensureAdminUser() {
   const existing = await usersCollection.findOne({ userid: ADMIN_USERID });
@@ -87,6 +88,7 @@ async function migrateProjects() {
       update.statuses = proj.statuses.map((s) => s.name || s.id);
     }
     if (!proj.priorities) update.priorities = DEFAULT_PRIORITIES;
+    if (!proj.resolutions) update.resolutions = DEFAULT_RESOLUTIONS;
     if (Object.keys(update).length > 0) {
       await projectsCollection.updateOne({ _id: proj._id }, { $set: update });
     }
@@ -200,6 +202,7 @@ app.post("/api/projects", async (req, res) => {
     nextIssueNumber: 1,
     statuses: DEFAULT_STATUSES,
     priorities: DEFAULT_PRIORITIES,
+    resolutions: DEFAULT_RESOLUTIONS,
   });
   res.status(201).json({
     id: result.insertedId.toString(),
@@ -207,6 +210,7 @@ app.post("/api/projects", async (req, res) => {
     key: key.trim().toUpperCase(),
     statuses: DEFAULT_STATUSES,
     priorities: DEFAULT_PRIORITIES,
+    resolutions: DEFAULT_RESOLUTIONS,
   });
 });
 app.post("/api/register", async (req, res) => {
@@ -302,16 +306,17 @@ app.get("/api/projects/:projectId/issue-settings", async (req, res) => {
   res.json({
     statuses: project.statuses || DEFAULT_STATUSES,
     priorities: project.priorities || DEFAULT_PRIORITIES,
+    resolutions: project.resolutions || DEFAULT_RESOLUTIONS,
   });
 });
 
 app.put("/api/projects/:projectId/issue-settings", async (req, res) => {
   const { projectId } = req.params;
-  const { statuses, priorities } = req.body;
-  if (!Array.isArray(statuses) || !Array.isArray(priorities)) {
+  const { statuses, priorities, resolutions } = req.body;
+  if (!Array.isArray(statuses) || !Array.isArray(priorities) || !Array.isArray(resolutions)) {
     return res.status(400).json({ message: "Invalid data" });
   }
-  const update = { statuses, priorities };
+  const update = { statuses, priorities, resolutions };
   await projectsCollection.updateOne({ _id: new ObjectId(projectId) }, { $set: update });
   res.json(update);
 });
@@ -456,6 +461,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     projectId,
     issueKey,
     fixVersion: undefined,
+    resolution: undefined,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     attachments: (req.files || []).map((f) => ({
@@ -501,6 +507,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     priority,
     affectsVersion,
     fixVersion,
+    resolution,
     projectId,
   } = req.body;
   const project = await projectsCollection.findOne({
@@ -521,6 +528,9 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       assignee.trim() === "" ? undefined : assignee.trim();
   if (comment !== undefined)
     updateFields.comment = comment.trim() === "" ? undefined : comment.trim();
+  if (resolution !== undefined)
+    updateFields.resolution =
+      resolution.trim() === "" ? undefined : resolution.trim();
   if (status !== undefined) {
     if (!project.statuses || !project.statuses.includes(status)) {
       return res

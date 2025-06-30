@@ -12,6 +12,7 @@ import { RegisterForm } from "./components/RegisterForm";
 import { TopBar } from "./components/TopBar";
 import { BoardView } from "./components/BoardView";
 import { IssueDetailPanel } from "./components/IssueDetailPanel";
+import ResolveIssueModal from "./components/ResolveIssueModal";
 import type {
   Issue,
   ResolutionStatus as StatusEnum,
@@ -75,6 +76,8 @@ const App: React.FC = () => {
     useState<Issue | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [issueToDelete, setIssueToDelete] = useState<string | null>(null);
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [issueToResolve, setIssueToResolve] = useState<Issue | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -454,9 +457,15 @@ const App: React.FC = () => {
   );
 
   const updateIssueStatus = useCallback(
-    async (issueId: string, newStatus: StatusEnum) => {
+    (issueId: string, newStatus: StatusEnum) => {
       const issueToUpdate = issues.find((issue) => issue.id === issueId);
       if (!issueToUpdate || issueToUpdate.status === newStatus) return;
+
+      if (newStatus === "수정 완료") {
+        setIssueToResolve(issueToUpdate);
+        setShowResolveModal(true);
+        return;
+      }
 
       setError(null);
       const originalIssues = [...issues];
@@ -465,42 +474,95 @@ const App: React.FC = () => {
           issue.id === issueId ? { ...issue, status: newStatus } : issue
         )
       );
-      try {
-        const response = await fetch(`/api/issues/${issueId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }), // Only send status for this specific update type
-        });
-        if (!response.ok) {
-          const errorData = await response
-            .json()
-            .catch(() => ({ message: "이슈 상태 업데이트에 실패했습니다." }));
-          throw new Error(
-            errorData.message ||
-              `이슈 상태 업데이트에 실패했습니다: ${response.statusText}`
+      fetch(`/api/issues/${issueId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            const errorData = await response
+              .json()
+              .catch(() => ({ message: "이슈 상태 업데이트에 실패했습니다." }));
+            throw new Error(
+              errorData.message ||
+                `이슈 상태 업데이트에 실패했습니다: ${response.statusText}`
+            );
+          }
+          return response.json();
+        })
+        .then((updatedIssueFromServer: Issue) => {
+          setIssues((prevIssues) =>
+            prevIssues.map((issue) =>
+              issue.id === updatedIssueFromServer.id
+                ? updatedIssueFromServer
+                : issue
+            )
           );
-        }
-        const updatedIssueFromServer: Issue = await response.json();
-        setIssues((prevIssues) =>
-          prevIssues.map((issue) =>
-            issue.id === updatedIssueFromServer.id
-              ? updatedIssueFromServer
-              : issue
-          )
-        );
-        if (selectedIssueForDetail?.id === issueId) {
-          setSelectedIssueForDetail(updatedIssueFromServer);
-        }
-      } catch (err) {
-        console.error("이슈 상태 업데이트 중 오류:", err);
-        setError(
-          (err as Error).message ||
-            "이슈 상태 업데이트 중 알 수 없는 오류가 발생했습니다."
-        );
-        setIssues(originalIssues); // Revert optimistic update on error
-      }
+          if (selectedIssueForDetail?.id === issueId) {
+            setSelectedIssueForDetail(updatedIssueFromServer);
+          }
+        })
+        .catch((err) => {
+          console.error("이슈 상태 업데이트 중 오류:", err);
+          setError(
+            (err as Error).message ||
+              "이슈 상태 업데이트 중 알 수 없는 오류가 발생했습니다."
+          );
+          setIssues(originalIssues);
+        });
     },
     [issues, selectedIssueForDetail]
+  );
+
+  const handleResolveIssue = useCallback(
+    async (data: {
+      assignee?: string;
+      resolution: string;
+      fixVersion?: string;
+      attachments: File[];
+      comment?: string;
+    }) => {
+      if (!issueToResolve) return;
+      setError(null);
+      setIsSubmitting(true);
+      const body = new FormData();
+      body.append('status', '수정 완료');
+      body.append('resolution', data.resolution);
+      if (data.assignee) body.append('assignee', data.assignee);
+      if (data.fixVersion) body.append('fixVersion', data.fixVersion);
+      if (data.comment) body.append('comment', data.comment);
+      data.attachments.forEach((f) => body.append('files', f));
+      try {
+        const response = await fetch(`/api/issues/${issueToResolve.id}`, {
+          method: 'PUT',
+          body,
+        });
+        if (!response.ok) {
+          const errData = await response
+            .json()
+            .catch(() => ({ message: '이슈 업데이트 실패' }));
+          throw new Error(errData.message);
+        }
+        const updatedIssue: Issue = await response.json();
+        setIssues((prev) =>
+          prev.map((i) => (i.id === updatedIssue.id ? updatedIssue : i))
+        );
+        if (selectedIssueForDetail?.id === updatedIssue.id) {
+          setSelectedIssueForDetail(updatedIssue);
+        }
+        setShowResolveModal(false);
+        setIssueToResolve(null);
+      } catch (err) {
+        console.error('상태 업데이트 오류:', err);
+        setError(
+          (err as Error).message || '이슈 상태 업데이트 중 오류가 발생했습니다.'
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [issueToResolve, selectedIssueForDetail]
   );
 
   const handleIssueUpdated = useCallback(
@@ -860,6 +922,23 @@ const App: React.FC = () => {
           isSubmitting={isSubmitting}
         />
       </Modal>
+
+      {issueToResolve && (
+        <ResolveIssueModal
+          isOpen={showResolveModal}
+          onClose={() => {
+            setShowResolveModal(false);
+            setIssueToResolve(null);
+          }}
+          onSubmit={handleResolveIssue}
+          projectId={issueToResolve.projectId}
+          users={users}
+          resolutions={
+            projects.find((p) => p.id === issueToResolve.projectId)?.resolutions || []
+          }
+          initialAssignee={issueToResolve.assignee}
+        />
+      )}
     </div>
   );
 };
