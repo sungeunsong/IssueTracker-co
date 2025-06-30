@@ -21,10 +21,7 @@ import type {
   User,
 } from "./types";
 import {
-  ResolutionStatus,
   IssueType,
-  IssuePriority,
-  statusDisplayNames,
   boardStatusToTitleMap,
   DEFAULT_BOARD_STATUSES,
   DEFAULT_STATUSES,
@@ -718,6 +715,7 @@ const App: React.FC = () => {
                     itemsPerPage={ITEMS_PER_PAGE_LIST}
                     onPageChange={handlePageChange}
                     users={users}
+                    statuses={currentProject?.statuses || DEFAULT_STATUSES}
                   />
                 </div>
               )}

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { Issue, User } from "../types";
-import {
+import type {
   ResolutionStatus,
+} from "../types";
+import {
   statusDisplayNames,
   statusColors,
   IssueType,

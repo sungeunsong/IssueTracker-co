@@ -9,11 +9,9 @@ import type {
   Version,
 } from "../types";
 import {
-  ResolutionStatus,
   statusDisplayNames,
   IssueType,
   issueTypeDisplayNames,
-  IssuePriority,
   getPriorityDisplayName,
 } from "../types";
 import { PlusIcon } from "./icons/PlusIcon";

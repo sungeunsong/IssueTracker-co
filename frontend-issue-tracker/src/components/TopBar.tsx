@@ -1,6 +1,7 @@
 import React from "react";
 import type { ViewMode } from "../App";
-import { ResolutionStatus, statusDisplayNames } from "../types";
+import type { ResolutionStatus } from "../types";
+import { statusDisplayNames } from "../types";
 import { SearchIcon } from "./icons/SearchIcon";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 import { GlobeIcon } from "./icons/GlobeIcon";
