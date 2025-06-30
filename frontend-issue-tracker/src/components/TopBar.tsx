@@ -34,6 +34,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   isAdmin,
   onRequestLogout,
   onRequestRegister,
+  statuses,
 }) => {
   const navItems = [
     { id: "board" as ViewMode, label: "Board" },

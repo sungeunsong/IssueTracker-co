@@ -45,6 +45,8 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   users,
   currentUserId,
   currentUserName,
+  statuses,
+  priorities,
 }) => {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
@@ -77,7 +79,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(reporterUser ? reporterUser.username : "");
       setAssignee(initialData.assignee || "");
       setComment(initialData.comment || "");
-      setStatus(initialData.status || (statuses[0] || ""));
+      setStatus(initialData.status || statuses[0] || "");
       setType(initialData.type || IssueType.TASK);
       setPriority(initialData.priority || priorities[0]);
       setAffectsVersion(initialData.affectsVersion || "");

@@ -1,176 +1,129 @@
 import React, { useEffect, useState } from 'react';
 import { DEFAULT_PRIORITIES, DEFAULT_RESOLUTIONS } from '../types';
+import EditableList from './EditableList'; // 재사용할 자식 컴포넌트
 
 interface Props {
   projectId: string;
 }
 
 const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
+  // 현재 상태
   const [statuses, setStatuses] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
   const [resolutions, setResolutions] = useState<string[]>([]);
-  const [newStatus, setNewStatus] = useState('');
-  const [newPriority, setNewPriority] = useState('');
-  const [newResolution, setNewResolution] = useState('');
+
+  // 변경 여부(isDirty)를 확인하기 위한 초기 상태
+  const [initialStatuses, setInitialStatuses] = useState<string[]>([]);
+  const [initialPriorities, setInitialPriorities] = useState<string[]>([]);
+  const [initialResolutions, setInitialResolutions] = useState<string[]>([]);
+
+  // UI 상태
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const res = await fetch(`/api/projects/${projectId}/issue-settings`);
-      if (res.ok) {
-        const data = await res.json();
-        setStatuses(data.statuses || []);
-        setPriorities(data.priorities || DEFAULT_PRIORITIES);
-        setResolutions(data.resolutions || ["완료", "원하지 않음", "재현 불가"]);
-      } else {
-        setStatuses([]);
-        setPriorities(DEFAULT_PRIORITIES);
-        setResolutions(DEFAULT_RESOLUTIONS);
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/projects/${projectId}/issue-settings`);
+        if (res.ok) {
+          const data = await res.json();
+          // 현재 상태와 초기 상태를 모두 설정
+          setStatuses(data.statuses || []);
+          setPriorities(data.priorities || DEFAULT_PRIORITIES);
+          setResolutions(data.resolutions || DEFAULT_RESOLUTIONS);
+
+          setInitialStatuses(data.statuses || []);
+          setInitialPriorities(data.priorities || DEFAULT_PRIORITIES);
+          setInitialResolutions(data.resolutions || DEFAULT_RESOLUTIONS);
+        } else {
+          // API 실패 시 기본값으로 설정
+          setStatuses([]);
+          setPriorities(DEFAULT_PRIORITIES);
+          setResolutions(DEFAULT_RESOLUTIONS);
+          setInitialStatuses([]);
+          setInitialPriorities(DEFAULT_PRIORITIES);
+          setInitialResolutions(DEFAULT_RESOLUTIONS);
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchSettings();
   }, [projectId]);
 
   const handleSave = async () => {
-    await fetch(`/api/projects/${projectId}/issue-settings`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ statuses, priorities, resolutions }),
-    });
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/issue-settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statuses, priorities, resolutions }),
+      });
+
+      if (res.ok) {
+        // 저장이 성공하면 초기 상태를 현재 상태로 업데이트하여 '저장' 버튼을 다시 비활성화
+        setInitialStatuses(statuses);
+        setInitialPriorities(priorities);
+        setInitialResolutions(resolutions);
+      } else {
+        // 에러 처리 (예: 사용자에게 Toast 알림)
+        console.error("Failed to save settings");
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
+  // 하나라도 변경되었는지 확인
+  const isDirty =
+    JSON.stringify(statuses) !== JSON.stringify(initialStatuses) ||
+    JSON.stringify(priorities) !== JSON.stringify(initialPriorities) ||
+    JSON.stringify(resolutions) !== JSON.stringify(initialResolutions);
+
+  if (isLoading) {
+    return <div className="p-4">Loading settings...</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold mb-2">Issue Statuses</h3>
-        <ul className="space-y-2">
-          {statuses.map((s, idx) => (
-            <li key={idx} className="flex space-x-2">
-              <input
-                value={s}
-                onChange={(e) =>
-                  setStatuses(statuses.map((v, i) => (i === idx ? e.target.value : v)))
-                }
-                className="border border-slate-300 rounded px-2 py-1 flex-1"
-                placeholder="상태 이름"
-              />
-              <button
-                onClick={() => setStatuses(statuses.filter((_, i) => i !== idx))}
-                className="text-red-600 px-2"
-              >
-                삭제
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-2 flex space-x-2">
-          <input
-            value={newStatus}
-            onChange={(e) => setNewStatus(e.target.value)}
-            className="border border-slate-300 rounded px-2 py-1 flex-1"
-            placeholder="새 상태"
-          />
-          <button
-            onClick={() => {
-              if (newStatus.trim()) {
-                setStatuses([...statuses, newStatus.trim()]);
-                setNewStatus('');
-              }
-            }}
-            className="px-3 py-1 bg-slate-200 rounded"
-          >
-            추가
-          </button>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-8 p-4">
+      <div className="space-y-6">
+        {/* 재사용 컴포넌트를 사용하여 각 목록을 렌더링 */}
+        <EditableList
+          title="Issue Statuses"
+          items={statuses}
+          setItems={setStatuses}
+          placeholder="새 상태"
+        />
+        <EditableList
+          title="Issue Priorities"
+          items={priorities}
+          setItems={setPriorities}
+          placeholder="새 우선순위"
+        />
+        <EditableList
+          title="Resolution Reasons"
+          items={resolutions}
+          setItems={setResolutions}
+          placeholder="새 해결 사유"
+        />
       </div>
 
-      <div>
-        <h3 className="font-semibold mb-2">Issue Priorities</h3>
-        <ul className="space-y-2">
-          {priorities.map((p, idx) => (
-            <li key={idx} className="flex space-x-2">
-              <input
-                value={p}
-                onChange={(e) =>
-                  setPriorities(priorities.map((v, i) => (i === idx ? e.target.value : v)))
-                }
-                className="border border-slate-300 rounded px-2 py-1 flex-1"
-              />
-              <button
-                onClick={() => setPriorities(priorities.filter((_, i) => i !== idx))}
-                className="text-red-600 px-2"
-              >
-                삭제
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-2 flex space-x-2">
-          <input
-            value={newPriority}
-            onChange={(e) => setNewPriority(e.target.value)}
-            className="border border-slate-300 rounded px-2 py-1 flex-1"
-            placeholder="새 우선순위"
-          />
-          <button
-            onClick={() => {
-              if (newPriority.trim()) {
-                setPriorities([...priorities, newPriority.trim()]);
-                setNewPriority('');
-              }
-            }}
-            className="px-3 py-1 bg-slate-200 rounded"
-          >
-            추가
-          </button>
-        </div>
+      <div className="flex justify-end pt-4 mt-4 border-t border-slate-200">
+        <button
+          onClick={handleSave}
+          disabled={!isDirty || isSaving}
+          className="px-6 py-2 bg-indigo-600 text-white rounded-md font-semibold shadow-sm
+                     hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                     disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
+        >
+          {isSaving ? '저장 중...' : '저장'}
+        </button>
       </div>
-
-      <div>
-        <h3 className="font-semibold mb-2">Resolution Reasons</h3>
-        <ul className="space-y-2">
-          {resolutions.map((r, idx) => (
-            <li key={idx} className="flex space-x-2">
-              <input
-                value={r}
-                onChange={(e) =>
-                  setResolutions(resolutions.map((v, i) => (i === idx ? e.target.value : v)))
-                }
-                className="border border-slate-300 rounded px-2 py-1 flex-1"
-                placeholder="해결 사유"
-              />
-              <button
-                onClick={() => setResolutions(resolutions.filter((_, i) => i !== idx))}
-                className="text-red-600 px-2"
-              >
-                삭제
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-2 flex space-x-2">
-          <input
-            value={newResolution}
-            onChange={(e) => setNewResolution(e.target.value)}
-            className="border border-slate-300 rounded px-2 py-1 flex-1"
-            placeholder="새 해결 사유"
-          />
-          <button
-            onClick={() => {
-              if (newResolution.trim()) {
-                setResolutions([...resolutions, newResolution.trim()]);
-                setNewResolution('');
-              }
-            }}
-            className="px-3 py-1 bg-slate-200 rounded"
-          >
-            추가
-          </button>
-        </div>
-      </div>
-
-      <button onClick={handleSave} className="px-4 py-2 bg-indigo-600 text-white rounded">
-        저장
-      </button>
     </div>
   );
 };
