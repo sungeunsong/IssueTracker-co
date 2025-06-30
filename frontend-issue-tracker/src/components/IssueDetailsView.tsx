@@ -1,7 +1,7 @@
 
 import React from 'react';
 import type { Issue, User } from '../types';
-import { statusDisplayNames, statusColors } from '../types';
+import { statusColors } from '../types';
 import { RichTextViewer } from './RichTextViewer';
 
 interface IssueDetailsViewProps {
@@ -108,7 +108,7 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
             <span
               className={`px-3 py-1 text-xs font-semibold rounded-full ring-1 ring-inset ${statusColors[issue.status]}`}
             >
-              {statusDisplayNames[issue.status]}
+              {issue.status}
             </span>
           </dd>
         </div>

@@ -7,9 +7,9 @@ import type {
   Project,
   User,
   Version,
+  StatusOption,
 } from "../types";
 import {
-  statusDisplayNames,
   IssueType,
   issueTypeDisplayNames,
   getPriorityDisplayName,
@@ -30,7 +30,7 @@ interface IssueFormProps {
   users: User[];
   currentUserId: string | null;
   currentUserName: string | null;
-  statuses: StatusEnum[];
+  statuses: StatusOption[];
   priorities: PriorityEnum[];
 }
 
@@ -53,7 +53,9 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [reporterName, setReporterName] = useState("");
   const [assignee, setAssignee] = useState("");
   const [comment, setComment] = useState("");
-  const [status, setStatus] = useState<StatusEnum>(statuses[0]);
+  const [status, setStatus] = useState<StatusEnum>(
+    statuses[0] ? statuses[0].id : ""
+  );
   const [type, setType] = useState<TypeEnum>(IssueType.TASK); // Default to TASK
   const [priority, setPriority] = useState<PriorityEnum>(priorities[0]);
   const [affectsVersion, setAffectsVersion] = useState("");
@@ -76,7 +78,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(reporterUser ? reporterUser.username : "");
       setAssignee(initialData.assignee || "");
       setComment(initialData.comment || "");
-      setStatus(initialData.status || statuses[0]);
+      setStatus(initialData.status || (statuses[0]?.id || ""));
       setType(initialData.type || IssueType.TASK);
       setPriority(initialData.priority || priorities[0]);
       setAffectsVersion(initialData.affectsVersion || "");
@@ -92,7 +94,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(currentUserName || "");
       setAssignee("");
       setComment("");
-      setStatus(statuses[0]);
+      setStatus(statuses[0]?.id || "");
       setType(IssueType.TASK); // Default for new issues
       setPriority(priorities[0]);
       setAffectsVersion("");
@@ -348,8 +350,8 @@ export const IssueForm: React.FC<IssueFormProps> = ({
               disabled={isSubmitting}
             >
               {statuses.map((st) => (
-                <option key={st} value={st}>
-                  {statusDisplayNames[st] || st}
+                <option key={st.id} value={st.id}>
+                  {st.name}
                 </option>
               ))}
             </select>

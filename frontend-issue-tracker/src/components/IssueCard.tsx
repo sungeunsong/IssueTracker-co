@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import type { Issue, User } from "../types";
 import {
   statusColors,
-  statusDisplayNames,
   issueTypeColors,
   issueTypeDisplayNames,
   issuePriorityColors,
@@ -64,9 +63,9 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             statusColors[issue.status]
           } bg-opacity-80`}
           style={{ fontSize: "0.65rem" }}
-          title={`Status: ${statusDisplayNames[issue.status]}`}
+          title={`Status: ${issue.status}`}
         >
-          {statusDisplayNames[issue.status]}
+          {issue.status}
         </span>
         <div className="flex items-center space-x-1">
           {issue.assignee && (

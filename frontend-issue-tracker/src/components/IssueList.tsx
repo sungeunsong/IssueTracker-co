@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { Issue, User } from '../types';
+import type { Issue, User, StatusOption } from '../types';
 import type { ResolutionStatus } from '../types';
-import { statusColors, statusDisplayNames, issueTypeDisplayNames, issueTypeColors } from '../types';
+import { statusColors, issueTypeDisplayNames, issueTypeColors } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PencilIcon } from './icons/PencilIcon';
 import { EyeIcon } from './icons/EyeIcon';
@@ -19,7 +19,7 @@ interface IssueListProps {
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   users: User[];
-  statuses: ResolutionStatus[];
+  statuses: StatusOption[];
 }
 
 export const IssueList: React.FC<IssueListProps> = ({
@@ -178,7 +178,7 @@ export const IssueList: React.FC<IssueListProps> = ({
                 <span
                   className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[issue.status]}`}
                 >
-                  {statusDisplayNames[issue.status]}
+                  {issue.status}
                 </span>
               </td>
               <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-700">
@@ -196,8 +196,8 @@ export const IssueList: React.FC<IssueListProps> = ({
                     aria-label={`${issue.title} 상태 변경`}
                   >
                     {statuses.map((s) => (
-                      <option key={s} value={s}>
-                        {statusDisplayNames[s] || s}
+                      <option key={s.id} value={s.id}>
+                        {s.name}
                       </option>
                     ))}
                   </select>
