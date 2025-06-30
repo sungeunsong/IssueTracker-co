@@ -8,7 +8,7 @@ interface Props {
   onBack: () => void;
 }
 
-const menuItems = ['세부사항', '알림', '버전', '컴포넌트'];
+const menuItems = ['세부사항', '알림', '버전', '컴포넌트', '이슈 설정'];
 
 export const ProjectSettingsSidebar: React.FC<Props> = ({
   projectName,

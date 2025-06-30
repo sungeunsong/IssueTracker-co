@@ -25,8 +25,10 @@ import {
   IssueType,
   IssuePriority,
   statusDisplayNames,
-  boardStatuses,
   boardStatusToTitleMap,
+  DEFAULT_BOARD_STATUSES,
+  DEFAULT_STATUSES,
+  DEFAULT_PRIORITIES,
 } from "./types";
 import { LoginScreen } from "./components/LoginScreen";
 // import { PlusIcon } from './components/icons/PlusIcon'; // Not used directly here
@@ -70,6 +72,11 @@ const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedIssueForDetail, setSelectedIssueForDetail] =
     useState<Issue | null>(null);
+
+  const currentProject = useMemo(
+    () => projects.find((p) => p.id === currentProjectId) || null,
+    [projects, currentProjectId]
+  );
 
   const [showAddIssueModal, setShowAddIssueModal] = useState(false);
   const [showEditIssueModal, setShowEditIssueModal] = useState(false);
@@ -584,12 +591,13 @@ const App: React.FC = () => {
   );
 
   const boardColumns = useMemo(() => {
-    return boardStatuses.map((status) => ({
+    const statuses = currentProject?.statuses || DEFAULT_BOARD_STATUSES;
+    return statuses.map((status) => ({
       id: status,
-      title: boardStatusToTitleMap[status],
+      title: boardStatusToTitleMap[status] || status,
       issues: baseFilteredIssues.filter((issue) => issue.status === status),
     }));
-  }, [baseFilteredIssues]);
+  }, [baseFilteredIssues, currentProject]);
 
   if (isLoading && issues.length === 0) {
     return (
@@ -628,6 +636,7 @@ const App: React.FC = () => {
           onSearchTermChange={setSearchTerm}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
+          statuses={currentProject?.statuses || DEFAULT_STATUSES}
           onCreateIssue={() => {
             setShowAddIssueModal(true);
             setError(null);
@@ -726,6 +735,10 @@ const App: React.FC = () => {
           onUpdateStatus={updateIssueStatus}
           users={users}
           onIssueUpdated={handleIssueUpdated}
+          statuses={
+            projects.find((p) => p.id === selectedIssueForDetail.projectId)?.statuses ||
+            DEFAULT_STATUSES
+          }
         />
       )}
 
@@ -750,6 +763,8 @@ const App: React.FC = () => {
           users={users}
           currentUserId={currentUserId}
           currentUserName={currentUser}
+          statuses={currentProject?.statuses || DEFAULT_STATUSES}
+          priorities={currentProject?.priorities || DEFAULT_PRIORITIES}
         />
       </Modal>
 
@@ -791,6 +806,14 @@ const App: React.FC = () => {
             users={users}
             currentUserId={currentUserId}
             currentUserName={currentUser}
+            statuses={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.statuses ||
+              DEFAULT_STATUSES
+            }
+            priorities={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.priorities ||
+              DEFAULT_PRIORITIES
+            }
           />
         </Modal>
       )}

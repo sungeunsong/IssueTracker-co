@@ -8,7 +8,7 @@ import {
   IssueType,
   issueTypeDisplayNames,
   issueTypeColors,
-  issuePriorityDisplayNames,
+  getPriorityDisplayName,
 } from "../types";
 import { PencilIcon } from "./icons/PencilIcon";
 import { TrashIcon } from "./icons/TrashIcon";
@@ -26,6 +26,7 @@ interface IssueDetailPanelProps {
   onUpdateStatus: (issueId: string, newStatus: ResolutionStatus) => void;
   users: User[];
   onIssueUpdated: (issue: Issue) => void;
+  statuses: ResolutionStatus[];
 }
 
 const DetailItem: React.FC<{
@@ -56,6 +57,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
   onUpdateStatus,
   users,
   onIssueUpdated,
+  statuses,
 }) => {
   const [newComment, setNewComment] = useState("");
   const [localIssue, setLocalIssue] = useState(issue);
@@ -142,21 +144,11 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                 } appearance-none text-center font-medium`}
                 aria-label="Update issue status"
               >
-                {(
-                  Object.keys(ResolutionStatus) as Array<
-                    keyof typeof ResolutionStatus
-                  >
-                ).map((statusKey) =>
-                  ResolutionStatus[statusKey] ? (
-                    <option
-                      key={statusKey}
-                      value={ResolutionStatus[statusKey]}
-                      className="bg-white text-slate-800"
-                    >
-                      {statusDisplayNames[ResolutionStatus[statusKey]]}
-                    </option>
-                  ) : null
-                )}
+                {statuses.map((s) => (
+                  <option key={s} value={s} className="bg-white text-slate-800">
+                    {statusDisplayNames[s] || s}
+                  </option>
+                ))}
               </select>
             }
           />
@@ -174,7 +166,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
           />
           <DetailItem
             label="우선순위"
-            value={issuePriorityDisplayNames[issue.priority]}
+            value={getPriorityDisplayName(issue.priority)}
           />
           <DetailItem
             label="등록자"

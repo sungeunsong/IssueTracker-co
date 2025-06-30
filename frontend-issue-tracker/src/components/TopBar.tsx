@@ -14,6 +14,7 @@ interface TopBarProps {
   onSearchTermChange: (term: string) => void;
   statusFilter: ResolutionStatus | "ALL";
   onStatusFilterChange: (status: ResolutionStatus | "ALL") => void;
+  statuses: ResolutionStatus[];
   onCreateIssue: () => void;
   currentUser: string | null;
   isAdmin: boolean;
@@ -95,17 +96,11 @@ export const TopBar: React.FC<TopBarProps> = ({
               aria-label="Filter by status"
             >
               <option value="ALL">All Statuses</option>
-              {(
-                Object.keys(ResolutionStatus) as Array<
-                  keyof typeof ResolutionStatus
-                >
-              ).map((key) =>
-                ResolutionStatus[key] ? (
-                  <option key={key} value={ResolutionStatus[key]}>
-                    {statusDisplayNames[ResolutionStatus[key]]}
-                  </option>
-                ) : null
-              )}
+              {statuses.map((s) => (
+                <option key={s} value={s}>
+                  {statusDisplayNames[s] || s}
+                </option>
+              ))}
             </select>
           </div>
 

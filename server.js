@@ -44,7 +44,7 @@ const ADMIN_USERNAME = "관리자";
 const ADMIN_PASSWORD = "0000";
 
 const INITIAL_ISSUE_STATUS = "OPEN";
-const VALID_STATUSES = [
+const DEFAULT_STATUSES = [
   "OPEN",
   "IN_PROGRESS",
   "RESOLVED",
@@ -53,7 +53,7 @@ const VALID_STATUSES = [
   "WONT_DO",
 ];
 const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
-const VALID_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
+const DEFAULT_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
 const DEFAULT_PRIORITY = "MEDIUM";
 
 async function ensureAdminUser() {
@@ -71,6 +71,22 @@ async function ensureAdminUser() {
 }
 
 await ensureAdminUser();
+
+async function migrateProjects() {
+  const cursor = projectsCollection.find({
+    $or: [{ statuses: { $exists: false } }, { priorities: { $exists: false } }],
+  });
+  for await (const proj of cursor) {
+    const update = {};
+    if (!proj.statuses) update.statuses = DEFAULT_STATUSES;
+    if (!proj.priorities) update.priorities = DEFAULT_PRIORITIES;
+    if (Object.keys(update).length > 0) {
+      await projectsCollection.updateOne({ _id: proj._id }, { $set: update });
+    }
+  }
+}
+
+await migrateProjects();
 
 async function migrateIssues() {
   const cursor = issuesCollection.find({
@@ -175,11 +191,15 @@ app.post("/api/projects", async (req, res) => {
     name: name.trim(),
     key: key.trim().toUpperCase(),
     nextIssueNumber: 1,
+    statuses: DEFAULT_STATUSES,
+    priorities: DEFAULT_PRIORITIES,
   });
   res.status(201).json({
     id: result.insertedId.toString(),
     name: name.trim(),
     key: key.trim().toUpperCase(),
+    statuses: DEFAULT_STATUSES,
+    priorities: DEFAULT_PRIORITIES,
   });
 });
 app.post("/api/register", async (req, res) => {
@@ -264,6 +284,29 @@ app.get("/api/users", async (req, res) => {
     .find({}, { projection: { userid: 1, username: 1, isAdmin: 1, _id: 0 } })
     .toArray();
   res.json(users);
+});
+
+app.get("/api/projects/:projectId/issue-settings", async (req, res) => {
+  const { projectId } = req.params;
+  const project = await projectsCollection.findOne({ _id: new ObjectId(projectId) });
+  if (!project) {
+    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
+  res.json({
+    statuses: project.statuses || DEFAULT_STATUSES,
+    priorities: project.priorities || DEFAULT_PRIORITIES,
+  });
+});
+
+app.put("/api/projects/:projectId/issue-settings", async (req, res) => {
+  const { projectId } = req.params;
+  const { statuses, priorities } = req.body;
+  if (!Array.isArray(statuses) || !Array.isArray(priorities)) {
+    return res.status(400).json({ message: "Invalid data" });
+  }
+  const update = { statuses, priorities };
+  await projectsCollection.updateOne({ _id: new ObjectId(projectId) }, { $set: update });
+  res.json(update);
 });
 
 app.get("/api/projects/:projectId/versions", async (req, res) => {
@@ -371,14 +414,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
       )}`,
     });
   }
-  const issuePriority =
-    priority && VALID_PRIORITIES.includes(priority)
-      ? priority
-      : DEFAULT_PRIORITY;
   if (!projectId) {
     return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
   }
-  console.log(projectId);
   const projectResult = await projectsCollection.findOneAndUpdate(
     { _id: new ObjectId(projectId) },
     { $inc: { nextIssueNumber: 1 } },
@@ -387,6 +425,11 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   if (!projectResult) {
     return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
   }
+  const allowedPriorities = projectResult.priorities || DEFAULT_PRIORITIES;
+  const issuePriority =
+    priority && allowedPriorities.includes(priority)
+      ? priority
+      : allowedPriorities[0] || DEFAULT_PRIORITY;
   const issueNumber = projectResult?.nextIssueNumber - 1;
   const issueKey = `${projectResult?.key}-${String(issueNumber).padStart(
     4,
@@ -399,7 +442,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     reporter: reporter.trim(),
     assignee: assignee?.trim() || undefined,
     comment: comment?.trim() || undefined,
-    status: INITIAL_ISSUE_STATUS,
+    status: projectResult.statuses?.[0] || INITIAL_ISSUE_STATUS,
     type,
     priority: issuePriority,
     affectsVersion: affectsVersion?.trim() || undefined,
@@ -453,6 +496,12 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     fixVersion,
     projectId,
   } = req.body;
+  const project = await projectsCollection.findOne({
+    _id: new ObjectId(projectId || existing.projectId),
+  });
+  if (!project) {
+    return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
   let updateFields = {};
   let statusChanged = false;
   let fromStatus;
@@ -466,12 +515,8 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (comment !== undefined)
     updateFields.comment = comment.trim() === "" ? undefined : comment.trim();
   if (status !== undefined) {
-    if (!VALID_STATUSES.includes(status)) {
-      return res.status(400).json({
-        message: `유효한 상태 값을 제공해야 합니다. 유효한 값: ${VALID_STATUSES.join(
-          ", "
-        )}`,
-      });
+    if (!project.statuses || !project.statuses.includes(status)) {
+      return res.status(400).json({ message: "유효한 상태 값을 제공해야 합니다." });
     }
     updateFields.status = status;
     if (existing.status !== status) {
@@ -494,12 +539,8 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     updateFields.type = type;
   }
   if (priority !== undefined) {
-    if (!VALID_PRIORITIES.includes(priority)) {
-      return res.status(400).json({
-        message: `유효한 우선순위를 제공해야 합니다. 유효한 값: ${VALID_PRIORITIES.join(
-          ", "
-        )}`,
-      });
+    if (!project.priorities || !project.priorities.includes(priority)) {
+      return res.status(400).json({ message: "유효한 우선순위를 제공해야 합니다." });
     }
     updateFields.priority = priority;
   }

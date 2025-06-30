@@ -14,7 +14,7 @@ import {
   IssueType,
   issueTypeDisplayNames,
   IssuePriority,
-  issuePriorityDisplayNames,
+  getPriorityDisplayName,
 } from "../types";
 import { PlusIcon } from "./icons/PlusIcon";
 import { RichTextEditor } from "./RichTextEditor";
@@ -32,6 +32,8 @@ interface IssueFormProps {
   users: User[];
   currentUserId: string | null;
   currentUserName: string | null;
+  statuses: StatusEnum[];
+  priorities: PriorityEnum[];
 }
 
 export const IssueForm: React.FC<IssueFormProps> = ({
@@ -53,9 +55,9 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [reporterName, setReporterName] = useState("");
   const [assignee, setAssignee] = useState("");
   const [comment, setComment] = useState("");
-  const [status, setStatus] = useState<StatusEnum>(ResolutionStatus.OPEN);
+  const [status, setStatus] = useState<StatusEnum>(statuses[0]);
   const [type, setType] = useState<TypeEnum>(IssueType.TASK); // Default to TASK
-  const [priority, setPriority] = useState<PriorityEnum>(IssuePriority.MEDIUM);
+  const [priority, setPriority] = useState<PriorityEnum>(priorities[0]);
   const [affectsVersion, setAffectsVersion] = useState("");
   const [fixVersion, setFixVersion] = useState("");
   const [projectId, setProjectId] = useState<string>("");
@@ -76,9 +78,9 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(reporterUser ? reporterUser.username : "");
       setAssignee(initialData.assignee || "");
       setComment(initialData.comment || "");
-      setStatus(initialData.status || ResolutionStatus.OPEN);
+      setStatus(initialData.status || statuses[0]);
       setType(initialData.type || IssueType.TASK);
-      setPriority(initialData.priority || IssuePriority.MEDIUM);
+      setPriority(initialData.priority || priorities[0]);
       setAffectsVersion(initialData.affectsVersion || "");
       setFixVersion(initialData.fixVersion || "");
       setProjectId(
@@ -92,9 +94,9 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(currentUserName || "");
       setAssignee("");
       setComment("");
-      setStatus(ResolutionStatus.OPEN);
+      setStatus(statuses[0]);
       setType(IssueType.TASK); // Default for new issues
-      setPriority(IssuePriority.MEDIUM);
+      setPriority(priorities[0]);
       setAffectsVersion("");
       setFixVersion("");
       setProjectId(selectedProjectId || projects[0]?.id || "");
@@ -262,11 +264,9 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           disabled={isSubmitting}
           required
         >
-          {(
-            Object.keys(IssuePriority) as Array<keyof typeof IssuePriority>
-          ).map((pKey) => (
-            <option key={pKey} value={IssuePriority[pKey]}>
-              {issuePriorityDisplayNames[IssuePriority[pKey]]}
+          {priorities.map((p) => (
+            <option key={p} value={p}>
+              {getPriorityDisplayName(p)}
             </option>
           ))}
         </select>
@@ -349,13 +349,9 @@ export const IssueForm: React.FC<IssueFormProps> = ({
               className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
               disabled={isSubmitting}
             >
-              {(
-                Object.keys(ResolutionStatus) as Array<
-                  keyof typeof ResolutionStatus
-                >
-              ).map((statusKey) => (
-                <option key={statusKey} value={ResolutionStatus[statusKey]}>
-                  {statusDisplayNames[ResolutionStatus[statusKey]]}
+              {statuses.map((st) => (
+                <option key={st} value={st}>
+                  {statusDisplayNames[st] || st}
                 </option>
               ))}
             </select>
