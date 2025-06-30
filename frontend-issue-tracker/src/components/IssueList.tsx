@@ -2,7 +2,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Issue, User } from '../types';
-import { ResolutionStatus, statusColors, statusDisplayNames, issueTypeDisplayNames, issueTypeColors } from '../types';
+import type { ResolutionStatus } from '../types';
+import { statusColors, statusDisplayNames, issueTypeDisplayNames, issueTypeColors } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PencilIcon } from './icons/PencilIcon';
 import { EyeIcon } from './icons/EyeIcon';
@@ -18,6 +19,7 @@ interface IssueListProps {
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   users: User[];
+  statuses: ResolutionStatus[];
 }
 
 export const IssueList: React.FC<IssueListProps> = ({
@@ -31,6 +33,7 @@ export const IssueList: React.FC<IssueListProps> = ({
   itemsPerPage,
   onPageChange,
   users,
+  statuses,
 }) => {
   const totalPages = Math.ceil(totalIssues / itemsPerPage);
 
@@ -187,18 +190,16 @@ export const IssueList: React.FC<IssueListProps> = ({
               <td className="px-3 py-3 whitespace-nowrap text-sm font-medium">
                 <div className="flex items-center space-x-1">
                   <select
-                      value={issue.status}
-                      onChange={(e) => handleStatusChange(issue.id, e)}
-                      className="text-xs rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-1 pl-2 pr-7"
-                      aria-label={`${issue.title} 상태 변경`}
-                    >
-                      {(Object.keys(ResolutionStatus) as Array<keyof typeof ResolutionStatus>).map(statusKey => (
-                        ResolutionStatus[statusKey] ?
-                        <option key={statusKey} value={ResolutionStatus[statusKey]}>
-                          {statusDisplayNames[ResolutionStatus[statusKey]]}
-                        </option>
-                        : null
-                      ))}
+                    value={issue.status}
+                    onChange={(e) => handleStatusChange(issue.id, e)}
+                    className="text-xs rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-1 pl-2 pr-7"
+                    aria-label={`${issue.title} 상태 변경`}
+                  >
+                    {statuses.map((s) => (
+                      <option key={s} value={s}>
+                        {statusDisplayNames[s] || s}
+                      </option>
+                    ))}
                   </select>
                    <button
                     onClick={() => onViewIssue(issue)}
