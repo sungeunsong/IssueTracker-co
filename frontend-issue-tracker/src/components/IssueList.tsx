@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { Issue, User, StatusOption } from '../types';
+import type { Issue, User } from '../types';
 import type { ResolutionStatus } from '../types';
 import { statusColors, issueTypeDisplayNames, issueTypeColors } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
@@ -19,7 +19,7 @@ interface IssueListProps {
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   users: User[];
-  statuses: StatusOption[];
+  statuses: string[];
 }
 
 export const IssueList: React.FC<IssueListProps> = ({
@@ -196,8 +196,8 @@ export const IssueList: React.FC<IssueListProps> = ({
                     aria-label={`${issue.title} 상태 변경`}
                   >
                     {statuses.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
+                      <option key={s} value={s}>
+                        {s}
                       </option>
                     ))}
                   </select>

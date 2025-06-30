@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { DEFAULT_STATUSES, DEFAULT_PRIORITIES, StatusOption } from '../types';
+import { DEFAULT_PRIORITIES } from '../types';
 
 interface Props {
   projectId: string;
 }
 
 const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
-  const [statuses, setStatuses] = useState<StatusOption[]>([]);
+  const [statuses, setStatuses] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
-  const [newStatus, setNewStatus] = useState<StatusOption>({ id: '', name: '' });
+  const [newStatus, setNewStatus] = useState('');
   const [newPriority, setNewPriority] = useState('');
 
   useEffect(() => {
@@ -16,10 +16,10 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
       const res = await fetch(`/api/projects/${projectId}/issue-settings`);
       if (res.ok) {
         const data = await res.json();
-        setStatuses(data.statuses || DEFAULT_STATUSES);
+        setStatuses(data.statuses || []);
         setPriorities(data.priorities || DEFAULT_PRIORITIES);
       } else {
-        setStatuses(DEFAULT_STATUSES);
+        setStatuses([]);
         setPriorities(DEFAULT_PRIORITIES);
       }
     };
@@ -42,28 +42,12 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
           {statuses.map((s, idx) => (
             <li key={idx} className="flex space-x-2">
               <input
-                value={s.id}
+                value={s}
                 onChange={(e) =>
-                  setStatuses(
-                    statuses.map((v, i) =>
-                      i === idx ? { ...v, id: e.target.value } : v
-                    )
-                  )
-                }
-                className="border border-slate-300 rounded px-2 py-1 w-32"
-                placeholder="Key"
-              />
-              <input
-                value={s.name}
-                onChange={(e) =>
-                  setStatuses(
-                    statuses.map((v, i) =>
-                      i === idx ? { ...v, name: e.target.value } : v
-                    )
-                  )
+                  setStatuses(statuses.map((v, i) => (i === idx ? e.target.value : v)))
                 }
                 className="border border-slate-300 rounded px-2 py-1 flex-1"
-                placeholder="Name"
+                placeholder="상태 이름"
               />
               <button
                 onClick={() => setStatuses(statuses.filter((_, i) => i !== idx))}
@@ -76,24 +60,16 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
         </ul>
         <div className="mt-2 flex space-x-2">
           <input
-            value={newStatus.id}
-            onChange={(e) => setNewStatus({ ...newStatus, id: e.target.value })}
-            className="border border-slate-300 rounded px-2 py-1 w-32"
-            placeholder="Key"
-          />
-          <input
-            value={newStatus.name}
-            onChange={(e) =>
-              setNewStatus({ ...newStatus, name: e.target.value })
-            }
+            value={newStatus}
+            onChange={(e) => setNewStatus(e.target.value)}
             className="border border-slate-300 rounded px-2 py-1 flex-1"
-            placeholder="Name"
+            placeholder="새 상태"
           />
           <button
             onClick={() => {
-              if (newStatus.id.trim() && newStatus.name.trim()) {
-                setStatuses([...statuses, { ...newStatus }]);
-                setNewStatus({ id: '', name: '' });
+              if (newStatus.trim()) {
+                setStatuses([...statuses, newStatus.trim()]);
+                setNewStatus('');
               }
             }}
             className="px-3 py-1 bg-slate-200 rounded"
