@@ -115,6 +115,7 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
         <DetailItem label="생성일시" value={formattedDate} />
         <DetailItem label="수정일시" value={formattedUpdated} />
         {formattedResolved && <DetailItem label="해결일시" value={formattedResolved} />}
+        {issue.resolution && <DetailItem label="해결 사유" value={issue.resolution} />}
         {issue.attachments && issue.attachments.length > 0 && (
           <DetailItem
             label="첨부 파일"

@@ -1,6 +1,12 @@
 
 export type ResolutionStatus = string;
 
+export const DEFAULT_RESOLUTIONS: string[] = [
+  "완료",
+  "원하지 않음",
+  "재현 불가",
+];
+
 export interface StatusOption {
   id: string;
   name: string;
@@ -17,6 +23,7 @@ export interface Issue {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   resolvedAt?: string; // ISO date string when issue is resolved/closed
+  resolution?: string;
   history?: IssueHistoryEntry[];
 }
 

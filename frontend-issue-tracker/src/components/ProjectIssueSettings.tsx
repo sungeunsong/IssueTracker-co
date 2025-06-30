@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DEFAULT_PRIORITIES } from '../types';
+import { DEFAULT_PRIORITIES, DEFAULT_RESOLUTIONS } from '../types';
 
 interface Props {
   projectId: string;
@@ -8,8 +8,10 @@ interface Props {
 const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
   const [statuses, setStatuses] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
+  const [resolutions, setResolutions] = useState<string[]>([]);
   const [newStatus, setNewStatus] = useState('');
   const [newPriority, setNewPriority] = useState('');
+  const [newResolution, setNewResolution] = useState('');
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -18,9 +20,11 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
         const data = await res.json();
         setStatuses(data.statuses || []);
         setPriorities(data.priorities || DEFAULT_PRIORITIES);
+        setResolutions(data.resolutions || ["완료", "원하지 않음", "재현 불가"]);
       } else {
         setStatuses([]);
         setPriorities(DEFAULT_PRIORITIES);
+        setResolutions(DEFAULT_RESOLUTIONS);
       }
     };
     fetchSettings();
@@ -30,7 +34,7 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
     await fetch(`/api/projects/${projectId}/issue-settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ statuses, priorities }),
+      body: JSON.stringify({ statuses, priorities, resolutions }),
     });
   };
 
@@ -112,6 +116,49 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
               if (newPriority.trim()) {
                 setPriorities([...priorities, newPriority.trim()]);
                 setNewPriority('');
+              }
+            }}
+            className="px-3 py-1 bg-slate-200 rounded"
+          >
+            추가
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-2">Resolution Reasons</h3>
+        <ul className="space-y-2">
+          {resolutions.map((r, idx) => (
+            <li key={idx} className="flex space-x-2">
+              <input
+                value={r}
+                onChange={(e) =>
+                  setResolutions(resolutions.map((v, i) => (i === idx ? e.target.value : v)))
+                }
+                className="border border-slate-300 rounded px-2 py-1 flex-1"
+                placeholder="해결 사유"
+              />
+              <button
+                onClick={() => setResolutions(resolutions.filter((_, i) => i !== idx))}
+                className="text-red-600 px-2"
+              >
+                삭제
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-2 flex space-x-2">
+          <input
+            value={newResolution}
+            onChange={(e) => setNewResolution(e.target.value)}
+            className="border border-slate-300 rounded px-2 py-1 flex-1"
+            placeholder="새 해결 사유"
+          />
+          <button
+            onClick={() => {
+              if (newResolution.trim()) {
+                setResolutions([...resolutions, newResolution.trim()]);
+                setNewResolution('');
               }
             }}
             className="px-3 py-1 bg-slate-200 rounded"
