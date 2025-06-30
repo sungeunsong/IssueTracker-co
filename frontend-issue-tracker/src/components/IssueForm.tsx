@@ -55,7 +55,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState<StatusEnum>(ResolutionStatus.OPEN);
   const [type, setType] = useState<TypeEnum>(IssueType.TASK); // Default to TASK
-  const [priority, setPriority] = useState<PriorityEnum>(PriorityEnum.MEDIUM);
+  const [priority, setPriority] = useState<PriorityEnum>(IssuePriority.MEDIUM);
   const [affectsVersion, setAffectsVersion] = useState("");
   const [fixVersion, setFixVersion] = useState("");
   const [projectId, setProjectId] = useState<string>("");
@@ -78,7 +78,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setComment(initialData.comment || "");
       setStatus(initialData.status || ResolutionStatus.OPEN);
       setType(initialData.type || IssueType.TASK);
-      setPriority(initialData.priority || PriorityEnum.MEDIUM);
+      setPriority(initialData.priority || IssuePriority.MEDIUM);
       setAffectsVersion(initialData.affectsVersion || "");
       setFixVersion(initialData.fixVersion || "");
       setProjectId(
@@ -94,7 +94,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setComment("");
       setStatus(ResolutionStatus.OPEN);
       setType(IssueType.TASK); // Default for new issues
-      setPriority(PriorityEnum.MEDIUM);
+      setPriority(IssuePriority.MEDIUM);
       setAffectsVersion("");
       setFixVersion("");
       setProjectId(selectedProjectId || projects[0]?.id || "");
@@ -108,7 +108,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   useEffect(() => {
     if (projectId) {
       fetch(`/api/projects/${projectId}/versions`)
-        .then((res) => res.ok ? res.json() : [])
+        .then((res) => (res.ok ? res.json() : []))
         .then((data) => setVersions(data as Version[]))
         .catch(() => setVersions([]));
     } else {
@@ -262,13 +262,13 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           disabled={isSubmitting}
           required
         >
-          {(Object.keys(IssuePriority) as Array<keyof typeof IssuePriority>).map(
-            (pKey) => (
-              <option key={pKey} value={IssuePriority[pKey]}>
-                {issuePriorityDisplayNames[IssuePriority[pKey]]}
-              </option>
-            )
-          )}
+          {(
+            Object.keys(IssuePriority) as Array<keyof typeof IssuePriority>
+          ).map((pKey) => (
+            <option key={pKey} value={IssuePriority[pKey]}>
+              {issuePriorityDisplayNames[IssuePriority[pKey]]}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -431,7 +431,10 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       </div>
 
       <div>
-        <label htmlFor="issue-files" className="block text-sm font-medium text-slate-700 mb-1">
+        <label
+          htmlFor="issue-files"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
           첨부 파일
         </label>
         <input

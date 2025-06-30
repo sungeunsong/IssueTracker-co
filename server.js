@@ -43,6 +43,19 @@ const ADMIN_USERID = "apadmin";
 const ADMIN_USERNAME = "관리자";
 const ADMIN_PASSWORD = "0000";
 
+const INITIAL_ISSUE_STATUS = "OPEN";
+const VALID_STATUSES = [
+  "OPEN",
+  "IN_PROGRESS",
+  "RESOLVED",
+  "VALIDATING",
+  "CLOSED",
+  "WONT_DO",
+];
+const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
+const VALID_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
+const DEFAULT_PRIORITY = "MEDIUM";
+
 async function ensureAdminUser() {
   const existing = await usersCollection.findOne({ userid: ADMIN_USERID });
   if (!existing) {
@@ -61,7 +74,10 @@ await ensureAdminUser();
 
 async function migrateIssues() {
   const cursor = issuesCollection.find({
-    $or: [{ updatedAt: { $exists: false } }, { resolvedAt: { $exists: false } }],
+    $or: [
+      { updatedAt: { $exists: false } },
+      { resolvedAt: { $exists: false } },
+    ],
   });
   for await (const doc of cursor) {
     const updates = {};
@@ -85,25 +101,6 @@ async function migrateIssues() {
 
 await migrateIssues();
 
-const INITIAL_ISSUE_STATUS = "OPEN";
-const VALID_STATUSES = [
-  "OPEN",
-  "IN_PROGRESS",
-  "RESOLVED",
-  "VALIDATING",
-  "CLOSED",
-  "WONT_DO",
-];
-const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
-const VALID_PRIORITIES = [
-  "HIGHEST",
-  "HIGH",
-  "MEDIUM",
-  "LOW",
-  "LOWEST",
-];
-const DEFAULT_PRIORITY = "MEDIUM";
-
 app.use(express.json());
 app.use(
   session({
@@ -126,7 +123,15 @@ app.use("/api", (req, res, next) => {
 });
 
 function mapIssue(doc) {
-  const { _id, createdAt, updatedAt, resolvedAt, comments = [], history = [], ...rest } = doc;
+  const {
+    _id,
+    createdAt,
+    updatedAt,
+    resolvedAt,
+    comments = [],
+    history = [],
+    ...rest
+  } = doc;
   return {
     id: _id.toString(),
     createdAt,
@@ -179,7 +184,9 @@ app.post("/api/projects", async (req, res) => {
 });
 app.post("/api/register", async (req, res) => {
   if (!req.session.user || !req.session.user.isAdmin) {
-    return res.status(403).json({ message: "관리자만 사용자 등록이 가능합니다." });
+    return res
+      .status(403)
+      .json({ message: "관리자만 사용자 등록이 가능합니다." });
   }
   const { userid, username, password } = req.body;
   if (!userid || !username || !password) {
@@ -192,7 +199,12 @@ app.post("/api/register", async (req, res) => {
     return res.status(409).json({ message: "이미 존재하는 사용자입니다." });
   }
   const passwordHash = await bcrypt.hash(password, 10);
-  await usersCollection.insertOne({ userid, username, passwordHash, isAdmin: false });
+  await usersCollection.insertOne({
+    userid,
+    username,
+    passwordHash,
+    isAdmin: false,
+  });
   res.status(201).json({ message: "등록 완료" });
 });
 
@@ -293,7 +305,8 @@ app.put("/api/versions/:id", async (req, res) => {
   if (releaseDate !== undefined) update.releaseDate = releaseDate;
   if (leader !== undefined) update.leader = leader;
   if (description !== undefined)
-    update.description = description.trim() === "" ? undefined : description.trim();
+    update.description =
+      description.trim() === "" ? undefined : description.trim();
   if (released !== undefined) update.released = released;
   const result = await versionsCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
@@ -359,7 +372,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     });
   }
   const issuePriority =
-    priority && VALID_PRIORITIES.includes(priority) ? priority : DEFAULT_PRIORITY;
+    priority && VALID_PRIORITIES.includes(priority)
+      ? priority
+      : DEFAULT_PRIORITY;
   if (!projectId) {
     return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
   }
@@ -506,7 +521,10 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     historyEntry.fromStatus = fromStatus;
     historyEntry.toStatus = toStatus;
   }
-  const updateOperation = { $set: updateFields, $push: { history: historyEntry } };
+  const updateOperation = {
+    $set: updateFields,
+    $push: { history: historyEntry },
+  };
   if (req.files && Array.isArray(req.files) && req.files.length > 0) {
     updateOperation.$push.attachments = {
       $each: req.files.map((f) => ({
