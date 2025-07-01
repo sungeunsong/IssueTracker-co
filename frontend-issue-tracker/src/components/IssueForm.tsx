@@ -7,7 +7,7 @@ import type {
   User,
   Version,
 } from "../types";
-import { DEFAULT_ISSUE_TYPES, getPriorityDisplayName } from "../types";
+import { DEFAULT_ISSUE_TYPES } from "../types";
 import { PlusIcon } from "./icons/PlusIcon";
 import { RichTextEditor } from "./RichTextEditor";
 import type { IssueFormData } from "../App";
@@ -89,6 +89,26 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       }
     });
   }, [types]);
+
+  // 우선순위도 삽입
+  const prioritiesWithIcon = useMemo<TypeOption[]>(() => {
+    return priorities.map((priority): TypeOption => {
+      let upString = priority.toUpperCase();
+      if (upString === "HIGHEST") {
+        return { label: priority, value: priority, icon: "🔥" }; // 가장 시급
+      } else if (upString === "HIGH") {
+        return { label: priority, value: priority, icon: "⚠️" }; // 높은 중요도
+      } else if (upString === "MEDIUM") {
+        return { label: priority, value: priority, icon: "📌" }; // 일반
+      } else if (upString === "LOW") {
+        return { label: priority, value: priority, icon: "💤" }; // 낮음
+      } else if (upString === "LOWEST") {
+        return { label: priority, value: priority, icon: "🧊" }; // 가장 낮음
+      } else {
+        return { label: priority, value: priority, icon: "📦" }; // 기타
+      }
+    });
+  }, [priorities]);
 
   useEffect(() => {
     if (initialData) {
@@ -279,20 +299,27 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         >
           우선순위 <span className="text-red-500">*</span>
         </label>
-        <select
-          id="issue-priority"
-          value={priority}
-          onChange={(e) => setPriority(e.target.value as PriorityEnum)}
-          className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
-          disabled={isSubmitting}
-          required
-        >
-          {priorities.map((p) => (
-            <option key={p} value={p}>
-              {getPriorityDisplayName(p)}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            id="issue-priority"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as PriorityEnum)}
+            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md py-2 px-3 ${
+              typeError ? "border-red-500" : "border-slate-300"
+            }`}
+            disabled={isSubmitting}
+            required
+          >
+            {prioritiesWithIcon.map(({ value, label, icon }) => (
+              <option key={value} value={value}>
+                {icon} {label}
+              </option>
+            ))}
+          </select>
+          {typeError && (
+            <p className="mt-1 text-xs text-red-600">{typeError}</p>
+          )}
+        </div>
       </div>
 
       <div>

@@ -1,13 +1,11 @@
-
 export type ResolutionStatus = string;
-
 
 export type IssueType = string;
 export const DEFAULT_ISSUE_TYPES: IssueType[] = [
-  '작업',
-  '버그',
-  '새 기능',
-  '개선',
+  "작업",
+  "버그",
+  "새 기능",
+  "개선",
 ];
 
 export type IssuePriority = string;
@@ -85,39 +83,28 @@ export interface Project {
 }
 
 export const statusColors: Record<string, string> = {
-  '열림': 'bg-blue-100 text-blue-800 ring-blue-600/20',
-  '수정 중': 'bg-yellow-100 text-yellow-800 ring-yellow-600/20',
-  '수정 완료': 'bg-teal-100 text-teal-800 ring-teal-600/20',
-  '검증': 'bg-purple-100 text-purple-800 ring-purple-600/20',
-  '닫힘': 'bg-slate-100 text-slate-800 ring-slate-600/20',
-  '원치 않음': 'bg-gray-100 text-gray-800 ring-gray-600/20',
+  열림: "bg-blue-100 text-blue-800 ring-blue-600/20",
+  "수정 중": "bg-yellow-100 text-yellow-800 ring-yellow-600/20",
+  "수정 완료": "bg-teal-100 text-teal-800 ring-teal-600/20",
+  검증: "bg-purple-100 text-purple-800 ring-purple-600/20",
+  닫힘: "bg-slate-100 text-slate-800 ring-slate-600/20",
+  "원치 않음": "bg-gray-100 text-gray-800 ring-gray-600/20",
 };
 
 export const issueTypeColors: Record<string, string> = {
-  '작업': 'bg-sky-100 text-sky-800 ring-sky-600/20',
-  '버그': 'bg-red-100 text-red-800 ring-red-600/20',
-  '새 기능': 'bg-lime-100 text-lime-800 ring-lime-600/20',
-  '개선': 'bg-amber-100 text-amber-800 ring-amber-600/20',
-};
-
-export const issuePriorityDisplayNames: Record<string, string> = {
-  HIGHEST: 'Highest',
-  HIGH: 'High',
-  MEDIUM: 'Medium',
-  LOW: 'Low',
-  LOWEST: 'Lowest',
+  작업: "bg-sky-100 text-sky-800 ring-sky-600/20",
+  버그: "bg-red-100 text-red-800 ring-red-600/20",
+  "새 기능": "bg-lime-100 text-lime-800 ring-lime-600/20",
+  개선: "bg-amber-100 text-amber-800 ring-amber-600/20",
 };
 
 export const issuePriorityColors: Record<string, string> = {
-  HIGHEST: 'border-red-500',
-  HIGH: 'border-orange-500',
-  MEDIUM: 'border-yellow-500',
-  LOW: 'border-green-500',
-  LOWEST: 'border-blue-500',
+  HIGHEST: "border-red-500",
+  HIGH: "border-orange-500",
+  MEDIUM: "border-yellow-500",
+  LOW: "border-green-500",
+  LOWEST: "border-blue-500",
 };
-export const getPriorityDisplayName = (p: string) =>
-  issuePriorityDisplayNames[p] || p;
-
 
 export interface BoardColumn {
   id: ResolutionStatus;
@@ -135,4 +122,3 @@ export interface Version {
   description?: string;
   released: boolean;
 }
-
