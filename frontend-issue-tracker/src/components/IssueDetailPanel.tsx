@@ -4,8 +4,6 @@ import type { Issue, User } from "../types";
 import type { ResolutionStatus } from "../types";
 import {
   statusColors,
-  IssueType,
-  issueTypeDisplayNames,
   issueTypeColors,
   getPriorityDisplayName,
 } from "../types";
@@ -160,10 +158,10 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
             value={
               <span
                 className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  issueTypeColors[issue.type]
+                  issueTypeColors[issue.type] || 'bg-slate-100 text-slate-800 ring-slate-600/20'
                 }`}
               >
-                {issueTypeDisplayNames[issue.type]}
+                {issue.type}
               </span>
             }
           />

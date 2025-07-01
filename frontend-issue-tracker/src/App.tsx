@@ -16,12 +16,11 @@ import ResolveIssueModal from "./components/ResolveIssueModal";
 import type {
   Issue,
   ResolutionStatus as StatusEnum,
-  IssueType as TypeEnum,
   IssuePriority as PriorityEnum,
   Project,
   User,
 } from "./types";
-import { IssueType, DEFAULT_PRIORITIES } from "./types";
+import { DEFAULT_ISSUE_TYPES, DEFAULT_PRIORITIES } from "./types";
 import { LoginScreen } from "./components/LoginScreen";
 // import { PlusIcon } from './components/icons/PlusIcon'; // Not used directly here
 
@@ -34,7 +33,7 @@ export type IssueFormData = {
   assignee?: string;
   comment?: string;
   status?: StatusEnum; // Only for edit
-  type: TypeEnum; // New, mandatory
+  type: string; // New, mandatory
   priority: PriorityEnum;
   affectsVersion?: string; // New
   fixVersion?: string; // New, only for edit
@@ -819,6 +818,7 @@ const App: React.FC = () => {
           currentUserName={currentUser}
           statuses={currentProject?.statuses || []}
           priorities={currentProject?.priorities || DEFAULT_PRIORITIES}
+          types={currentProject?.types || DEFAULT_ISSUE_TYPES}
         />
       </Modal>
 
@@ -867,6 +867,10 @@ const App: React.FC = () => {
             priorities={
               projects.find((p) => p.id === selectedIssueForEdit.projectId)?.priorities ||
               DEFAULT_PRIORITIES
+            }
+            types={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.types ||
+              DEFAULT_ISSUE_TYPES
             }
           />
         </Modal>

@@ -4,7 +4,6 @@ import type { Issue, User } from "../types";
 import {
   statusColors,
   issueTypeColors,
-  issueTypeDisplayNames,
   issuePriorityColors,
 } from "../types";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
@@ -45,12 +44,12 @@ export const IssueCard: React.FC<IssueCardProps> = ({
         </h3>
         <span
           className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${
-            issueTypeColors[issue.type]
+            issueTypeColors[issue.type] || 'bg-slate-100 text-slate-800 ring-slate-600/20'
           } whitespace-nowrap`}
           style={{ fontSize: "0.65rem" }}
-          title={`Type: ${issueTypeDisplayNames[issue.type]}`}
+          title={`Type: ${issue.type}`}
         >
-          {issueTypeDisplayNames[issue.type]}
+          {issue.type}
         </span>
       </div>
 

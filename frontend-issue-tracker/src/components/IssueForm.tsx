@@ -2,15 +2,13 @@ import React, { useState, useEffect } from "react";
 import type {
   Issue,
   ResolutionStatus as StatusEnum,
-  IssueType as TypeEnum,
   IssuePriority as PriorityEnum,
   Project,
   User,
   Version,
 } from "../types";
 import {
-  IssueType,
-  issueTypeDisplayNames,
+  DEFAULT_ISSUE_TYPES,
   getPriorityDisplayName,
 } from "../types";
 import { PlusIcon } from "./icons/PlusIcon";
@@ -31,6 +29,7 @@ interface IssueFormProps {
   currentUserName: string | null;
   statuses: string[];
   priorities: PriorityEnum[];
+  types: string[];
 }
 
 export const IssueForm: React.FC<IssueFormProps> = ({
@@ -47,6 +46,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   currentUserName,
   statuses,
   priorities,
+  types,
 }) => {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
@@ -57,7 +57,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [status, setStatus] = useState<StatusEnum>(
     statuses[0] ? statuses[0] : ""
   );
-  const [type, setType] = useState<TypeEnum>(IssueType.TASK); // Default to TASK
+  const [type, setType] = useState<string>(types[0] || DEFAULT_ISSUE_TYPES[0]);
   const [priority, setPriority] = useState<PriorityEnum>(priorities[0]);
   const [affectsVersion, setAffectsVersion] = useState("");
   const [fixVersion, setFixVersion] = useState("");
@@ -80,7 +80,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setAssignee(initialData.assignee || "");
       setComment(initialData.comment || "");
       setStatus(initialData.status || statuses[0] || "");
-      setType(initialData.type || IssueType.TASK);
+      setType(initialData.type || types[0] || DEFAULT_ISSUE_TYPES[0]);
       setPriority(initialData.priority || priorities[0]);
       setAffectsVersion(initialData.affectsVersion || "");
       setFixVersion(initialData.fixVersion || "");
@@ -96,7 +96,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setAssignee("");
       setComment("");
       setStatus(statuses[0] || "");
-      setType(IssueType.TASK); // Default for new issues
+      setType(types[0] || DEFAULT_ISSUE_TYPES[0]);
       setPriority(priorities[0]);
       setAffectsVersion("");
       setFixVersion("");
@@ -230,7 +230,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           id="issue-type"
           value={type}
           onChange={(e) => {
-            setType(e.target.value as TypeEnum);
+            setType(e.target.value);
             if (typeError) setTypeError("");
           }}
           className={`mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 ${
@@ -239,13 +239,11 @@ export const IssueForm: React.FC<IssueFormProps> = ({
           disabled={isSubmitting}
           required
         >
-          {(Object.keys(IssueType) as Array<keyof typeof IssueType>).map(
-            (typeKey) => (
-              <option key={typeKey} value={IssueType[typeKey]}>
-                {issueTypeDisplayNames[IssueType[typeKey]]}
-              </option>
-            )
-          )}
+          {types.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
         {typeError && <p className="mt-1 text-xs text-red-600">{typeError}</p>}
       </div>

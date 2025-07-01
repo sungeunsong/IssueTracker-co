@@ -52,7 +52,7 @@ const DEFAULT_STATUSES = [
   "닫힘",
   "원치 않음",
 ];
-const VALID_ISSUE_TYPES = ["TASK", "BUG", "NEW_FEATURE", "IMPROVEMENT"];
+const DEFAULT_TYPES = ["작업", "버그", "새 기능", "개선"];
 const DEFAULT_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
 const DEFAULT_PRIORITY = "MEDIUM";
 const DEFAULT_RESOLUTIONS = ["완료", "원하지 않음", "재현 불가"];
@@ -89,6 +89,7 @@ async function migrateProjects() {
     }
     if (!proj.priorities) update.priorities = DEFAULT_PRIORITIES;
     if (!proj.resolutions) update.resolutions = DEFAULT_RESOLUTIONS;
+    if (!proj.types) update.types = DEFAULT_TYPES;
     if (Object.keys(update).length > 0) {
       await projectsCollection.updateOne({ _id: proj._id }, { $set: update });
     }
@@ -203,6 +204,7 @@ app.post("/api/projects", async (req, res) => {
     statuses: DEFAULT_STATUSES,
     priorities: DEFAULT_PRIORITIES,
     resolutions: DEFAULT_RESOLUTIONS,
+    types: DEFAULT_TYPES,
   });
   res.status(201).json({
     id: result.insertedId.toString(),
@@ -211,6 +213,7 @@ app.post("/api/projects", async (req, res) => {
     statuses: DEFAULT_STATUSES,
     priorities: DEFAULT_PRIORITIES,
     resolutions: DEFAULT_RESOLUTIONS,
+    types: DEFAULT_TYPES,
   });
 });
 app.post("/api/register", async (req, res) => {
@@ -307,16 +310,22 @@ app.get("/api/projects/:projectId/issue-settings", async (req, res) => {
     statuses: project.statuses || DEFAULT_STATUSES,
     priorities: project.priorities || DEFAULT_PRIORITIES,
     resolutions: project.resolutions || DEFAULT_RESOLUTIONS,
+    types: project.types || DEFAULT_TYPES,
   });
 });
 
 app.put("/api/projects/:projectId/issue-settings", async (req, res) => {
   const { projectId } = req.params;
-  const { statuses, priorities, resolutions } = req.body;
-  if (!Array.isArray(statuses) || !Array.isArray(priorities) || !Array.isArray(resolutions)) {
+  const { statuses, priorities, resolutions, types } = req.body;
+  if (
+    !Array.isArray(statuses) ||
+    !Array.isArray(priorities) ||
+    !Array.isArray(resolutions) ||
+    !Array.isArray(types)
+  ) {
     return res.status(400).json({ message: "Invalid data" });
   }
-  const update = { statuses, priorities, resolutions };
+  const update = { statuses, priorities, resolutions, types };
   await projectsCollection.updateOne({ _id: new ObjectId(projectId) }, { $set: update });
   res.json(update);
 });
@@ -419,13 +428,6 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
       .status(400)
       .json({ message: "제목, 내용과 등록자는 필수입니다." });
   }
-  if (!type || !VALID_ISSUE_TYPES.includes(type)) {
-    return res.status(400).json({
-      message: `유효한 업무 유형을 선택해야 합니다. 유효한 값: ${VALID_ISSUE_TYPES.join(
-        ", "
-      )}`,
-    });
-  }
   if (!projectId) {
     return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
   }
@@ -436,6 +438,10 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   );
   if (!projectResult) {
     return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
+  const allowedTypes = projectResult.types || DEFAULT_TYPES;
+  if (!type || !allowedTypes.includes(type)) {
+    return res.status(400).json({ message: "유효한 업무 유형을 선택해야 합니다." });
   }
   const allowedPriorities = projectResult.priorities || DEFAULT_PRIORITIES;
   const issuePriority =
@@ -558,12 +564,10 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     }
   }
   if (type !== undefined) {
-    if (!VALID_ISSUE_TYPES.includes(type)) {
-      return res.status(400).json({
-        message: `유효한 업무 유형을 제공해야 합니다. 유효한 값: ${VALID_ISSUE_TYPES.join(
-          ", "
-        )}`,
-      });
+    if (!project.types || !project.types.includes(type)) {
+      return res
+        .status(400)
+        .json({ message: "유효한 업무 유형을 제공해야 합니다." });
     }
     updateFields.type = type;
   }
