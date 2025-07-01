@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import type {
   Issue,
   ResolutionStatus as StatusEnum,
@@ -7,10 +7,7 @@ import type {
   User,
   Version,
 } from "../types";
-import {
-  DEFAULT_ISSUE_TYPES,
-  getPriorityDisplayName,
-} from "../types";
+import { DEFAULT_ISSUE_TYPES, getPriorityDisplayName } from "../types";
 import { PlusIcon } from "./icons/PlusIcon";
 import { RichTextEditor } from "./RichTextEditor";
 import type { IssueFormData } from "../App";
@@ -30,6 +27,12 @@ interface IssueFormProps {
   statuses: string[];
   priorities: PriorityEnum[];
   types: string[];
+}
+
+interface TypeOption {
+  label: string;
+  value: string;
+  icon: string;
 }
 
 export const IssueForm: React.FC<IssueFormProps> = ({
@@ -69,6 +72,23 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [titleError, setTitleError] = useState("");
   const [reporterError, setReporterError] = useState("");
   const [typeError, setTypeError] = useState("");
+
+  // 초기에 업무 유형에 아이콘을 삽입하자
+  const typesWithIcon = useMemo<TypeOption[]>(() => {
+    return types.map((type): TypeOption => {
+      if (type === "버그") {
+        return { label: type, value: type, icon: "🐞" };
+      } else if (type === "개선") {
+        return { label: type, value: type, icon: "⬆️" };
+      } else if (type === "작업") {
+        return { label: type, value: type, icon: "📝" };
+      } else if (type === "새 기능") {
+        return { label: type, value: type, icon: "➕" };
+      } else {
+        return { label: type, value: type, icon: "📦" };
+      }
+    });
+  }, [types]);
 
   useEffect(() => {
     if (initialData) {
@@ -226,26 +246,30 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         >
           업무 유형 <span className="text-red-500">*</span>
         </label>
-        <select
-          id="issue-type"
-          value={type}
-          onChange={(e) => {
-            setType(e.target.value);
-            if (typeError) setTypeError("");
-          }}
-          className={`mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 ${
-            typeError ? "border-red-500" : "border-slate-300"
-          }`}
-          disabled={isSubmitting}
-          required
-        >
-          {types.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        {typeError && <p className="mt-1 text-xs text-red-600">{typeError}</p>}
+        <div className="relative">
+          <select
+            id="issue-type"
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              if (typeError) setTypeError("");
+            }}
+            className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md py-2 px-3 ${
+              typeError ? "border-red-500" : "border-slate-300"
+            }`}
+            disabled={isSubmitting}
+            required
+          >
+            {typesWithIcon.map(({ value, label, icon }) => (
+              <option key={value} value={value}>
+                {icon} {label}
+              </option>
+            ))}
+          </select>
+          {typeError && (
+            <p className="mt-1 text-xs text-red-600">{typeError}</p>
+          )}
+        </div>
       </div>
 
       <div>
