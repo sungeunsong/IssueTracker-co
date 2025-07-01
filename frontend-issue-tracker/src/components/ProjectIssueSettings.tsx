@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DEFAULT_PRIORITIES, DEFAULT_RESOLUTIONS } from '../types';
+import { DEFAULT_PRIORITIES, DEFAULT_RESOLUTIONS, DEFAULT_ISSUE_TYPES } from '../types';
 import EditableList from './EditableList'; // 재사용할 자식 컴포넌트
 
 interface Props {
@@ -11,11 +11,13 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
   const [statuses, setStatuses] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
   const [resolutions, setResolutions] = useState<string[]>([]);
+  const [types, setTypes] = useState<string[]>([]);
 
   // 변경 여부(isDirty)를 확인하기 위한 초기 상태
   const [initialStatuses, setInitialStatuses] = useState<string[]>([]);
   const [initialPriorities, setInitialPriorities] = useState<string[]>([]);
   const [initialResolutions, setInitialResolutions] = useState<string[]>([]);
+  const [initialTypes, setInitialTypes] = useState<string[]>([]);
 
   // UI 상태
   const [isLoading, setIsLoading] = useState(true);
@@ -32,18 +34,22 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
           setStatuses(data.statuses || []);
           setPriorities(data.priorities || DEFAULT_PRIORITIES);
           setResolutions(data.resolutions || DEFAULT_RESOLUTIONS);
+          setTypes(data.types || DEFAULT_ISSUE_TYPES);
 
           setInitialStatuses(data.statuses || []);
           setInitialPriorities(data.priorities || DEFAULT_PRIORITIES);
           setInitialResolutions(data.resolutions || DEFAULT_RESOLUTIONS);
+          setInitialTypes(data.types || DEFAULT_ISSUE_TYPES);
         } else {
           // API 실패 시 기본값으로 설정
           setStatuses([]);
           setPriorities(DEFAULT_PRIORITIES);
           setResolutions(DEFAULT_RESOLUTIONS);
+          setTypes(DEFAULT_ISSUE_TYPES);
           setInitialStatuses([]);
           setInitialPriorities(DEFAULT_PRIORITIES);
           setInitialResolutions(DEFAULT_RESOLUTIONS);
+          setInitialTypes(DEFAULT_ISSUE_TYPES);
         }
       } catch (error) {
         console.error("Failed to fetch settings:", error);
@@ -60,7 +66,7 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
       const res = await fetch(`/api/projects/${projectId}/issue-settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statuses, priorities, resolutions }),
+        body: JSON.stringify({ statuses, priorities, resolutions, types }),
       });
 
       if (res.ok) {
@@ -68,6 +74,7 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
         setInitialStatuses(statuses);
         setInitialPriorities(priorities);
         setInitialResolutions(resolutions);
+        setInitialTypes(types);
       } else {
         // 에러 처리 (예: 사용자에게 Toast 알림)
         console.error("Failed to save settings");
@@ -83,7 +90,8 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
   const isDirty =
     JSON.stringify(statuses) !== JSON.stringify(initialStatuses) ||
     JSON.stringify(priorities) !== JSON.stringify(initialPriorities) ||
-    JSON.stringify(resolutions) !== JSON.stringify(initialResolutions);
+    JSON.stringify(resolutions) !== JSON.stringify(initialResolutions) ||
+    JSON.stringify(types) !== JSON.stringify(initialTypes);
 
   if (isLoading) {
     return <div className="p-4">Loading settings...</div>;
@@ -98,6 +106,12 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
           items={statuses}
           setItems={setStatuses}
           placeholder="새 상태"
+        />
+        <EditableList
+          title="Issue Types"
+          items={types}
+          setItems={setTypes}
+          placeholder="새 유형"
         />
         <EditableList
           title="Issue Priorities"

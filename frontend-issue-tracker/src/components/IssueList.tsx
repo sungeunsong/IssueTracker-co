@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Issue, User } from '../types';
 import type { ResolutionStatus } from '../types';
-import { statusColors, issueTypeDisplayNames, issueTypeColors } from '../types';
+import { statusColors, issueTypeColors } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PencilIcon } from './icons/PencilIcon';
 import { EyeIcon } from './icons/EyeIcon';
@@ -169,9 +169,9 @@ export const IssueList: React.FC<IssueListProps> = ({
               </td>
               <td className="px-3 py-3 whitespace-nowrap">
                  <span
-                  className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${issueTypeColors[issue.type]}`}
+                  className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${issueTypeColors[issue.type] || 'bg-slate-100 text-slate-800 ring-slate-600/20'}`}
                 >
-                  {issueTypeDisplayNames[issue.type]}
+                  {issue.type}
                 </span>
               </td>
               <td className="px-3 py-3 whitespace-nowrap">

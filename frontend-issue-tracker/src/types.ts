@@ -2,12 +2,13 @@
 export type ResolutionStatus = string;
 
 
-export enum IssueType {
-  TASK = "TASK",
-  BUG = "BUG",
-  NEW_FEATURE = "NEW_FEATURE",
-  IMPROVEMENT = "IMPROVEMENT",
-}
+export type IssueType = string;
+export const DEFAULT_ISSUE_TYPES: IssueType[] = [
+  '작업',
+  '버그',
+  '새 기능',
+  '개선',
+];
 
 export type IssuePriority = string;
 export const DEFAULT_PRIORITIES: IssuePriority[] = [
@@ -80,6 +81,7 @@ export interface Project {
   statuses?: string[];
   priorities?: IssuePriority[];
   resolutions?: string[];
+  types?: IssueType[];
 }
 
 export const statusColors: Record<string, string> = {
@@ -91,18 +93,11 @@ export const statusColors: Record<string, string> = {
   '원치 않음': 'bg-gray-100 text-gray-800 ring-gray-600/20',
 };
 
-export const issueTypeDisplayNames: Record<IssueType, string> = {
-  [IssueType.TASK]: "작업",
-  [IssueType.BUG]: "버그",
-  [IssueType.NEW_FEATURE]: "새 기능",
-  [IssueType.IMPROVEMENT]: "개선",
-};
-
-export const issueTypeColors: Record<IssueType, string> = {
-  [IssueType.TASK]: 'bg-sky-100 text-sky-800 ring-sky-600/20',
-  [IssueType.BUG]: 'bg-red-100 text-red-800 ring-red-600/20',
-  [IssueType.NEW_FEATURE]: 'bg-lime-100 text-lime-800 ring-lime-600/20',
-  [IssueType.IMPROVEMENT]: 'bg-amber-100 text-amber-800 ring-amber-600/20',
+export const issueTypeColors: Record<string, string> = {
+  '작업': 'bg-sky-100 text-sky-800 ring-sky-600/20',
+  '버그': 'bg-red-100 text-red-800 ring-red-600/20',
+  '새 기능': 'bg-lime-100 text-lime-800 ring-lime-600/20',
+  '개선': 'bg-amber-100 text-amber-800 ring-amber-600/20',
 };
 
 export const issuePriorityDisplayNames: Record<string, string> = {
