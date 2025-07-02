@@ -39,6 +39,7 @@ export interface Issue {
   type: IssueType; // New
   priority: IssuePriority;
   component?: string;
+  customer?: string;
   affectsVersion?: string; // New
   fixVersion?: string; // New
   projectId: string;
@@ -82,6 +83,9 @@ export interface Project {
   resolutions?: string[];
   types?: IssueType[];
   components?: string[];
+  customers?: string[];
+  showCustomers?: boolean;
+  showComponents?: boolean;
 }
 
 export const statusColors: Record<string, string> = {
@@ -126,6 +130,15 @@ export interface Version {
 }
 
 export interface Component {
+  id: string;
+  projectId: string;
+  name: string;
+  description?: string;
+  owners: string[];
+  issueCount?: number;
+}
+
+export interface Customer {
   id: string;
   projectId: string;
   name: string;

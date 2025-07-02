@@ -4,6 +4,8 @@ import ProjectSettingsSidebar from './components/ProjectSettingsSidebar';
 import ProjectVersions from './components/ProjectVersions';
 import ProjectIssueSettings from './components/ProjectIssueSettings';
 import ProjectComponents from './components/ProjectComponents';
+import ProjectCustomers from './components/ProjectCustomers';
+import ProjectDetails from './components/ProjectDetails';
 import type { User } from './types';
 
 interface LocationState {
@@ -48,9 +50,21 @@ export const ProjectSettingsPage: React.FC = () => {
       />
       <main className="flex-1 p-6 overflow-auto">
         <h2 className="text-xl font-semibold mb-4">{activeSection}</h2>
-        {activeSection === '버전' ? (
+        {activeSection === '세부사항' ? (
+          projectId ? (
+            <ProjectDetails projectId={projectId} />
+          ) : (
+            <div>프로젝트 ID가 없습니다.</div>
+          )
+        ) : activeSection === '버전' ? (
           projectId ? (
             <ProjectVersions projectId={projectId} users={users} currentUserId={currentUserId} />
+          ) : (
+            <div>프로젝트 ID가 없습니다.</div>
+          )
+        ) : activeSection === '고객사' ? (
+          projectId ? (
+            <ProjectCustomers projectId={projectId} users={users} />
           ) : (
             <div>프로젝트 ID가 없습니다.</div>
           )
