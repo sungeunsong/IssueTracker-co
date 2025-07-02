@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Modal } from './Modal';
-import { ConfirmationModal } from './ConfirmationModal';
-import ComponentForm from './ComponentForm';
-import type { Component, User } from '../types';
-import { EllipsisVerticalIcon } from './icons/EllipsisVerticalIcon';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Modal } from "./Modal";
+import { ConfirmationModal } from "./ConfirmationModal";
+import ComponentForm from "./ComponentForm";
+import type { Component, User } from "../types";
+import { EllipsisVerticalIcon } from "./icons/EllipsisVerticalIcon";
 
 interface ActionMenuProps {
   onEdit: () => void;
@@ -20,12 +20,12 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ onEdit, onDelete }) => {
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative inline-block" ref={ref}>
       <button
         type="button"
         className="flex items-center text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100"
@@ -37,13 +37,19 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ onEdit, onDelete }) => {
         <div className="origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
           <div className="py-1">
             <button
-              onClick={() => { onEdit(); setOpen(false); }}
+              onClick={() => {
+                onEdit();
+                setOpen(false);
+              }}
               className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
             >
               수정
             </button>
             <button
-              onClick={() => { onDelete(); setOpen(false); }}
+              onClick={() => {
+                onDelete();
+                setOpen(false);
+              }}
               className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
             >
               삭제
@@ -81,14 +87,14 @@ export const ProjectComponents: React.FC<Props> = ({ projectId, users }) => {
   const handleSave = async (data: Partial<Component>) => {
     if (editComponent) {
       await fetch(`/api/components/${editComponent.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     } else {
       await fetch(`/api/projects/${projectId}/components`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     }
@@ -99,7 +105,7 @@ export const ProjectComponents: React.FC<Props> = ({ projectId, users }) => {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    await fetch(`/api/components/${deleteId}`, { method: 'DELETE' });
+    await fetch(`/api/components/${deleteId}`, { method: "DELETE" });
     setDeleteId(null);
     fetchComponents();
   };
@@ -126,16 +132,23 @@ export const ProjectComponents: React.FC<Props> = ({ projectId, users }) => {
           {components.map((c) => (
             <tr key={c.id}>
               <td className="px-3 py-2 whitespace-nowrap">{c.name}</td>
-              <td className="px-3 py-2 whitespace-nowrap">{c.description || '-'}</td>
               <td className="px-3 py-2 whitespace-nowrap">
-                {c.owners.map((o) => users.find((u) => u.userid === o)?.username || o).join(', ') || '-'}
+                {c.description || "-"}
+              </td>
+              <td className="px-3 py-2 whitespace-nowrap">
+                {c.owners
+                  .map((o) => users.find((u) => u.userid === o)?.username || o)
+                  .join(", ") || "-"}
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-center">
                 {c.issueCount ?? 0}
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-center">
                 <ActionMenu
-                  onEdit={() => { setEditComponent(c); setShowModal(true); }}
+                  onEdit={() => {
+                    setEditComponent(c);
+                    setShowModal(true);
+                  }}
                   onDelete={() => setDeleteId(c.id)}
                 />
               </td>
@@ -145,15 +158,21 @@ export const ProjectComponents: React.FC<Props> = ({ projectId, users }) => {
       </table>
       <Modal
         isOpen={showModal}
-        onClose={() => { setShowModal(false); setEditComponent(null); }}
+        onClose={() => {
+          setShowModal(false);
+          setEditComponent(null);
+        }}
         title="컴포넌트"
       >
         <ComponentForm
           initialData={editComponent || undefined}
           onSubmit={handleSave}
-          onCancel={() => { setShowModal(false); setEditComponent(null); }}
+          onCancel={() => {
+            setShowModal(false);
+            setEditComponent(null);
+          }}
           users={users}
-          submitText={editComponent ? '저장' : '생성'}
+          submitText={editComponent ? "저장" : "생성"}
         />
       </Modal>
       {deleteId && (
