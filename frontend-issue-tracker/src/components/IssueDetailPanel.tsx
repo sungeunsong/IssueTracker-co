@@ -182,6 +182,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                   : undefined
               }
             />
+            <DetailItem label="컴포넌트" value={issue.component} />
             <DetailItem label="영향을 받는 버전" value={issue.affectsVersion} />
             <DetailItem label="수정 버전" value={issue.fixVersion} />
             <DetailItem label="해결 사유" value={issue.resolution} />

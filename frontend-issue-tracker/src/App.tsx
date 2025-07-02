@@ -35,6 +35,7 @@ export type IssueFormData = {
   status?: StatusEnum; // Only for edit
   type: string; // New, mandatory
   priority: PriorityEnum;
+  component?: string;
   affectsVersion?: string; // New
   fixVersion?: string; // New, only for edit
   projectId: string;
@@ -819,6 +820,7 @@ const App: React.FC = () => {
           statuses={currentProject?.statuses || []}
           priorities={currentProject?.priorities || DEFAULT_PRIORITIES}
           types={currentProject?.types || DEFAULT_ISSUE_TYPES}
+          components={currentProject?.components || []}
         />
       </Modal>
 
@@ -871,6 +873,10 @@ const App: React.FC = () => {
             types={
               projects.find((p) => p.id === selectedIssueForEdit.projectId)?.types ||
               DEFAULT_ISSUE_TYPES
+            }
+            components={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.components ||
+              []
             }
           />
         </Modal>

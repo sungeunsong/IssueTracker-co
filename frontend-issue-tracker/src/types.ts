@@ -38,6 +38,7 @@ export interface Issue {
   resolution?: string;
   type: IssueType; // New
   priority: IssuePriority;
+  component?: string;
   affectsVersion?: string; // New
   fixVersion?: string; // New
   projectId: string;
@@ -80,6 +81,7 @@ export interface Project {
   priorities?: IssuePriority[];
   resolutions?: string[];
   types?: IssueType[];
+  components?: string[];
 }
 
 export const statusColors: Record<string, string> = {
