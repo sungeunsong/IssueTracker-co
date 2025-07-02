@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProjectSettingsSidebar from './components/ProjectSettingsSidebar';
 import ProjectVersions from './components/ProjectVersions';
 import ProjectIssueSettings from './components/ProjectIssueSettings';
+import ProjectComponents from './components/ProjectComponents';
 import type { User } from './types';
 
 interface LocationState {
@@ -50,6 +51,12 @@ export const ProjectSettingsPage: React.FC = () => {
         {activeSection === '버전' ? (
           projectId ? (
             <ProjectVersions projectId={projectId} users={users} currentUserId={currentUserId} />
+          ) : (
+            <div>프로젝트 ID가 없습니다.</div>
+          )
+        ) : activeSection === '컴포넌트' ? (
+          projectId ? (
+            <ProjectComponents projectId={projectId} users={users} />
           ) : (
             <div>프로젝트 ID가 없습니다.</div>
           )

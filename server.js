@@ -38,6 +38,7 @@ const issuesCollection = db.collection("issues");
 const projectsCollection = db.collection("projects");
 const usersCollection = db.collection("users");
 const versionsCollection = db.collection("versions");
+const componentsCollection = db.collection("components");
 
 const ADMIN_USERID = "apadmin";
 const ADMIN_USERNAME = "관리자";
@@ -181,6 +182,11 @@ function mapVersion(doc) {
   return { id: _id.toString(), ...rest };
 }
 
+function mapComponent(doc) {
+  const { _id, ...rest } = doc;
+  return { id: _id.toString(), ...rest };
+}
+
 app.get("/api/projects", async (req, res) => {
   const projects = await projectsCollection.find().toArray();
   res.json(projects.map(mapProject));
@@ -310,28 +316,31 @@ app.get("/api/projects/:projectId/issue-settings", async (req, res) => {
   if (!project) {
     return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
   }
+  const comps = await componentsCollection
+    .find({ projectId })
+    .project({ name: 1 })
+    .toArray();
   res.json({
     statuses: project.statuses || DEFAULT_STATUSES,
     priorities: project.priorities || DEFAULT_PRIORITIES,
     resolutions: project.resolutions || DEFAULT_RESOLUTIONS,
     types: project.types || DEFAULT_TYPES,
-    components: project.components || DEFAULT_COMPONENTS,
+    components: comps.map((c) => c.name),
   });
 });
 
 app.put("/api/projects/:projectId/issue-settings", async (req, res) => {
   const { projectId } = req.params;
-  const { statuses, priorities, resolutions, types, components } = req.body;
+  const { statuses, priorities, resolutions, types } = req.body;
   if (
     !Array.isArray(statuses) ||
     !Array.isArray(priorities) ||
     !Array.isArray(resolutions) ||
-    !Array.isArray(types) ||
-    !Array.isArray(components)
+    !Array.isArray(types)
   ) {
     return res.status(400).json({ message: "Invalid data" });
   }
-  const update = { statuses, priorities, resolutions, types, components };
+  const update = { statuses, priorities, resolutions, types };
   await projectsCollection.updateOne({ _id: new ObjectId(projectId) }, { $set: update });
   res.json(update);
 });
@@ -398,6 +407,99 @@ app.delete("/api/versions/:id", async (req, res) => {
   res.status(204).send();
 });
 
+app.get("/api/projects/:projectId/components", async (req, res) => {
+  const { projectId } = req.params;
+  const comps = await componentsCollection
+    .find({ projectId })
+    .sort({ name: 1 })
+    .toArray();
+  const countsArr = await issuesCollection
+    .aggregate([
+      { $match: { projectId, component: { $ne: null } } },
+      { $group: { _id: "$component", count: { $sum: 1 } } },
+    ])
+    .toArray();
+  const countMap = Object.fromEntries(countsArr.map((c) => [c._id, c.count]));
+  res.json(
+    comps.map((c) => ({
+      ...mapComponent(c),
+      issueCount: countMap[c.name] || 0,
+    }))
+  );
+});
+
+app.post("/api/projects/:projectId/components", async (req, res) => {
+  const { projectId } = req.params;
+  const { name, description, owners } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: "이름은 필수입니다." });
+  }
+  const doc = {
+    projectId,
+    name: name.trim(),
+    description: description?.trim() || undefined,
+    owners: Array.isArray(owners) ? owners : [],
+    createdAt: new Date().toISOString(),
+  };
+  const result = await componentsCollection.insertOne(doc);
+  await projectsCollection.updateOne(
+    { _id: new ObjectId(projectId) },
+    { $addToSet: { components: doc.name } }
+  );
+  res
+    .status(201)
+    .json({ id: result.insertedId.toString(), ...doc, issueCount: 0 });
+});
+
+app.put("/api/components/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, description, owners } = req.body;
+  const existing = await componentsCollection.findOne({ _id: new ObjectId(id) });
+  if (!existing) {
+    return res.status(404).json({ message: "컴포넌트를 찾을 수 없습니다." });
+  }
+  const update = { updatedAt: new Date().toISOString() };
+  if (name !== undefined) update.name = name.trim();
+  if (description !== undefined)
+    update.description = description.trim() === "" ? undefined : description.trim();
+  if (owners !== undefined) update.owners = Array.isArray(owners) ? owners : [];
+  await componentsCollection.updateOne({ _id: new ObjectId(id) }, { $set: update });
+  if (name !== undefined && name.trim() !== existing.name) {
+    await projectsCollection.updateOne(
+      { _id: new ObjectId(existing.projectId) },
+      { $pull: { components: existing.name } }
+    );
+    await projectsCollection.updateOne(
+      { _id: new ObjectId(existing.projectId) },
+      { $addToSet: { components: name.trim() } }
+    );
+    await issuesCollection.updateMany(
+      { projectId: existing.projectId, component: existing.name },
+      { $set: { component: name.trim() } }
+    );
+  }
+  const updated = await componentsCollection.findOne({ _id: new ObjectId(id) });
+  const issueCount = await issuesCollection.countDocuments({
+    projectId: existing.projectId,
+    component: updated.name,
+  });
+  res.json({ ...mapComponent(updated), issueCount });
+});
+
+app.delete("/api/components/:id", async (req, res) => {
+  const { id } = req.params;
+  const existing = await componentsCollection.findOne({ _id: new ObjectId(id) });
+  if (!existing) {
+    return res.status(404).json({ message: "컴포넌트를 찾을 수 없습니다." });
+  }
+  await componentsCollection.deleteOne({ _id: new ObjectId(id) });
+  await projectsCollection.updateOne(
+    { _id: new ObjectId(existing.projectId) },
+    { $pull: { components: existing.name } }
+  );
+  res.status(204).send();
+});
+
 app.get("/api/issues", async (req, res) => {
   const { projectId } = req.query;
   const filter = projectId ? { projectId } : {};
@@ -451,7 +553,11 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     return res.status(400).json({ message: "유효한 업무 유형을 선택해야 합니다." });
   }
   const allowedPriorities = projectResult.priorities || DEFAULT_PRIORITIES;
-  const allowedComponents = projectResult.components || DEFAULT_COMPONENTS;
+  const comps = await componentsCollection
+    .find({ projectId })
+    .project({ name: 1 })
+    .toArray();
+  const allowedComponents = comps.map((c) => c.name);
   const issuePriority =
     priority && allowedPriorities.includes(priority)
       ? priority
@@ -593,7 +699,12 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     updateFields.priority = priority;
   }
   if (component !== undefined) {
-    if (project.components && !project.components.includes(component) && component !== "") {
+    const comps = await componentsCollection
+      .find({ projectId: project._id.toString() })
+      .project({ name: 1 })
+      .toArray();
+    const allowed = comps.map((c) => c.name);
+    if (!allowed.includes(component) && component !== "") {
       return res.status(400).json({ message: "유효한 컴포넌트를 제공해야 합니다." });
     }
     updateFields.component = component.trim() === "" ? undefined : component.trim();

@@ -124,3 +124,12 @@ export interface Version {
   description?: string;
   released: boolean;
 }
+
+export interface Component {
+  id: string;
+  projectId: string;
+  name: string;
+  description?: string;
+  owners: string[];
+  issueCount?: number;
+}
