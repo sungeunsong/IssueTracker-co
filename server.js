@@ -39,6 +39,7 @@ const projectsCollection = db.collection("projects");
 const usersCollection = db.collection("users");
 const versionsCollection = db.collection("versions");
 const componentsCollection = db.collection("components");
+const customersCollection = db.collection("customers");
 
 const ADMIN_USERID = "apadmin";
 const ADMIN_USERNAME = "관리자";
@@ -58,6 +59,7 @@ const DEFAULT_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
 const DEFAULT_PRIORITY = "MEDIUM";
 const DEFAULT_RESOLUTIONS = ["완료", "원하지 않음", "재현 불가"];
 const DEFAULT_COMPONENTS = [];
+const DEFAULT_CUSTOMERS = [];
 
 async function ensureAdminUser() {
   const existing = await usersCollection.findOne({ userid: ADMIN_USERID });
@@ -93,6 +95,9 @@ async function migrateProjects() {
     if (!proj.resolutions) update.resolutions = DEFAULT_RESOLUTIONS;
     if (!proj.types) update.types = DEFAULT_TYPES;
     if (!proj.components) update.components = DEFAULT_COMPONENTS;
+    if (!proj.customers) update.customers = DEFAULT_CUSTOMERS;
+    if (proj.showCustomers === undefined) update.showCustomers = true;
+    if (proj.showComponents === undefined) update.showComponents = true;
     if (Object.keys(update).length > 0) {
       await projectsCollection.updateOne({ _id: proj._id }, { $set: update });
     }
@@ -214,6 +219,9 @@ app.post("/api/projects", async (req, res) => {
     resolutions: DEFAULT_RESOLUTIONS,
     types: DEFAULT_TYPES,
     components: DEFAULT_COMPONENTS,
+    customers: DEFAULT_CUSTOMERS,
+    showCustomers: true,
+    showComponents: true,
   });
   res.status(201).json({
     id: result.insertedId.toString(),
@@ -224,7 +232,33 @@ app.post("/api/projects", async (req, res) => {
     resolutions: DEFAULT_RESOLUTIONS,
     types: DEFAULT_TYPES,
     components: DEFAULT_COMPONENTS,
+    customers: DEFAULT_CUSTOMERS,
+    showCustomers: true,
+    showComponents: true,
   });
+});
+
+app.get("/api/projects/:projectId", async (req, res) => {
+  const { projectId } = req.params;
+  const project = await projectsCollection.findOne({ _id: new ObjectId(projectId) });
+  if (!project) {
+    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
+  res.json(mapProject(project));
+});
+
+app.put("/api/projects/:projectId", async (req, res) => {
+  const { projectId } = req.params;
+  const { showCustomers, showComponents } = req.body;
+  const update = {};
+  if (showCustomers !== undefined) update.showCustomers = !!showCustomers;
+  if (showComponents !== undefined) update.showComponents = !!showComponents;
+  await projectsCollection.updateOne({ _id: new ObjectId(projectId) }, { $set: update });
+  const proj = await projectsCollection.findOne({ _id: new ObjectId(projectId) });
+  if (!proj) {
+    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
+  res.json(mapProject(proj));
 });
 app.post("/api/register", async (req, res) => {
   if (!req.session.user || !req.session.user.isAdmin) {
@@ -500,6 +534,96 @@ app.delete("/api/components/:id", async (req, res) => {
   res.status(204).send();
 });
 
+app.get("/api/projects/:projectId/customers", async (req, res) => {
+  const { projectId } = req.params;
+  const custs = await customersCollection
+    .find({ projectId })
+    .sort({ name: 1 })
+    .toArray();
+  const countsArr = await issuesCollection
+    .aggregate([
+      { $match: { projectId, customer: { $ne: null } } },
+      { $group: { _id: "$customer", count: { $sum: 1 } } },
+    ])
+    .toArray();
+  const countMap = Object.fromEntries(countsArr.map((c) => [c._id, c.count]));
+  res.json(
+    custs.map((c) => ({ ...mapComponent(c), issueCount: countMap[c.name] || 0 }))
+  );
+});
+
+app.post("/api/projects/:projectId/customers", async (req, res) => {
+  const { projectId } = req.params;
+  const { name, description, owners } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: "이름은 필수입니다." });
+  }
+  const doc = {
+    projectId,
+    name: name.trim(),
+    description: description?.trim() || undefined,
+    owners: Array.isArray(owners) ? owners : [],
+    createdAt: new Date().toISOString(),
+  };
+  const result = await customersCollection.insertOne(doc);
+  await projectsCollection.updateOne(
+    { _id: new ObjectId(projectId) },
+    { $addToSet: { customers: doc.name } }
+  );
+  res
+    .status(201)
+    .json({ id: result.insertedId.toString(), ...doc, issueCount: 0 });
+});
+
+app.put("/api/customers/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, description, owners } = req.body;
+  const existing = await customersCollection.findOne({ _id: new ObjectId(id) });
+  if (!existing) {
+    return res.status(404).json({ message: "고객사를 찾을 수 없습니다." });
+  }
+  const update = { updatedAt: new Date().toISOString() };
+  if (name !== undefined) update.name = name.trim();
+  if (description !== undefined)
+    update.description = description.trim() === "" ? undefined : description.trim();
+  if (owners !== undefined) update.owners = Array.isArray(owners) ? owners : [];
+  await customersCollection.updateOne({ _id: new ObjectId(id) }, { $set: update });
+  if (name !== undefined && name.trim() !== existing.name) {
+    await projectsCollection.updateOne(
+      { _id: new ObjectId(existing.projectId) },
+      { $pull: { customers: existing.name } }
+    );
+    await projectsCollection.updateOne(
+      { _id: new ObjectId(existing.projectId) },
+      { $addToSet: { customers: name.trim() } }
+    );
+    await issuesCollection.updateMany(
+      { projectId: existing.projectId, customer: existing.name },
+      { $set: { customer: name.trim() } }
+    );
+  }
+  const updated = await customersCollection.findOne({ _id: new ObjectId(id) });
+  const issueCount = await issuesCollection.countDocuments({
+    projectId: existing.projectId,
+    customer: updated.name,
+  });
+  res.json({ ...mapComponent(updated), issueCount });
+});
+
+app.delete("/api/customers/:id", async (req, res) => {
+  const { id } = req.params;
+  const existing = await customersCollection.findOne({ _id: new ObjectId(id) });
+  if (!existing) {
+    return res.status(404).json({ message: "고객사를 찾을 수 없습니다." });
+  }
+  await customersCollection.deleteOne({ _id: new ObjectId(id) });
+  await projectsCollection.updateOne(
+    { _id: new ObjectId(existing.projectId) },
+    { $pull: { customers: existing.name } }
+  );
+  res.status(204).send();
+});
+
 app.get("/api/issues", async (req, res) => {
   const { projectId } = req.query;
   const filter = projectId ? { projectId } : {};
@@ -530,6 +654,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     priority,
     affectsVersion,
     component,
+    customer,
     projectId,
   } = req.body;
   if (!title || !content || !reporter) {
@@ -558,6 +683,11 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     .project({ name: 1 })
     .toArray();
   const allowedComponents = comps.map((c) => c.name);
+  const custs = await customersCollection
+    .find({ projectId })
+    .project({ name: 1 })
+    .toArray();
+  const allowedCustomers = custs.map((c) => c.name);
   const issuePriority =
     priority && allowedPriorities.includes(priority)
       ? priority
@@ -566,6 +696,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     return res
       .status(400)
       .json({ message: "유효한 컴포넌트를 선택해야 합니다." });
+  }
+  if (customer && !allowedCustomers.includes(customer)) {
+    return res.status(400).json({ message: "유효한 고객사를 선택해야 합니다." });
   }
   const issueNumber = projectResult?.nextIssueNumber - 1;
   const issueKey = `${projectResult?.key}-${String(issueNumber).padStart(
@@ -584,6 +717,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     priority: issuePriority,
     affectsVersion: affectsVersion?.trim() || undefined,
     component: component?.trim() || undefined,
+    customer: customer?.trim() || undefined,
     projectId,
     issueKey,
     fixVersion: undefined,
@@ -635,6 +769,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     fixVersion,
     resolution,
     component,
+    customer,
     projectId,
   } = req.body;
   const project = await projectsCollection.findOne({
@@ -708,6 +843,17 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       return res.status(400).json({ message: "유효한 컴포넌트를 제공해야 합니다." });
     }
     updateFields.component = component.trim() === "" ? undefined : component.trim();
+  }
+  if (customer !== undefined) {
+    const custs = await customersCollection
+      .find({ projectId: project._id.toString() })
+      .project({ name: 1 })
+      .toArray();
+    const allowedCust = custs.map((c) => c.name);
+    if (!allowedCust.includes(customer) && customer !== "") {
+      return res.status(400).json({ message: "유효한 고객사를 제공해야 합니다." });
+    }
+    updateFields.customer = customer.trim() === "" ? undefined : customer.trim();
   }
   if (affectsVersion !== undefined)
     updateFields.affectsVersion =
