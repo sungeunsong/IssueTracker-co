@@ -56,6 +56,7 @@ const DEFAULT_TYPES = ["작업", "버그", "새 기능", "개선"];
 const DEFAULT_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
 const DEFAULT_PRIORITY = "MEDIUM";
 const DEFAULT_RESOLUTIONS = ["완료", "원하지 않음", "재현 불가"];
+const DEFAULT_COMPONENTS = [];
 
 async function ensureAdminUser() {
   const existing = await usersCollection.findOne({ userid: ADMIN_USERID });
@@ -90,6 +91,7 @@ async function migrateProjects() {
     if (!proj.priorities) update.priorities = DEFAULT_PRIORITIES;
     if (!proj.resolutions) update.resolutions = DEFAULT_RESOLUTIONS;
     if (!proj.types) update.types = DEFAULT_TYPES;
+    if (!proj.components) update.components = DEFAULT_COMPONENTS;
     if (Object.keys(update).length > 0) {
       await projectsCollection.updateOne({ _id: proj._id }, { $set: update });
     }
@@ -205,6 +207,7 @@ app.post("/api/projects", async (req, res) => {
     priorities: DEFAULT_PRIORITIES,
     resolutions: DEFAULT_RESOLUTIONS,
     types: DEFAULT_TYPES,
+    components: DEFAULT_COMPONENTS,
   });
   res.status(201).json({
     id: result.insertedId.toString(),
@@ -214,6 +217,7 @@ app.post("/api/projects", async (req, res) => {
     priorities: DEFAULT_PRIORITIES,
     resolutions: DEFAULT_RESOLUTIONS,
     types: DEFAULT_TYPES,
+    components: DEFAULT_COMPONENTS,
   });
 });
 app.post("/api/register", async (req, res) => {
@@ -311,21 +315,23 @@ app.get("/api/projects/:projectId/issue-settings", async (req, res) => {
     priorities: project.priorities || DEFAULT_PRIORITIES,
     resolutions: project.resolutions || DEFAULT_RESOLUTIONS,
     types: project.types || DEFAULT_TYPES,
+    components: project.components || DEFAULT_COMPONENTS,
   });
 });
 
 app.put("/api/projects/:projectId/issue-settings", async (req, res) => {
   const { projectId } = req.params;
-  const { statuses, priorities, resolutions, types } = req.body;
+  const { statuses, priorities, resolutions, types, components } = req.body;
   if (
     !Array.isArray(statuses) ||
     !Array.isArray(priorities) ||
     !Array.isArray(resolutions) ||
-    !Array.isArray(types)
+    !Array.isArray(types) ||
+    !Array.isArray(components)
   ) {
     return res.status(400).json({ message: "Invalid data" });
   }
-  const update = { statuses, priorities, resolutions, types };
+  const update = { statuses, priorities, resolutions, types, components };
   await projectsCollection.updateOne({ _id: new ObjectId(projectId) }, { $set: update });
   res.json(update);
 });
@@ -421,6 +427,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     type,
     priority,
     affectsVersion,
+    component,
     projectId,
   } = req.body;
   if (!title || !content || !reporter) {
@@ -444,10 +451,16 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     return res.status(400).json({ message: "유효한 업무 유형을 선택해야 합니다." });
   }
   const allowedPriorities = projectResult.priorities || DEFAULT_PRIORITIES;
+  const allowedComponents = projectResult.components || DEFAULT_COMPONENTS;
   const issuePriority =
     priority && allowedPriorities.includes(priority)
       ? priority
       : allowedPriorities[0] || DEFAULT_PRIORITY;
+  if (component && !allowedComponents.includes(component)) {
+    return res
+      .status(400)
+      .json({ message: "유효한 컴포넌트를 선택해야 합니다." });
+  }
   const issueNumber = projectResult?.nextIssueNumber - 1;
   const issueKey = `${projectResult?.key}-${String(issueNumber).padStart(
     4,
@@ -464,6 +477,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     type,
     priority: issuePriority,
     affectsVersion: affectsVersion?.trim() || undefined,
+    component: component?.trim() || undefined,
     projectId,
     issueKey,
     fixVersion: undefined,
@@ -514,6 +528,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     affectsVersion,
     fixVersion,
     resolution,
+    component,
     projectId,
   } = req.body;
   const project = await projectsCollection.findOne({
@@ -576,6 +591,12 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       return res.status(400).json({ message: "유효한 우선순위를 제공해야 합니다." });
     }
     updateFields.priority = priority;
+  }
+  if (component !== undefined) {
+    if (project.components && !project.components.includes(component) && component !== "") {
+      return res.status(400).json({ message: "유효한 컴포넌트를 제공해야 합니다." });
+    }
+    updateFields.component = component.trim() === "" ? undefined : component.trim();
   }
   if (affectsVersion !== undefined)
     updateFields.affectsVersion =

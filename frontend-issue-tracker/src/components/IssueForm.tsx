@@ -27,6 +27,7 @@ interface IssueFormProps {
   statuses: string[];
   priorities: PriorityEnum[];
   types: string[];
+  components: string[];
 }
 
 interface TypeOption {
@@ -50,6 +51,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   statuses,
   priorities,
   types,
+  components,
 }) => {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
@@ -62,6 +64,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   );
   const [type, setType] = useState<string>(types[0] || DEFAULT_ISSUE_TYPES[0]);
   const [priority, setPriority] = useState<PriorityEnum>(priorities[0]);
+  const [componentValue, setComponentValue] = useState("");
   const [affectsVersion, setAffectsVersion] = useState("");
   const [fixVersion, setFixVersion] = useState("");
   const [projectId, setProjectId] = useState<string>("");
@@ -122,6 +125,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setStatus(initialData.status || statuses[0] || "");
       setType(initialData.type || types[0] || DEFAULT_ISSUE_TYPES[0]);
       setPriority(initialData.priority || priorities[0]);
+      setComponentValue(initialData.component || "");
       setAffectsVersion(initialData.affectsVersion || "");
       setFixVersion(initialData.fixVersion || "");
       setProjectId(
@@ -138,6 +142,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setStatus(statuses[0] || "");
       setType(types[0] || DEFAULT_ISSUE_TYPES[0]);
       setPriority(priorities[0]);
+      setComponentValue("");
       setAffectsVersion("");
       setFixVersion("");
       setProjectId(selectedProjectId || projects[0]?.id || "");
@@ -197,6 +202,7 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         comment: comment.trim() || undefined,
         type: type,
         priority: priority,
+        component: componentValue.trim() || undefined,
         affectsVersion: affectsVersion.trim() || undefined,
         projectId,
         attachments,
@@ -320,6 +326,29 @@ export const IssueForm: React.FC<IssueFormProps> = ({
             <p className="mt-1 text-xs text-red-600">{typeError}</p>
           )}
         </div>
+      </div>
+
+      <div>
+        <label
+          htmlFor="issue-component"
+          className="block text-sm font-medium text-slate-700 mb-1"
+        >
+          컴포넌트
+        </label>
+        <select
+          id="issue-component"
+          value={componentValue}
+          onChange={(e) => setComponentValue(e.target.value)}
+          className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
+          disabled={isSubmitting}
+        >
+          <option value="">선택 없음</option>
+          {components.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
