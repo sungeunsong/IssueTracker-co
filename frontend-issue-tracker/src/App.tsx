@@ -801,6 +801,14 @@ const App: React.FC = () => {
             projects.find((p) => p.id === selectedIssueForDetail.projectId)
               ?.statuses || []
           }
+          types={
+            projects.find((p) => p.id === selectedIssueForDetail.projectId)
+              ?.types || []
+          }
+          priorities={
+            projects.find((p) => p.id === selectedIssueForDetail.projectId)
+              ?.priorities || []
+          }
           showCustomers={currentProject?.showCustomers}
           showComponents={currentProject?.showComponents}
         />

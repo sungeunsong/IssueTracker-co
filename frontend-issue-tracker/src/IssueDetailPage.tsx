@@ -103,6 +103,9 @@ export const IssueDetailPage: React.FC = () => {
       <IssueDetailsView
         issue={issue}
         users={users}
+        statuses={project?.statuses || []}
+        types={project?.types || []}
+        priorities={project?.priorities || []}
         showCustomers={issue.showCustomers}
         showComponents={issue.showComponents}
       />
