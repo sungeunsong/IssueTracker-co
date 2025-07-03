@@ -391,8 +391,32 @@ async function mapIssueWithLookups(doc) {
 }
 
 app.get("/api/projects", async (req, res) => {
+  const currentUserId = req.session.user?.userid;
+  
+  if (!currentUserId) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  
+  // 현재 사용자 정보 조회
+  const currentUser = await usersCollection.findOne({ userid: currentUserId });
+  
   const projects = await projectsCollection.find().toArray();
-  res.json(projects.map(mapProject));
+  
+  // 관리자인 경우 모든 프로젝트 반환
+  if (currentUser && currentUser.isAdmin) {
+    return res.json(projects.map(mapProject));
+  }
+  
+  // 권한이 있는 프로젝트만 필터링
+  const filteredProjects = projects.filter(project => {
+    const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
+    const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
+    
+    // 명시적으로 권한이 있는 경우만 표시
+    return hasReadPermission || hasWritePermission;
+  });
+  
+  res.json(filteredProjects.map(mapProject));
 });
 
 app.post("/api/projects", async (req, res) => {
@@ -544,9 +568,18 @@ app.get("/api/current-user", (req, res) => {
 
 app.get("/api/users", async (req, res) => {
   const users = await usersCollection
-    .find({}, { projection: { userid: 1, username: 1, isAdmin: 1, _id: 0 } })
+    .find({}, { projection: { userid: 1, username: 1, isAdmin: 1, _id: 1 } })
     .toArray();
-  res.json(users);
+  
+  const mappedUsers = users.map(user => ({
+    id: user._id.toString(),
+    userid: user.userid,
+    username: user.username,
+    name: user.username, // username을 name으로도 사용
+    isAdmin: user.isAdmin || false
+  }));
+  
+  res.json(mappedUsers);
 });
 
 app.get("/api/projects/:projectId/issue-settings", async (req, res) => {
@@ -841,9 +874,82 @@ app.delete("/api/customers/:id", async (req, res) => {
   res.status(204).send();
 });
 
+app.get("/api/projects/:projectId/permissions", async (req, res) => {
+  const { projectId } = req.params;
+  const project = await projectsCollection.findOne({
+    _id: new ObjectId(projectId),
+  });
+  if (!project) {
+    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
+  res.json({
+    readUsers: project.readUsers || [],
+    writeUsers: project.writeUsers || []
+  });
+});
+
+app.put("/api/projects/:projectId/permissions", async (req, res) => {
+  const { projectId } = req.params;
+  const { readUsers, writeUsers } = req.body;
+  
+  const project = await projectsCollection.findOne({
+    _id: new ObjectId(projectId),
+  });
+  if (!project) {
+    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
+  
+  await projectsCollection.updateOne(
+    { _id: new ObjectId(projectId) },
+    { 
+      $set: { 
+        readUsers: readUsers || [],
+        writeUsers: writeUsers || [],
+        updatedAt: new Date().toISOString()
+      }
+    }
+  );
+  
+  res.json({ message: "권한이 성공적으로 업데이트되었습니다." });
+});
+
 app.get("/api/issues", async (req, res) => {
   const { projectId } = req.query;
+  const currentUserId = req.session.user?.userid;
+  
+  if (!currentUserId) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  
+  // 현재 사용자 정보 조회
+  const currentUser = await usersCollection.findOne({ userid: currentUserId });
+  
   const filter = projectId ? { projectId } : {};
+  
+  // 프로젝트 권한 확인 (관리자는 모든 권한)
+  if (projectId && (!currentUser || !currentUser.isAdmin)) {
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(projectId),
+    });
+    
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+    
+    const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
+    const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
+    
+    // 권한이 없으면 접근 거부
+    if (!hasReadPermission && !hasWritePermission) {
+      return res.status(403).json({ message: "이 프로젝트에 접근할 권한이 없습니다." });
+    }
+    
+    // 쓰기 권한만 있는 경우 본인이 작성한 이슈만 필터링
+    if (hasWritePermission && !hasReadPermission) {
+      filter.createdBy = currentUserId;
+    }
+  }
+  
   const issues = await issuesCollection
     .find(filter)
     .sort({ createdAt: -1 })
@@ -918,6 +1024,32 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   }
   if (!projectId) {
     return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
+  }
+  
+  const currentUserId = req.session.user?.userid;
+  if (!currentUserId) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  
+  // 현재 사용자 정보 조회
+  const currentUser = await usersCollection.findOne({ userid: currentUserId });
+  
+  // 관리자가 아닌 경우 프로젝트 권한 확인
+  if (!currentUser || !currentUser.isAdmin) {
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(projectId),
+    });
+    
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+    
+    const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
+    
+    // 쓰기 권한 확인 (읽기 권한만으로는 이슈 생성 불가)
+    if (!hasWritePermission && (project.writeUsers || project.readUsers)) {
+      return res.status(403).json({ message: "이슈를 생성할 권한이 없습니다." });
+    }
   }
   const projectResult = await projectsCollection.findOneAndUpdate(
     { _id: new ObjectId(projectId) },
@@ -1022,6 +1154,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     fixVersion: undefined,
     resolution: undefined,
     resolutionId: undefined,
+    createdBy: currentUserId,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     attachments: (req.files || []).map((f) => ({
@@ -1056,6 +1189,15 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (!existing) {
     return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
   }
+  
+  const currentUserId = req.session.user?.userid;
+  if (!currentUserId) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  
+  // 현재 사용자 정보 조회
+  const currentUser = await usersCollection.findOne({ userid: currentUserId });
+  
   const {
     title,
     content,
@@ -1077,6 +1219,26 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   });
   if (!project) {
     return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
+  
+  // 관리자가 아닌 경우 권한 확인
+  if (!currentUser || !currentUser.isAdmin) {
+    const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
+    
+    // 권한 확인
+    if (project.writeUsers || project.readUsers) {
+      // 쓰기 권한이 있으면 모든 이슈 수정 가능
+      if (hasWritePermission) {
+        // 쓰기 권한이 있으면 통과
+      } else if (hasReadPermission) {
+        // 읽기 권한만 있으면 수정 불가
+        return res.status(403).json({ message: "읽기 권한만으로는 이슈를 수정할 수 없습니다." });
+      } else {
+        // 권한이 없으면 수정 불가
+        return res.status(403).json({ message: "이슈를 수정할 권한이 없습니다." });
+      }
+    }
   }
   let updateFields = {};
   let statusChanged = false;

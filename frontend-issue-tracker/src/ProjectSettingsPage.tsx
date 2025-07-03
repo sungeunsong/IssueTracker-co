@@ -6,6 +6,7 @@ import ProjectIssueSettings from './components/ProjectIssueSettings';
 import ProjectComponents from './components/ProjectComponents';
 import ProjectCustomers from './components/ProjectCustomers';
 import ProjectDetails from './components/ProjectDetails';
+import ProjectPermissions from './components/ProjectPermissions';
 import type { User } from './types';
 
 interface LocationState {
@@ -77,6 +78,12 @@ export const ProjectSettingsPage: React.FC = () => {
         ) : activeSection === '이슈 설정' ? (
           projectId ? (
             <ProjectIssueSettings projectId={projectId} />
+          ) : (
+            <div>프로젝트 ID가 없습니다.</div>
+          )
+        ) : activeSection === '권한' ? (
+          projectId ? (
+            <ProjectPermissions projectId={projectId} users={users} />
           ) : (
             <div>프로젝트 ID가 없습니다.</div>
           )

@@ -124,8 +124,10 @@ export interface IssueHistoryEntry {
 }
 
 export interface User {
+  id: string;
   userid: string;
   username: string;
+  name: string;
   isAdmin?: boolean;
 }
 
