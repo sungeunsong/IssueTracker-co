@@ -243,7 +243,7 @@ async function migrateIssues() {
     if (doc.resolution && !doc.resolutionId) {
       let resolutionId = null;
       if (project?.resolutions) {
-        const resolutionItem = project.resolutions.find(r => 
+        const resolutionItem = project.resolutions.find(r =>
           (typeof r === 'object' ? r.name === doc.resolution : r === doc.resolution)
         );
         resolutionId = resolutionItem ? (typeof resolutionItem === 'object' ? resolutionItem.id : mapOldResolutionToId(resolutionItem)) : mapOldResolutionToId(doc.resolution);
@@ -253,6 +253,46 @@ async function migrateIssues() {
       updates.resolutionId = resolutionId;
       // 이제 resolution 필드도 ID로 저장
       updates.resolution = resolutionId;
+    }
+
+    if (doc.component && !doc.componentId) {
+      const comp = await componentsCollection.findOne({
+        projectId: doc.projectId,
+        name: doc.component,
+      });
+      if (comp) {
+        updates.componentId = comp._id.toString();
+      }
+    }
+
+    if (doc.customer && !doc.customerId) {
+      const cust = await customersCollection.findOne({
+        projectId: doc.projectId,
+        name: doc.customer,
+      });
+      if (cust) {
+        updates.customerId = cust._id.toString();
+      }
+    }
+
+    if (doc.affectsVersion && !doc.affectsVersionId) {
+      const ver = await versionsCollection.findOne({
+        projectId: doc.projectId,
+        name: doc.affectsVersion,
+      });
+      if (ver) {
+        updates.affectsVersionId = ver._id.toString();
+      }
+    }
+
+    if (doc.fixVersion && !doc.fixVersionId) {
+      const ver = await versionsCollection.findOne({
+        projectId: doc.projectId,
+        name: doc.fixVersion,
+      });
+      if (ver) {
+        updates.fixVersionId = ver._id.toString();
+      }
     }
     
     if (Object.keys(updates).length > 0) {
@@ -319,6 +359,35 @@ function mapVersion(doc) {
 function mapComponent(doc) {
   const { _id, ...rest } = doc;
   return { id: _id.toString(), ...rest };
+}
+
+async function mapIssueWithLookups(doc) {
+  const base = mapIssue(doc);
+  if (doc.componentId) {
+    const comp = await componentsCollection.findOne({ _id: new ObjectId(doc.componentId) });
+    base.component = comp?.name;
+  } else if (doc.component) {
+    base.component = doc.component;
+  }
+  if (doc.customerId) {
+    const cust = await customersCollection.findOne({ _id: new ObjectId(doc.customerId) });
+    base.customer = cust?.name;
+  } else if (doc.customer) {
+    base.customer = doc.customer;
+  }
+  if (doc.affectsVersionId) {
+    const ver = await versionsCollection.findOne({ _id: new ObjectId(doc.affectsVersionId) });
+    base.affectsVersion = ver?.name;
+  } else if (doc.affectsVersion) {
+    base.affectsVersion = doc.affectsVersion;
+  }
+  if (doc.fixVersionId) {
+    const ver = await versionsCollection.findOne({ _id: new ObjectId(doc.fixVersionId) });
+    base.fixVersion = ver?.name;
+  } else if (doc.fixVersion) {
+    base.fixVersion = doc.fixVersion;
+  }
+  return base;
 }
 
 app.get("/api/projects", async (req, res) => {
@@ -654,10 +723,6 @@ app.put("/api/components/:id", async (req, res) => {
       { _id: new ObjectId(existing.projectId) },
       { $addToSet: { components: name.trim() } }
     );
-    await issuesCollection.updateMany(
-      { projectId: existing.projectId, component: existing.name },
-      { $set: { component: name.trim() } }
-    );
   }
   const updated = await componentsCollection.findOne({ _id: new ObjectId(id) });
   const issueCount = await issuesCollection.countDocuments({
@@ -753,10 +818,6 @@ app.put("/api/customers/:id", async (req, res) => {
       { _id: new ObjectId(existing.projectId) },
       { $addToSet: { customers: name.trim() } }
     );
-    await issuesCollection.updateMany(
-      { projectId: existing.projectId, customer: existing.name },
-      { $set: { customer: name.trim() } }
-    );
   }
   const updated = await customersCollection.findOne({ _id: new ObjectId(id) });
   const issueCount = await issuesCollection.countDocuments({
@@ -787,7 +848,8 @@ app.get("/api/issues", async (req, res) => {
     .find(filter)
     .sort({ createdAt: -1 })
     .toArray();
-  res.json(issues.map(mapIssue));
+  const mapped = await Promise.all(issues.map((i) => mapIssueWithLookups(i)));
+  res.json(mapped);
 });
 
 app.get("/api/issues/key/:issueKey", async (req, res) => {
@@ -796,7 +858,7 @@ app.get("/api/issues/key/:issueKey", async (req, res) => {
   if (!issue) {
     return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
   }
-  res.json(mapIssue(issue));
+  res.json(await mapIssueWithLookups(issue));
 });
 
 app.get("/api/issuesWithProject/key/:issueKey", async (req, res) => {
@@ -808,7 +870,7 @@ app.get("/api/issuesWithProject/key/:issueKey", async (req, res) => {
       return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
     }
 
-    const mappedIssue = mapIssue(issue);
+    const mappedIssue = await mapIssueWithLookups(issue);
 
     const project = await projectsCollection.findOne({
       _id: new ObjectId(issue.projectId),
@@ -906,6 +968,39 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   const initialStatus = typeof initialStatusObj === 'object' ? initialStatusObj.name : (initialStatusObj || INITIAL_ISSUE_STATUS);
   const initialStatusId = typeof initialStatusObj === 'object' ? initialStatusObj.id : mapOldStatusToId(initialStatus);
 
+  let componentId;
+  if (component) {
+    if (ObjectId.isValid(component)) {
+      const comp = await componentsCollection.findOne({ _id: new ObjectId(component) });
+      componentId = comp?._id.toString();
+    } else {
+      const comp = comps.find((c) => c.name === component);
+      componentId = comp?._id.toString();
+    }
+  }
+
+  let customerId;
+  if (customer) {
+    if (ObjectId.isValid(customer)) {
+      const cust = await customersCollection.findOne({ _id: new ObjectId(customer) });
+      customerId = cust?._id.toString();
+    } else {
+      const cust = custs.find((c) => c.name === customer);
+      customerId = cust?._id.toString();
+    }
+  }
+
+  let affectsVersionId;
+  if (affectsVersion) {
+    if (ObjectId.isValid(affectsVersion)) {
+      const ver = await versionsCollection.findOne({ _id: new ObjectId(affectsVersion) });
+      affectsVersionId = ver?._id.toString();
+    } else {
+      const ver = await versionsCollection.findOne({ projectId, name: affectsVersion });
+      affectsVersionId = ver?._id.toString();
+    }
+  }
+
   const newIssue = {
     title: title.trim(),
     content: content.trim(),
@@ -919,9 +1014,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     typeId: typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj),
     priority: issuePriority,
     priorityId: issuePriority,
-    affectsVersion: affectsVersion?.trim() || undefined,
-    component: component?.trim() || undefined,
-    customer: customer?.trim() || undefined,
+    affectsVersionId,
+    componentId,
+    customerId,
     projectId,
     issueKey,
     fixVersion: undefined,
@@ -952,7 +1047,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     ],
   };
   const result = await issuesCollection.insertOne(newIssue);
-  res.status(201).json({ id: result.insertedId.toString(), ...newIssue });
+  res.status(201).json(await mapIssueWithLookups({ _id: result.insertedId, ...newIssue }));
 });
 
 app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
@@ -1081,8 +1176,12 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 컴포넌트를 제공해야 합니다." });
     }
-    updateFields.component =
-      component.trim() === "" ? undefined : component.trim();
+    if (component.trim() === "") {
+      updateFields.componentId = undefined;
+    } else {
+      const comp = comps.find((c) => c.name === component);
+      updateFields.componentId = comp?._id.toString();
+    }
   }
   if (customer !== undefined) {
     const custs = await customersCollection
@@ -1095,15 +1194,29 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 고객사를 제공해야 합니다." });
     }
-    updateFields.customer =
-      customer.trim() === "" ? undefined : customer.trim();
+    if (customer.trim() === "") {
+      updateFields.customerId = undefined;
+    } else {
+      const cust = custs.find((c) => c.name === customer);
+      updateFields.customerId = cust?._id.toString();
+    }
   }
-  if (affectsVersion !== undefined)
-    updateFields.affectsVersion =
-      affectsVersion.trim() === "" ? undefined : affectsVersion.trim();
-  if (fixVersion !== undefined)
-    updateFields.fixVersion =
-      fixVersion.trim() === "" ? undefined : fixVersion.trim();
+  if (affectsVersion !== undefined) {
+    if (affectsVersion.trim() === "") {
+      updateFields.affectsVersionId = undefined;
+    } else {
+      const ver = await versionsCollection.findOne({ projectId: project._id.toString(), name: affectsVersion });
+      updateFields.affectsVersionId = ver?._id.toString();
+    }
+  }
+  if (fixVersion !== undefined) {
+    if (fixVersion.trim() === "") {
+      updateFields.fixVersionId = undefined;
+    } else {
+      const ver = await versionsCollection.findOne({ projectId: project._id.toString(), name: fixVersion });
+      updateFields.fixVersionId = ver?._id.toString();
+    }
+  }
   if (projectId !== undefined) updateFields.projectId = projectId;
   updateFields.updatedAt = new Date().toISOString();
   const historyEntry = {
@@ -1140,7 +1253,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (!result) {
     return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
   }
-  res.json(mapIssue(result));
+  res.json(await mapIssueWithLookups(result));
 });
 
 app.post("/api/issues/:id/comments", async (req, res) => {
@@ -1176,7 +1289,7 @@ app.post("/api/issues/:id/comments", async (req, res) => {
   if (!result) {
     return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
   }
-  res.json(mapIssue(result));
+  res.json(await mapIssueWithLookups(result));
 });
 
 app.delete("/api/issues/:id", async (req, res) => {
