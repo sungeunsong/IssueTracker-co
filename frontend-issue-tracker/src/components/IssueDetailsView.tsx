@@ -1,12 +1,31 @@
 
 import React from 'react';
-import type { Issue, User } from '../types';
-import { statusColors } from '../types';
+import type {
+  Issue,
+  User,
+  StatusItem,
+  TypeItem,
+  PriorityItem,
+} from '../types';
+import {
+  getStatusNameById,
+  getStatusColorById,
+  getTypeNameById,
+  getPriorityNameById,
+  getTypeColorById,
+  getPriorityColorById,
+  DEFAULT_STATUSES,
+  DEFAULT_ISSUE_TYPES,
+  DEFAULT_PRIORITIES,
+} from '../types';
 import { RichTextViewer } from './RichTextViewer';
 
 interface IssueDetailsViewProps {
   issue: Issue;
   users?: User[];
+  statuses?: (StatusItem | string)[];
+  types?: (TypeItem | string)[];
+  priorities?: (PriorityItem | string)[];
   showCustomers?: boolean;
   showComponents?: boolean;
 }
@@ -32,6 +51,9 @@ const DetailItem: React.FC<DetailItemProps> = ({ label, value, isCode, isPreLine
 export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({
   issue,
   users,
+  statuses = DEFAULT_STATUSES,
+  types = DEFAULT_ISSUE_TYPES,
+  priorities = DEFAULT_PRIORITIES,
   showCustomers = true,
   showComponents = true,
 }) => {
@@ -61,6 +83,15 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({
         second: '2-digit',
       })
     : null;
+
+  const statusName = getStatusNameById(
+    issue.statusId || issue.status,
+    statuses as StatusItem[]
+  );
+  const statusColor = getStatusColorById(
+    issue.statusId || issue.status,
+    statuses as StatusItem[]
+  );
 
   return (
     <div className="space-y-6">
@@ -125,9 +156,9 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({
           <dt className="text-sm font-medium text-slate-500">상태</dt>
           <dd className="mt-1">
             <span
-              className={`px-3 py-1 text-xs font-semibold rounded-full ring-1 ring-inset ${statusColors[issue.status]}`}
+              className={`px-3 py-1 text-xs font-semibold rounded-full ring-1 ring-inset ${statusColor}`}
             >
-              {issue.status}
+              {statusName}
             </span>
           </dd>
         </div>

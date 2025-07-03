@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import type { Issue, User, StatusItem } from "../types";
+import type {
+  Issue,
+  User,
+  StatusItem,
+  TypeItem,
+  PriorityItem,
+} from "../types";
 import type { ResolutionStatus } from "../types";
-import { statusColors, issueTypeColors } from "../types";
+import {
+  getStatusNameById,
+  getTypeNameById,
+  getPriorityNameById,
+  getStatusColorById,
+  getTypeColorById,
+  statusColors,
+} from "../types";
 import { PencilIcon } from "./icons/PencilIcon";
 import { TrashIcon } from "./icons/TrashIcon";
 import { XIcon } from "./icons/XIcon";
@@ -20,6 +33,8 @@ interface IssueDetailPanelProps {
   users: User[];
   onIssueUpdated: (issue: Issue) => void;
   statuses: (StatusItem | string)[];
+  types: (TypeItem | string)[];
+  priorities: (PriorityItem | string)[];
   showCustomers?: boolean;
   showComponents?: boolean;
 }
@@ -53,6 +68,8 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
   users,
   onIssueUpdated,
   statuses,
+  types,
+  priorities,
   showCustomers = true,
   showComponents = true,
 }) => {
@@ -86,6 +103,27 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
         minute: "2-digit",
       })
     : null;
+
+  const statusName = getStatusNameById(
+    issue.statusId || issue.status,
+    statuses as StatusItem[]
+  );
+  const statusColor = getStatusColorById(
+    issue.statusId || issue.status,
+    statuses as StatusItem[]
+  );
+  const typeName = getTypeNameById(
+    issue.typeId || issue.type,
+    types as TypeItem[]
+  );
+  const typeColor = getTypeColorById(
+    issue.typeId || issue.type,
+    types as TypeItem[]
+  );
+  const priorityName = getPriorityNameById(
+    issue.priorityId || issue.priority,
+    priorities as PriorityItem[]
+  );
 
   return (
     <>
@@ -135,13 +173,11 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
               label="상태"
               value={
                 <select
-                  value={issue.status}
+                  value={statusName}
                   onChange={(e) =>
                     onUpdateStatus(issue.id, e.target.value as ResolutionStatus)
                   }
-                  className={`w-full text-xs p-1.5 rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
-                    statusColors[issue.status]
-                  } appearance-none text-center font-medium`}
+                  className={`w-full text-xs p-1.5 rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${statusColor} appearance-none text-center font-medium`}
                   aria-label="Update issue status"
                 >
                   {statuses.map((s) => {
@@ -165,15 +201,14 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
               value={
                 <span
                   className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    issueTypeColors[issue.type] ||
-                    "bg-slate-100 text-slate-800 ring-slate-600/20"
+                    typeColor || "bg-slate-100 text-slate-800 ring-slate-600/20"
                   }`}
                 >
-                  {issue.type}
+                  {typeName}
                 </span>
               }
             />
-            <DetailItem label="우선순위" value={issue.priority} />
+            <DetailItem label="우선순위" value={priorityName} />
             <DetailItem
               label="등록자"
               value={
