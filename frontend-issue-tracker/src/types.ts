@@ -47,6 +47,11 @@ export interface Issue {
   history?: IssueHistoryEntry[];
 }
 
+export interface IssueWithProject extends Issue {
+  showCustomers?: boolean;
+  showComponents?: boolean;
+}
+
 export interface Attachment {
   filename: string;
   originalName: string;
