@@ -528,21 +528,21 @@ const App: React.FC = () => {
       setError(null);
       setIsSubmitting(true);
       const body = new FormData();
-      body.append('status', '수정 완료');
-      body.append('resolution', data.resolution);
-      if (data.assignee) body.append('assignee', data.assignee);
-      if (data.fixVersion) body.append('fixVersion', data.fixVersion);
-      if (data.comment) body.append('comment', data.comment);
-      data.attachments.forEach((f) => body.append('files', f));
+      body.append("status", "수정 완료");
+      body.append("resolution", data.resolution);
+      if (data.assignee) body.append("assignee", data.assignee);
+      if (data.fixVersion) body.append("fixVersion", data.fixVersion);
+      if (data.comment) body.append("comment", data.comment);
+      data.attachments.forEach((f) => body.append("files", f));
       try {
         const response = await fetch(`/api/issues/${issueToResolve.id}`, {
-          method: 'PUT',
+          method: "PUT",
           body,
         });
         if (!response.ok) {
           const errData = await response
             .json()
-            .catch(() => ({ message: '이슈 업데이트 실패' }));
+            .catch(() => ({ message: "이슈 업데이트 실패" }));
           throw new Error(errData.message);
         }
         const updatedIssue: Issue = await response.json();
@@ -555,9 +555,9 @@ const App: React.FC = () => {
         setShowResolveModal(false);
         setIssueToResolve(null);
       } catch (err) {
-        console.error('상태 업데이트 오류:', err);
+        console.error("상태 업데이트 오류:", err);
         setError(
-          (err as Error).message || '이슈 상태 업데이트 중 오류가 발생했습니다.'
+          (err as Error).message || "이슈 상태 업데이트 중 오류가 발생했습니다."
         );
       } finally {
         setIsSubmitting(false);
@@ -566,15 +566,10 @@ const App: React.FC = () => {
     [issueToResolve, selectedIssueForDetail]
   );
 
-  const handleIssueUpdated = useCallback(
-    (updated: Issue) => {
-      setIssues((prev) =>
-        prev.map((i) => (i.id === updated.id ? updated : i))
-      );
-      setSelectedIssueForDetail(updated);
-    },
-    []
-  );
+  const handleIssueUpdated = useCallback((updated: Issue) => {
+    setIssues((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    setSelectedIssueForDetail(updated);
+  }, []);
 
   const requestDeleteIssue = useCallback((issueId: string) => {
     setIssueToDelete(issueId);
@@ -791,9 +786,11 @@ const App: React.FC = () => {
           users={users}
           onIssueUpdated={handleIssueUpdated}
           statuses={
-            projects.find((p) => p.id === selectedIssueForDetail.projectId)?.statuses ||
-            []
+            projects.find((p) => p.id === selectedIssueForDetail.projectId)
+              ?.statuses || []
           }
+          showCustomers={currentProject?.showCustomers}
+          showComponents={currentProject?.showComponents}
         />
       )}
 
@@ -867,30 +864,32 @@ const App: React.FC = () => {
             currentUserId={currentUserId}
             currentUserName={currentUser}
             statuses={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.statuses ||
-              []
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.statuses || []
             }
             priorities={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.priorities ||
-              DEFAULT_PRIORITIES
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.priorities || DEFAULT_PRIORITIES
             }
             types={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.types ||
-              DEFAULT_ISSUE_TYPES
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.types || DEFAULT_ISSUE_TYPES
             }
             components={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.components ||
-              []
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.components || []
             }
             customers={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.customers ||
-              []
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.customers || []
             }
             showCustomers={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.showCustomers
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.showCustomers
             }
             showComponents={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)?.showComponents
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.showComponents
             }
           />
         </Modal>
@@ -958,7 +957,8 @@ const App: React.FC = () => {
           projectId={issueToResolve.projectId}
           users={users}
           resolutions={
-            projects.find((p) => p.id === issueToResolve.projectId)?.resolutions || []
+            projects.find((p) => p.id === issueToResolve.projectId)
+              ?.resolutions || []
           }
           initialAssignee={issueToResolve.assignee}
         />
