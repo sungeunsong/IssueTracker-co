@@ -306,7 +306,9 @@ const App: React.FC = () => {
   const baseFilteredIssues = useMemo(() => {
     let tempIssues = issues;
     if (statusFilter !== "ALL") {
-      tempIssues = tempIssues.filter((issue) => issue.status === statusFilter);
+      tempIssues = tempIssues.filter(
+        (issue) => issue.statusId === statusFilter
+      );
     }
     if (searchTerm.trim()) {
       const lowerSearchTerm = searchTerm.toLowerCase();
@@ -641,11 +643,19 @@ const App: React.FC = () => {
 
   const boardColumns = useMemo(() => {
     const statuses = currentProject?.statuses || [];
-    return statuses.map((s) => ({
-      id: s,
-      title: s,
-      issues: baseFilteredIssues.filter((issue) => issue.status === s),
-    }));
+    return statuses.map((status) => {
+      // StatusItem 객체인지 문자열인지 확인 (하위 호환성)
+      const statusName = typeof status === "object" ? status.name : status;
+      const statusId = typeof status === "object" ? status.id : status;
+
+      return {
+        id: statusName, // UI에서 사용할 상태 이름
+        title: statusName,
+        issues: baseFilteredIssues.filter(
+          (issue) => issue.statusId === statusId
+        ),
+      };
+    });
   }, [baseFilteredIssues, currentProject]);
 
   if (isLoading && issues.length === 0) {
@@ -752,6 +762,7 @@ const App: React.FC = () => {
                   onSelectIssue={handleSelectIssueForDetail}
                   onUpdateStatus={updateIssueStatus}
                   users={users}
+                  project={currentProject}
                 />
               )}
               {viewMode === "list" && (
@@ -768,6 +779,7 @@ const App: React.FC = () => {
                     onPageChange={handlePageChange}
                     users={users}
                     statuses={currentProject?.statuses || []}
+                    project={currentProject}
                   />
                 </div>
               )}

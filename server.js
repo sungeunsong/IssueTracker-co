@@ -47,17 +47,75 @@ const ADMIN_PASSWORD = "0000";
 
 const INITIAL_ISSUE_STATUS = "열림";
 const DEFAULT_STATUSES = [
-  "열림",
-  "수정 중",
-  "수정 완료",
-  "검증",
-  "닫힘",
-  "원치 않음",
+  { id: "open", name: "열림", color: "blue", order: 1 },
+  { id: "in_progress", name: "수정 중", color: "yellow", order: 2 },
+  { id: "resolved", name: "수정 완료", color: "teal", order: 3 },
+  { id: "verified", name: "검증", color: "purple", order: 4 },
+  { id: "closed", name: "닫힘", color: "gray", order: 5 },
+  { id: "rejected", name: "원치 않음", color: "gray", order: 6 },
 ];
-const DEFAULT_TYPES = ["작업", "버그", "새 기능", "개선"];
-const DEFAULT_PRIORITIES = ["HIGHEST", "HIGH", "MEDIUM", "LOW", "LOWEST"];
-const DEFAULT_PRIORITY = "MEDIUM";
-const DEFAULT_RESOLUTIONS = ["완료", "원하지 않음", "재현 불가"];
+const DEFAULT_TYPES = [
+  { id: "task", name: "작업", color: "sky", order: 1 },
+  { id: "bug", name: "버그", color: "red", order: 2 },
+  { id: "feature", name: "새 기능", color: "lime", order: 3 },
+  { id: "improvement", name: "개선", color: "yellow", order: 4 },
+];
+const DEFAULT_PRIORITIES = [
+  { id: "highest", name: "HIGHEST", color: "red", order: 1 },
+  { id: "high", name: "HIGH", color: "orange", order: 2 },
+  { id: "medium", name: "MEDIUM", color: "yellow", order: 3 },
+  { id: "low", name: "LOW", color: "green", order: 4 },
+  { id: "lowest", name: "LOWEST", color: "blue", order: 5 },
+];
+const DEFAULT_PRIORITY_ID = "medium";
+const DEFAULT_RESOLUTIONS = [
+  { id: "completed", name: "완료", color: "green", order: 1 },
+  { id: "rejected", name: "원하지 않음", color: "gray", order: 2 },
+  { id: "cannot_reproduce", name: "재현 불가", color: "orange", order: 3 },
+];
+
+// 기존 문자열 값을 ID로 매핑하는 함수들
+function mapOldStatusToId(oldStatus) {
+  const mapping = {
+    "열림": "open",
+    "수정 중": "in_progress", 
+    "수정 완료": "resolved",
+    "검증": "verified",
+    "닫힘": "closed",
+    "원치 않음": "rejected"
+  };
+  return mapping[oldStatus] || "open";
+}
+
+function mapOldTypeToId(oldType) {
+  const mapping = {
+    "작업": "task",
+    "버그": "bug", 
+    "새 기능": "feature",
+    "개선": "improvement"
+  };
+  return mapping[oldType] || "task";
+}
+
+function mapOldPriorityToId(oldPriority) {
+  const mapping = {
+    "HIGHEST": "highest",
+    "HIGH": "high",
+    "MEDIUM": "medium", 
+    "LOW": "low",
+    "LOWEST": "lowest"
+  };
+  return mapping[oldPriority] || "medium";
+}
+
+function mapOldResolutionToId(oldResolution) {
+  const mapping = {
+    "완료": "completed",
+    "원하지 않음": "rejected",
+    "재현 불가": "cannot_reproduce"
+  };
+  return mapping[oldResolution] || null;
+}
 const DEFAULT_COMPONENTS = [];
 const DEFAULT_CUSTOMERS = [];
 
@@ -78,28 +136,35 @@ async function ensureAdminUser() {
 await ensureAdminUser();
 
 async function migrateProjects() {
-  const cursor = projectsCollection.find({
-    $or: [{ statuses: { $exists: false } }, { priorities: { $exists: false } }],
-  });
+  const cursor = projectsCollection.find({});
   for await (const proj of cursor) {
     const update = {};
-    if (!proj.statuses) {
+    
+    // 기존 문자열 배열을 ID 기반 객체 배열로 변환
+    if (!proj.statuses || (Array.isArray(proj.statuses) && typeof proj.statuses[0] === "string")) {
       update.statuses = DEFAULT_STATUSES;
-    } else if (
-      Array.isArray(proj.statuses) &&
-      typeof proj.statuses[0] === "object"
-    ) {
-      update.statuses = proj.statuses.map((s) => s.name || s.id);
     }
-    if (!proj.priorities) update.priorities = DEFAULT_PRIORITIES;
-    if (!proj.resolutions) update.resolutions = DEFAULT_RESOLUTIONS;
-    if (!proj.types) update.types = DEFAULT_TYPES;
+    
+    if (!proj.priorities || (Array.isArray(proj.priorities) && typeof proj.priorities[0] === "string")) {
+      update.priorities = DEFAULT_PRIORITIES;
+    }
+    
+    if (!proj.resolutions || (Array.isArray(proj.resolutions) && typeof proj.resolutions[0] === "string")) {
+      update.resolutions = DEFAULT_RESOLUTIONS;
+    }
+    
+    if (!proj.types || (Array.isArray(proj.types) && typeof proj.types[0] === "string")) {
+      update.types = DEFAULT_TYPES;
+    }
+    
     if (!proj.components) update.components = DEFAULT_COMPONENTS;
     if (!proj.customers) update.customers = DEFAULT_CUSTOMERS;
     if (proj.showCustomers === undefined) update.showCustomers = true;
     if (proj.showComponents === undefined) update.showComponents = true;
+    
     if (Object.keys(update).length > 0) {
       await projectsCollection.updateOne({ _id: proj._id }, { $set: update });
+      console.log(`Migrated project ${proj.name} to ID-based structure`);
     }
   }
 }
@@ -107,14 +172,14 @@ async function migrateProjects() {
 await migrateProjects();
 
 async function migrateIssues() {
-  const cursor = issuesCollection.find({
-    $or: [
-      { updatedAt: { $exists: false } },
-      { resolvedAt: { $exists: false } },
-    ],
-  });
+  const cursor = issuesCollection.find({});
   for await (const doc of cursor) {
     const updates = {};
+    
+    // 프로젝트 정보 조회 (설정 기반 ID 매핑을 위해)
+    const project = await projectsCollection.findOne({ _id: new ObjectId(doc.projectId) });
+    
+    // 기존 필드 마이그레이션
     if (!doc.updatedAt) {
       updates.updatedAt = doc.createdAt || new Date().toISOString();
     }
@@ -125,10 +190,74 @@ async function migrateIssues() {
       updates.resolvedAt = updates.updatedAt || doc.updatedAt || doc.createdAt;
     }
     if (!doc.priority) {
-      updates.priority = DEFAULT_PRIORITY;
+      updates.priority = DEFAULT_PRIORITY_ID;
     }
+    
+    // 완전한 ID 기반 변환: 이제 status, type, priority를 ID로 저장
+    if (doc.status && !doc.statusId) {
+      // 프로젝트 설정에서 이름으로 ID 찾기
+      let statusId = null;
+      if (project?.statuses) {
+        const statusItem = project.statuses.find(s => 
+          (typeof s === 'object' ? s.name === doc.status : s === doc.status)
+        );
+        statusId = statusItem ? (typeof statusItem === 'object' ? statusItem.id : mapOldStatusToId(statusItem)) : mapOldStatusToId(doc.status);
+      } else {
+        statusId = mapOldStatusToId(doc.status);
+      }
+      updates.statusId = statusId;
+      // 이제 status 필드는 ID로 저장
+      updates.status = statusId;
+    }
+    
+    if (doc.type && !doc.typeId) {
+      let typeId = null;
+      if (project?.types) {
+        const typeItem = project.types.find(t => 
+          (typeof t === 'object' ? t.name === doc.type : t === doc.type)
+        );
+        typeId = typeItem ? (typeof typeItem === 'object' ? typeItem.id : mapOldTypeToId(typeItem)) : mapOldTypeToId(doc.type);
+      } else {
+        typeId = mapOldTypeToId(doc.type);
+      }
+      updates.typeId = typeId;
+      // 이제 type 필드도 ID로 저장
+      updates.type = typeId;
+    }
+    
+    if (doc.priority && typeof doc.priority === "string" && !doc.priorityId) {
+      let priorityId = null;
+      if (project?.priorities) {
+        const priorityItem = project.priorities.find(p => 
+          (typeof p === 'object' ? p.name === doc.priority : p === doc.priority)
+        );
+        priorityId = priorityItem ? (typeof priorityItem === 'object' ? priorityItem.id : mapOldPriorityToId(priorityItem)) : mapOldPriorityToId(doc.priority);
+      } else {
+        priorityId = mapOldPriorityToId(doc.priority);
+      }
+      updates.priorityId = priorityId;
+      // 이제 priority 필드도 ID로 저장
+      updates.priority = priorityId;
+    }
+    
+    if (doc.resolution && !doc.resolutionId) {
+      let resolutionId = null;
+      if (project?.resolutions) {
+        const resolutionItem = project.resolutions.find(r => 
+          (typeof r === 'object' ? r.name === doc.resolution : r === doc.resolution)
+        );
+        resolutionId = resolutionItem ? (typeof resolutionItem === 'object' ? resolutionItem.id : mapOldResolutionToId(resolutionItem)) : mapOldResolutionToId(doc.resolution);
+      } else {
+        resolutionId = mapOldResolutionToId(doc.resolution);
+      }
+      updates.resolutionId = resolutionId;
+      // 이제 resolution 필드도 ID로 저장
+      updates.resolution = resolutionId;
+    }
+    
     if (Object.keys(updates).length > 0) {
       await issuesCollection.updateOne({ _id: doc._id }, { $set: updates });
+      console.log(`Migrated issue ${doc.issueKey} to full ID-based structure`);
     }
   }
 }
@@ -737,7 +866,8 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
   }
   const allowedTypes = projectResult.types || DEFAULT_TYPES;
-  if (!type || !allowedTypes.includes(type)) {
+  const typeObj = allowedTypes.find(t => (typeof t === 'object' ? t.id === type : t === type));
+  if (!type || !typeObj) {
     return res
       .status(400)
       .json({ message: "유효한 업무 유형을 선택해야 합니다." });
@@ -753,10 +883,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     .project({ name: 1 })
     .toArray();
   const allowedCustomers = custs.map((c) => c.name);
-  const issuePriority =
-    priority && allowedPriorities.includes(priority)
-      ? priority
-      : allowedPriorities[0] || DEFAULT_PRIORITY;
+  const priorityObj = allowedPriorities.find(p => (typeof p === 'object' ? p.id === priority : p === priority));
+  const issuePriority = priorityObj ? (typeof priorityObj === 'object' ? priorityObj.id : priorityObj) : 
+    (allowedPriorities[0] ? (typeof allowedPriorities[0] === 'object' ? allowedPriorities[0].id : allowedPriorities[0]) : DEFAULT_PRIORITY_ID);
   if (component && !allowedComponents.includes(component)) {
     return res
       .status(400)
@@ -773,15 +902,23 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     "0"
   )}`;
 
+  const initialStatusObj = projectResult.statuses?.[0];
+  const initialStatus = typeof initialStatusObj === 'object' ? initialStatusObj.name : (initialStatusObj || INITIAL_ISSUE_STATUS);
+  const initialStatusId = typeof initialStatusObj === 'object' ? initialStatusObj.id : mapOldStatusToId(initialStatus);
+
   const newIssue = {
     title: title.trim(),
     content: content.trim(),
     reporter: reporter.trim(),
     assignee: assignee?.trim() || undefined,
     comment: comment?.trim() || undefined,
-    status: projectResult.statuses?.[0] || INITIAL_ISSUE_STATUS,
-    type,
+    // 이제 모든 값들을 ID로 저장
+    status: initialStatusId,
+    statusId: initialStatusId,
+    type: typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj),
+    typeId: typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj),
     priority: issuePriority,
+    priorityId: issuePriority,
     affectsVersion: affectsVersion?.trim() || undefined,
     component: component?.trim() || undefined,
     customer: customer?.trim() || undefined,
@@ -789,6 +926,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     issueKey,
     fixVersion: undefined,
     resolution: undefined,
+    resolutionId: undefined,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     attachments: (req.files || []).map((f) => ({
@@ -867,40 +1005,70 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       };
     }
   }
-  if (resolution !== undefined)
-    updateFields.resolution =
-      resolution.trim() === "" ? undefined : resolution.trim();
+  if (resolution !== undefined) {
+    const trimmedResolution = resolution.trim();
+    updateFields.resolution = trimmedResolution === "" ? undefined : trimmedResolution;
+    if (trimmedResolution) {
+      const resolutionObj = project.resolutions?.find(r => 
+        (typeof r === 'object' ? r.id === trimmedResolution || r.name === trimmedResolution : r === trimmedResolution)
+      );
+      const resolutionId = resolutionObj ? 
+        (typeof resolutionObj === 'object' ? resolutionObj.id : mapOldResolutionToId(resolutionObj)) : 
+        mapOldResolutionToId(trimmedResolution);
+      updateFields.resolution = resolutionId;  // ID로 저장
+      updateFields.resolutionId = resolutionId;
+    } else {
+      updateFields.resolution = undefined;  // ID로 저장
+      updateFields.resolutionId = undefined;
+    }
+  }
   if (status !== undefined) {
-    if (!project.statuses || !project.statuses.includes(status)) {
+    const statusObj = project.statuses?.find(s => 
+      (typeof s === 'object' ? s.id === status || s.name === status : s === status)
+    );
+    if (!statusObj) {
       return res
         .status(400)
         .json({ message: "유효한 상태 값을 제공해야 합니다." });
     }
-    updateFields.status = status;
-    if (existing.status !== status) {
+    const statusName = typeof statusObj === 'object' ? statusObj.name : statusObj;
+    const statusId = typeof statusObj === 'object' ? statusObj.id : mapOldStatusToId(statusObj);
+    
+    updateFields.status = statusId;  // 이제 status도 ID로 저장
+    updateFields.statusId = statusId;
+    
+    if (existing.status !== statusName) {
       statusChanged = true;
       fromStatus = existing.status;
-      toStatus = status;
+      toStatus = statusName;
     }
-    if (["수정 완료", "닫힘", "원치 않음"].includes(status)) {
+    if (["수정 완료", "닫힘", "원치 않음"].includes(statusName)) {
       updateFields.resolvedAt = new Date().toISOString();
     }
   }
   if (type !== undefined) {
-    if (!project.types || !project.types.includes(type)) {
+    const typeObj = project.types?.find(t => 
+      (typeof t === 'object' ? t.id === type || t.name === type : t === type)
+    );
+    if (!typeObj) {
       return res
         .status(400)
         .json({ message: "유효한 업무 유형을 제공해야 합니다." });
     }
-    updateFields.type = type;
+    updateFields.type = typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj);  // ID로 저장
+    updateFields.typeId = typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj);
   }
   if (priority !== undefined) {
-    if (!project.priorities || !project.priorities.includes(priority)) {
+    const priorityObj = project.priorities?.find(p => 
+      (typeof p === 'object' ? p.id === priority || p.name === priority : p === priority)
+    );
+    if (!priorityObj) {
       return res
         .status(400)
         .json({ message: "유효한 우선순위를 제공해야 합니다." });
     }
-    updateFields.priority = priority;
+    updateFields.priority = typeof priorityObj === 'object' ? priorityObj.id : mapOldPriorityToId(priorityObj);  // ID로 저장
+    updateFields.priorityId = typeof priorityObj === 'object' ? priorityObj.id : mapOldPriorityToId(priorityObj);
   }
   if (component !== undefined) {
     const comps = await componentsCollection

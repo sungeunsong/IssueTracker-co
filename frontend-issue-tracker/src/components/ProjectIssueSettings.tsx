@@ -1,23 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { DEFAULT_PRIORITIES, DEFAULT_RESOLUTIONS, DEFAULT_ISSUE_TYPES } from '../types';
-import EditableList from './EditableList'; // 재사용할 자식 컴포넌트
+import { 
+  DEFAULT_PRIORITIES, 
+  DEFAULT_RESOLUTIONS, 
+  DEFAULT_ISSUE_TYPES, 
+  DEFAULT_STATUSES,
+  StatusItem,
+  TypeItem,
+  PriorityItem,
+  ResolutionItem
+} from '../types';
+import { EditableKeyValueList } from './EditableList';
 
 interface Props {
   projectId: string;
 }
 
 const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
-  // 현재 상태
-  const [statuses, setStatuses] = useState<string[]>([]);
-  const [priorities, setPriorities] = useState<string[]>([]);
-  const [resolutions, setResolutions] = useState<string[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
+  // 현재 상태 - ID 기반 객체 배열로 변경
+  const [statuses, setStatuses] = useState<StatusItem[]>([]);
+  const [priorities, setPriorities] = useState<PriorityItem[]>([]);
+  const [resolutions, setResolutions] = useState<ResolutionItem[]>([]);
+  const [types, setTypes] = useState<TypeItem[]>([]);
 
   // 변경 여부(isDirty)를 확인하기 위한 초기 상태
-  const [initialStatuses, setInitialStatuses] = useState<string[]>([]);
-  const [initialPriorities, setInitialPriorities] = useState<string[]>([]);
-  const [initialResolutions, setInitialResolutions] = useState<string[]>([]);
-  const [initialTypes, setInitialTypes] = useState<string[]>([]);
+  const [initialStatuses, setInitialStatuses] = useState<StatusItem[]>([]);
+  const [initialPriorities, setInitialPriorities] = useState<PriorityItem[]>([]);
+  const [initialResolutions, setInitialResolutions] = useState<ResolutionItem[]>([]);
+  const [initialTypes, setInitialTypes] = useState<TypeItem[]>([]);
 
   // UI 상태
   const [isLoading, setIsLoading] = useState(true);
@@ -30,23 +39,58 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
         const res = await fetch(`/api/projects/${projectId}/issue-settings`);
         if (res.ok) {
           const data = await res.json();
-          // 현재 상태와 초기 상태를 모두 설정
-          setStatuses(data.statuses || []);
-          setPriorities(data.priorities || DEFAULT_PRIORITIES);
-          setResolutions(data.resolutions || DEFAULT_RESOLUTIONS);
-          setTypes(data.types || DEFAULT_ISSUE_TYPES);
+          
+          // 서버에서 오는 데이터가 이미 ID 기반 객체 배열인지 문자열 배열인지 확인
+          const processStatuses = (statuses: any[]) => {
+            if (!statuses || statuses.length === 0) return DEFAULT_STATUSES;
+            return statuses.map((s, idx) => 
+              typeof s === 'object' ? s : { id: `status_${idx}`, name: s, color: 'blue', order: idx + 1 }
+            );
+          };
+          
+          const processPriorities = (priorities: any[]) => {
+            if (!priorities || priorities.length === 0) return DEFAULT_PRIORITIES;
+            return priorities.map((p, idx) => 
+              typeof p === 'object' ? p : { id: `priority_${idx}`, name: p, color: 'yellow', order: idx + 1 }
+            );
+          };
+          
+          const processResolutions = (resolutions: any[]) => {
+            if (!resolutions || resolutions.length === 0) return DEFAULT_RESOLUTIONS;
+            return resolutions.map((r, idx) => 
+              typeof r === 'object' ? r : { id: `resolution_${idx}`, name: r, color: 'green', order: idx + 1 }
+            );
+          };
+          
+          const processTypes = (types: any[]) => {
+            if (!types || types.length === 0) return DEFAULT_ISSUE_TYPES;
+            return types.map((t, idx) => 
+              typeof t === 'object' ? t : { id: `type_${idx}`, name: t, color: 'sky', order: idx + 1 }
+            );
+          };
 
-          setInitialStatuses(data.statuses || []);
-          setInitialPriorities(data.priorities || DEFAULT_PRIORITIES);
-          setInitialResolutions(data.resolutions || DEFAULT_RESOLUTIONS);
-          setInitialTypes(data.types || DEFAULT_ISSUE_TYPES);
+          // 현재 상태와 초기 상태를 모두 설정
+          const processedStatuses = processStatuses(data.statuses);
+          const processedPriorities = processPriorities(data.priorities);
+          const processedResolutions = processResolutions(data.resolutions);
+          const processedTypes = processTypes(data.types);
+          
+          setStatuses(processedStatuses);
+          setPriorities(processedPriorities);
+          setResolutions(processedResolutions);
+          setTypes(processedTypes);
+
+          setInitialStatuses(processedStatuses);
+          setInitialPriorities(processedPriorities);
+          setInitialResolutions(processedResolutions);
+          setInitialTypes(processedTypes);
         } else {
           // API 실패 시 기본값으로 설정
-          setStatuses([]);
+          setStatuses(DEFAULT_STATUSES);
           setPriorities(DEFAULT_PRIORITIES);
           setResolutions(DEFAULT_RESOLUTIONS);
           setTypes(DEFAULT_ISSUE_TYPES);
-          setInitialStatuses([]);
+          setInitialStatuses(DEFAULT_STATUSES);
           setInitialPriorities(DEFAULT_PRIORITIES);
           setInitialResolutions(DEFAULT_RESOLUTIONS);
           setInitialTypes(DEFAULT_ISSUE_TYPES);
@@ -100,30 +144,30 @@ const ProjectIssueSettings: React.FC<Props> = ({ projectId }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-4">
       <div className="space-y-6">
-        {/* 재사용 컴포넌트를 사용하여 각 목록을 렌더링 */}
-        <EditableList
+        {/* ID-이름 쌍으로 편집 가능한 리스트들 */}
+        <EditableKeyValueList
           title="Issue Statuses"
           items={statuses}
           setItems={setStatuses}
-          placeholder="새 상태"
+          defaultColor="blue"
         />
-        <EditableList
+        <EditableKeyValueList
           title="Issue Types"
           items={types}
           setItems={setTypes}
-          placeholder="새 유형"
+          defaultColor="sky"
         />
-        <EditableList
+        <EditableKeyValueList
           title="Issue Priorities"
           items={priorities}
           setItems={setPriorities}
-          placeholder="새 우선순위"
+          defaultColor="yellow"
         />
-        <EditableList
+        <EditableKeyValueList
           title="Resolution Reasons"
           items={resolutions}
           setItems={setResolutions}
-          placeholder="새 해결 사유"
+          defaultColor="green"
         />
       </div>
 

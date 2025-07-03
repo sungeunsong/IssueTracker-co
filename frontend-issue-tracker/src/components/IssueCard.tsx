@@ -1,10 +1,19 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import type { Issue, User } from "../types";
+import type { Issue, User, Project } from "../types";
 import {
   statusColors,
   issueTypeColors,
   issuePriorityColors,
+  getStatusNameById,
+  getTypeNameById,
+  getPriorityNameById,
+  getStatusColorById,
+  getTypeColorById,
+  getPriorityColorById,
+  DEFAULT_STATUSES,
+  DEFAULT_ISSUE_TYPES,
+  DEFAULT_PRIORITIES,
 } from "../types";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 
@@ -13,6 +22,7 @@ interface IssueCardProps {
   onClick: () => void;
   onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
   users: User[];
+  project?: Project | null;
 }
 
 export const IssueCard: React.FC<IssueCardProps> = ({
@@ -20,9 +30,22 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   onClick,
   onDragStart,
   users,
+  project,
 }) => {
+  const statuses = project?.statuses || DEFAULT_STATUSES;
+  const types = project?.types || DEFAULT_ISSUE_TYPES;
+  const priorities = project?.priorities || DEFAULT_PRIORITIES;
+
+  const statusName = getStatusNameById(issue.statusId, statuses);
+  const typeName = getTypeNameById(issue.typeId, types);
+  const priorityName = getPriorityNameById(issue.priorityId, priorities);
+
+  const statusColor = getStatusColorById(issue.statusId, statuses);
+  const typeColor = getTypeColorById(issue.typeId, types);
+  const priorityColor = getPriorityColorById(issue.priorityId, priorities);
+
   const getPriorityStyles = () => {
-    return `border-l-4 ${issuePriorityColors[issue.priority]}`;
+    return `border-l-4 ${priorityColor}`;
   };
 
   return (
@@ -43,13 +66,11 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           {issue.title}
         </h3>
         <span
-          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${
-            issueTypeColors[issue.type] || 'bg-slate-100 text-slate-800 ring-slate-600/20'
-          } whitespace-nowrap`}
+          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${typeColor} whitespace-nowrap`}
           style={{ fontSize: "0.65rem" }}
-          title={`Type: ${issue.type}`}
+          title={`Type: ${typeName}`}
         >
-          {issue.type}
+          {typeName}
         </span>
       </div>
 
@@ -58,13 +79,11 @@ export const IssueCard: React.FC<IssueCardProps> = ({
       </p>
       <div className="flex items-center justify-between text-xs text-slate-500">
         <span
-          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${
-            statusColors[issue.status]
-          } bg-opacity-80`}
+          className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${statusColor} bg-opacity-80`}
           style={{ fontSize: "0.65rem" }}
-          title={`Status: ${issue.status}`}
+          title={`Status: ${statusName}`}
         >
-          {issue.status}
+          {statusName}
         </span>
         <div className="flex items-center space-x-1">
           {issue.assignee && (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import type { Issue, User } from "../types";
+import type { Issue, User, StatusItem } from "../types";
 import type { ResolutionStatus } from "../types";
 import { statusColors, issueTypeColors } from "../types";
 import { PencilIcon } from "./icons/PencilIcon";
@@ -19,7 +19,7 @@ interface IssueDetailPanelProps {
   onUpdateStatus: (issueId: string, newStatus: ResolutionStatus) => void;
   users: User[];
   onIssueUpdated: (issue: Issue) => void;
-  statuses: string[];
+  statuses: (StatusItem | string)[];
   showCustomers?: boolean;
   showComponents?: boolean;
 }
@@ -144,15 +144,19 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                   } appearance-none text-center font-medium`}
                   aria-label="Update issue status"
                 >
-                  {statuses.map((s) => (
-                    <option
-                      key={s}
-                      value={s}
-                      className="bg-white text-slate-800"
-                    >
-                      {s}
-                    </option>
-                  ))}
+                  {statuses.map((s) => {
+                    const statusName = typeof s === 'object' ? s.name : s;
+                    const statusValue = typeof s === 'object' ? s.id : s;
+                    return (
+                      <option
+                        key={statusValue}
+                        value={statusName}
+                        className="bg-white text-slate-800"
+                      >
+                        {statusName}
+                      </option>
+                    );
+                  })}
                 </select>
               }
             />

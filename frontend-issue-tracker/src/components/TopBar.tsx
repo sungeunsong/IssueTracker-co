@@ -1,6 +1,6 @@
 import React from "react";
 import type { ViewMode } from "../App";
-import type { ResolutionStatus } from "../types";
+import type { ResolutionStatus, StatusItem } from "../types";
 import { SearchIcon } from "./icons/SearchIcon";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 import { GlobeIcon } from "./icons/GlobeIcon";
@@ -14,7 +14,7 @@ interface TopBarProps {
   onSearchTermChange: (term: string) => void;
   statusFilter: ResolutionStatus | "ALL";
   onStatusFilterChange: (status: ResolutionStatus | "ALL") => void;
-  statuses: string[];
+  statuses: StatusItem[];
   onCreateIssue: () => void;
   currentUser: string | null;
   isAdmin: boolean;
@@ -97,9 +97,9 @@ export const TopBar: React.FC<TopBarProps> = ({
               aria-label="Filter by status"
             >
               <option value="ALL">All Statuses</option>
-              {statuses.map((s) => (
-                <option key={s} value={s}>
-                  {s}
+              {statuses.map((status) => (
+                <option key={status.id} value={status.name}>
+                  {status.name}
                 </option>
               ))}
             </select>

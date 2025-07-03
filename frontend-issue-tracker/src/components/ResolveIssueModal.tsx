@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from './Modal';
-import type { User, Version } from '../types';
+import type { User, Version, ResolutionItem } from '../types';
 
 interface Props {
   isOpen: boolean;
@@ -14,7 +14,7 @@ interface Props {
   }) => void;
   projectId: string;
   users: User[];
-  resolutions: string[];
+  resolutions: (ResolutionItem | string)[];
   initialAssignee?: string;
 }
 
@@ -49,7 +49,9 @@ export const ResolveIssueModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (resolutions && resolutions.length > 0) {
-      setResolution(resolutions[0]);
+      const firstResolution = resolutions[0];
+      const resolutionName = typeof firstResolution === 'object' ? firstResolution.name : firstResolution;
+      setResolution(resolutionName);
     }
   }, [resolutions]);
 
@@ -91,11 +93,15 @@ export const ResolveIssueModal: React.FC<Props> = ({
             className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3"
             required
           >
-            {resolutions.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
+            {resolutions.map((r) => {
+              const resolutionName = typeof r === 'object' ? r.name : r;
+              const resolutionValue = typeof r === 'object' ? r.id : r;
+              return (
+                <option key={resolutionValue} value={resolutionName}>
+                  {resolutionName}
+                </option>
+              );
+            })}
           </select>
         </div>
 
