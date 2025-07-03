@@ -7,6 +7,8 @@ import { RichTextViewer } from './RichTextViewer';
 interface IssueDetailsViewProps {
   issue: Issue;
   users?: User[];
+  showCustomers?: boolean;
+  showComponents?: boolean;
 }
 
 interface DetailItemProps {
@@ -27,7 +29,12 @@ const DetailItem: React.FC<DetailItemProps> = ({ label, value, isCode, isPreLine
   </div>
 );
 
-export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users }) => {
+export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({
+  issue,
+  users,
+  showCustomers = true,
+  showComponents = true,
+}) => {
   const formattedDate = new Date(issue.createdAt).toLocaleString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -65,6 +72,18 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({ issue, users
         />
         <DetailItem label="등록자" value={users?.find(u => u.userid === issue.reporter)?.username || issue.reporter} />
         <DetailItem label="담당자" value={issue.assignee ? (users?.find(u => u.userid === issue.assignee)?.username || issue.assignee) : undefined} />
+        {showComponents && (
+          <DetailItem label="컴포넌트" value={issue.component} />
+        )}
+        {showCustomers && (
+          <DetailItem label="고객사" value={issue.customer} />
+        )}
+        {issue.affectsVersion && (
+          <DetailItem label="영향을 받는 버전" value={issue.affectsVersion} />
+        )}
+        {issue.fixVersion && (
+          <DetailItem label="수정 버전" value={issue.fixVersion} />
+        )}
         {issue.comments && issue.comments.length > 0 && (
           <div>
             <dt className="text-sm font-medium text-slate-500">코멘트</dt>
