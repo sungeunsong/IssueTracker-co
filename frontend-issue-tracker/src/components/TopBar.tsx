@@ -44,8 +44,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <header className="bg-white shadow-sm flex-shrink-0 border-b border-slate-200">
       <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Left Section: Tabs and View Name */}
-        <div className="flex items-center">
+        {/* Left Section: Tabs */}
+        <div className="flex items-center space-x-4 min-w-[160px]">
           <nav className="flex space-x-1 sm:space-x-2" aria-label="Tabs">
             {navItems.map((item) => (
               <button
@@ -67,9 +67,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           </nav>
         </div>
 
-        {/* Right Section: Search, Filters, Actions, User */}
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+        {/* Center Section: Search */}
+        <div className="flex-1 flex justify-center">
+          <div className="relative w-full max-w-lg">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <SearchIcon className="h-4 w-4 text-slate-400" />
             </div>
@@ -84,8 +84,10 @@ export const TopBar: React.FC<TopBarProps> = ({
               aria-label="Search issues"
             />
           </div>
+        </div>
 
-          {/* Status Filter Dropdown - simplified, consider a dedicated filter button for more complex filters */}
+        {/* Right Section: Filter, Icons, Buttons */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <div className="relative hidden md:block">
             <select
               id="status-filter-topbar"
@@ -126,7 +128,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <button
               type="button"
               onClick={onRequestRegister}
-              className="px-3 py-2 text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
+              className="px-3 py-2 text-sm text-white bg-slate-600 hover:bg-slate-700 rounded-md shadow-sm"
             >
               사용자 등록
             </button>
@@ -137,7 +139,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             type="button"
             className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150"
           >
-            <PlusIcon className="w-4 h-4 mr-1.5 -ml-0.5" />
+            {/* <PlusIcon className="w-4 h-4 mr-1.5 -ml-0.5" /> */}
             Create
           </button>
         </div>
