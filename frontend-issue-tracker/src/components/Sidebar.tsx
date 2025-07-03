@@ -16,6 +16,7 @@ interface SidebarProps {
   currentProjectId: string | null;
   onSelectProject: (id: string) => void;
   isAdmin: boolean;
+  adminProjectIds: string[];
   onOpenProjectSettings: (id: string) => void;
 }
 
@@ -85,6 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentProjectId,
   onSelectProject,
   isAdmin,
+  adminProjectIds,
   onOpenProjectSettings,
 }) => {
   return (
@@ -116,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isActive={p.id === currentProjectId}
               onClick={() => onSelectProject(p.id)}
               actions={
-                isAdmin && (
+                (isAdmin || adminProjectIds.includes(p.id)) && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

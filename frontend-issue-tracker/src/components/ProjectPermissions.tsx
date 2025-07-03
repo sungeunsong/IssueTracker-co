@@ -9,12 +9,14 @@ interface Props {
 interface ProjectPermissions {
   readUsers: string[];
   writeUsers: string[];
+  adminUsers: string[];
 }
 
 export const ProjectPermissions: React.FC<Props> = ({ projectId, users }) => {
   const [permissions, setPermissions] = useState<ProjectPermissions>({
     readUsers: [],
-    writeUsers: []
+    writeUsers: [],
+    adminUsers: []
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,7 +39,7 @@ export const ProjectPermissions: React.FC<Props> = ({ projectId, users }) => {
     fetchPermissions();
   }, [projectId]);
 
-  const handlePermissionChange = (userId: string, permissionType: 'read' | 'write', checked: boolean) => {
+  const handlePermissionChange = (userId: string, permissionType: 'read' | 'write' | 'admin', checked: boolean) => {
     setPermissions(prev => {
       const newPermissions = { ...prev };
       
@@ -47,11 +49,17 @@ export const ProjectPermissions: React.FC<Props> = ({ projectId, users }) => {
         } else {
           newPermissions.readUsers = prev.readUsers.filter(id => id !== userId);
         }
-      } else {
+      } else if (permissionType === 'write') {
         if (checked) {
           newPermissions.writeUsers = [...prev.writeUsers, userId];
         } else {
           newPermissions.writeUsers = prev.writeUsers.filter(id => id !== userId);
+        }
+      } else if (permissionType === 'admin') {
+        if (checked) {
+          newPermissions.adminUsers = [...prev.adminUsers, userId];
+        } else {
+          newPermissions.adminUsers = prev.adminUsers.filter(id => id !== userId);
         }
       }
       
@@ -94,6 +102,7 @@ export const ProjectPermissions: React.FC<Props> = ({ projectId, users }) => {
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• <strong>읽기 권한:</strong> 이슈를 볼 수 있지만 추가나 수정은 불가능</li>
           <li>• <strong>쓰기 권한:</strong> 이슈를 등록할 수 있고 본인이 등록한 이슈만 볼 수 있음</li>
+          <li>• <strong>관리자 권한:</strong> 프로젝트의 모든 권한과 프로젝트 설정 접근 가능</li>
           <li>• <strong>권한 없음:</strong> 프로젝트 리스트에 해당 프로젝트가 노출되지 않음</li>
         </ul>
       </div>
@@ -111,6 +120,7 @@ export const ProjectPermissions: React.FC<Props> = ({ projectId, users }) => {
                   <th className="text-left py-3 px-4 font-semibold">사용자</th>
                   <th className="text-center py-3 px-4 font-semibold">읽기 권한</th>
                   <th className="text-center py-3 px-4 font-semibold">쓰기 권한</th>
+                  <th className="text-center py-3 px-4 font-semibold">관리자 권한</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -140,6 +150,14 @@ export const ProjectPermissions: React.FC<Props> = ({ projectId, users }) => {
                         type="checkbox"
                         checked={permissions.writeUsers.includes(user.userid)}
                         onChange={(e) => handlePermissionChange(user.userid, 'write', e.target.checked)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={permissions.adminUsers.includes(user.userid)}
+                        onChange={(e) => handlePermissionChange(user.userid, 'admin', e.target.checked)}
                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                       />
                     </td>

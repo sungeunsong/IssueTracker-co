@@ -411,9 +411,10 @@ app.get("/api/projects", async (req, res) => {
   const filteredProjects = projects.filter(project => {
     const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
     const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasAdminPermission = project.adminUsers && project.adminUsers.includes(currentUserId);
     
     // 명시적으로 권한이 있는 경우만 표시
-    return hasReadPermission || hasWritePermission;
+    return hasReadPermission || hasWritePermission || hasAdminPermission;
   });
   
   res.json(filteredProjects.map(mapProject));
@@ -555,12 +556,22 @@ app.post("/api/logout", (req, res) => {
   });
 });
 
-app.get("/api/current-user", (req, res) => {
+app.get("/api/current-user", async (req, res) => {
   if (req.session.user) {
+    const currentUserId = req.session.user.userid;
+    
+    // 사용자가 관리자 권한을 가진 프로젝트 목록 조회
+    const projects = await projectsCollection.find({
+      adminUsers: currentUserId
+    }).toArray();
+    
+    const adminProjectIds = projects.map(project => project._id.toString());
+    
     return res.json({
       userid: req.session.user.userid,
       username: req.session.user.username,
       isAdmin: req.session.user.isAdmin || false,
+      adminProjectIds: adminProjectIds,
     });
   }
   res.status(401).json({ message: "로그인이 필요합니다." });
@@ -884,13 +895,14 @@ app.get("/api/projects/:projectId/permissions", async (req, res) => {
   }
   res.json({
     readUsers: project.readUsers || [],
-    writeUsers: project.writeUsers || []
+    writeUsers: project.writeUsers || [],
+    adminUsers: project.adminUsers || []
   });
 });
 
 app.put("/api/projects/:projectId/permissions", async (req, res) => {
   const { projectId } = req.params;
-  const { readUsers, writeUsers } = req.body;
+  const { readUsers, writeUsers, adminUsers } = req.body;
   
   const project = await projectsCollection.findOne({
     _id: new ObjectId(projectId),
@@ -905,6 +917,7 @@ app.put("/api/projects/:projectId/permissions", async (req, res) => {
       $set: { 
         readUsers: readUsers || [],
         writeUsers: writeUsers || [],
+        adminUsers: adminUsers || [],
         updatedAt: new Date().toISOString()
       }
     }
@@ -938,14 +951,15 @@ app.get("/api/issues", async (req, res) => {
     
     const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
     const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasAdminPermission = project.adminUsers && project.adminUsers.includes(currentUserId);
     
     // 권한이 없으면 접근 거부
-    if (!hasReadPermission && !hasWritePermission) {
+    if (!hasReadPermission && !hasWritePermission && !hasAdminPermission) {
       return res.status(403).json({ message: "이 프로젝트에 접근할 권한이 없습니다." });
     }
     
-    // 쓰기 권한만 있는 경우 본인이 작성한 이슈만 필터링
-    if (hasWritePermission && !hasReadPermission) {
+    // 쓰기 권한만 있는 경우 본인이 작성한 이슈만 필터링 (관리자 권한이나 읽기 권한이 있으면 모든 이슈 조회)
+    if (hasWritePermission && !hasReadPermission && !hasAdminPermission) {
       filter.createdBy = currentUserId;
     }
   }
@@ -1045,9 +1059,10 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     }
     
     const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasAdminPermission = project.adminUsers && project.adminUsers.includes(currentUserId);
     
-    // 쓰기 권한 확인 (읽기 권한만으로는 이슈 생성 불가)
-    if (!hasWritePermission && (project.writeUsers || project.readUsers)) {
+    // 쓰기 권한 또는 관리자 권한 확인 (읽기 권한만으로는 이슈 생성 불가)
+    if (!hasWritePermission && !hasAdminPermission && (project.writeUsers || project.readUsers || project.adminUsers)) {
       return res.status(403).json({ message: "이슈를 생성할 권한이 없습니다." });
     }
   }
@@ -1225,12 +1240,13 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (!currentUser || !currentUser.isAdmin) {
     const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
     const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
+    const hasAdminPermission = project.adminUsers && project.adminUsers.includes(currentUserId);
     
     // 권한 확인
-    if (project.writeUsers || project.readUsers) {
-      // 쓰기 권한이 있으면 모든 이슈 수정 가능
-      if (hasWritePermission) {
-        // 쓰기 권한이 있으면 통과
+    if (project.writeUsers || project.readUsers || project.adminUsers) {
+      // 쓰기 권한 또는 관리자 권한이 있으면 모든 이슈 수정 가능
+      if (hasWritePermission || hasAdminPermission) {
+        // 권한이 있으면 통과
       } else if (hasReadPermission) {
         // 읽기 권한만 있으면 수정 불가
         return res.status(403).json({ message: "읽기 권한만으로는 이슈를 수정할 수 없습니다." });

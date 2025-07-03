@@ -62,6 +62,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [adminProjectIds, setAdminProjectIds] = useState<string[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedIssueForDetail, setSelectedIssueForDetail] =
     useState<Issue | null>(null);
@@ -112,6 +113,7 @@ const App: React.FC = () => {
           setCurrentUser(data.username);
           setCurrentUserId(data.userid);
           setIsAdmin(!!data.isAdmin);
+          setAdminProjectIds(data.adminProjectIds || []);
           fetchUsers();
         } else {
           setIsAuthenticated(false);
@@ -208,6 +210,7 @@ const App: React.FC = () => {
         setCurrentUser(data.username);
         setCurrentUserId(data.userid);
         setIsAdmin(!!data.isAdmin);
+        setAdminProjectIds(data.adminProjectIds || []);
         await fetchUsers();
         setIsAuthenticated(true); // 이 상태 변경이 프로젝트 및 이슈 로딩을 트리거합니다.
       } else {
@@ -685,6 +688,7 @@ const App: React.FC = () => {
         currentProjectId={currentProjectId}
         onSelectProject={handleSelectProject}
         isAdmin={isAdmin}
+        adminProjectIds={adminProjectIds}
         onOpenProjectSettings={handleOpenProjectSettings}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
