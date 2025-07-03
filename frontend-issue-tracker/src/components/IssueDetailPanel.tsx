@@ -20,6 +20,8 @@ interface IssueDetailPanelProps {
   users: User[];
   onIssueUpdated: (issue: Issue) => void;
   statuses: string[];
+  showCustomers?: boolean;
+  showComponents?: boolean;
 }
 
 const DetailItem: React.FC<{
@@ -51,6 +53,8 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
   users,
   onIssueUpdated,
   statuses,
+  showCustomers = true,
+  showComponents = true,
 }) => {
   const [newComment, setNewComment] = useState("");
   const [localIssue, setLocalIssue] = useState(issue);
@@ -182,7 +186,14 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                   : undefined
               }
             />
-            <DetailItem label="컴포넌트" value={issue.component} />
+            {/* 컴포넌트 노출 여부 */}
+            {showComponents && (
+              <DetailItem label="컴포넌트" value={issue.component} />
+            )}
+            {/* 고객사 노출 여부 */}
+            {showCustomers && (
+              <DetailItem label="고객사" value={issue.customer} />
+            )}
             <DetailItem label="영향을 받는 버전" value={issue.affectsVersion} />
             <DetailItem label="수정 버전" value={issue.fixVersion} />
             <DetailItem label="해결 사유" value={issue.resolution} />
