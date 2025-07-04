@@ -128,8 +128,12 @@ export const ProjectPermissions: React.FC<Props> = ({ projectId, users }) => {
                   <tr key={user.userid} className="hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold mr-3">
-                          {(user.name || user.username || user.userid).charAt(0)}
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold mr-3 bg-gray-300">
+                          {user.profileImage ? (
+                            <img src={user.profileImage} alt={user.username} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-white">{(user.name || user.username || user.userid).charAt(0)}</span>
+                          )}
                         </div>
                         <div>
                           <div className="font-medium">{user.name || user.username}</div>

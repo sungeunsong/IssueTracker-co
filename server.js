@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const DB_NAME = process.env.DB_NAME || "issuetracker";
