@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { IssueForm } from "./components/IssueForm";
 import { IssueList } from "./components/IssueList";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { Modal } from "./components/Modal";
-// import { IssueDetailsView } from './components/IssueDetailsView'; // Not used directly here
 import { Sidebar } from "./components/Sidebar";
 import { ProjectForm } from "./components/ProjectForm";
 import { LoginForm } from "./components/LoginForm";
@@ -13,6 +12,7 @@ import { TopBar } from "./components/TopBar";
 import { BoardView } from "./components/BoardView";
 import { IssueDetailPanel } from "./components/IssueDetailPanel";
 import ResolveIssueModal from "./components/ResolveIssueModal";
+import { UserSettingsPage } from "./pages/UserSettingsPage";
 import type {
   Issue,
   ResolutionStatus as StatusEnum,
@@ -22,7 +22,6 @@ import type {
 } from "./types";
 import { DEFAULT_ISSUE_TYPES, DEFAULT_PRIORITIES } from "./types";
 import { LoginScreen } from "./components/LoginScreen";
-// import { PlusIcon } from './components/icons/PlusIcon'; // Not used directly here
 
 const ITEMS_PER_PAGE_LIST = 10;
 
@@ -45,9 +44,401 @@ export type IssueFormData = {
 
 export type ViewMode = "board" | "list";
 
+const MainContent: React.FC<any> = ({ // Define props for MainContent
+  isAuthenticated,
+  isLoading,
+  issues,
+  viewMode,
+  setViewMode,
+  projects,
+  currentProjectId,
+  handleSelectProject,
+  isAdmin,
+  adminProjectIds,
+  handleOpenProjectSettings,
+  error,
+  setError,
+  showAddProjectModal,
+  setShowAddProjectModal,
+  boardColumns,
+  handleSelectIssueForDetail,
+  updateIssueStatus,
+  users,
+  currentProject,
+  paginatedListIssues,
+  requestDeleteIssue,
+  handleOpenEditModal,
+  currentPage,
+  baseFilteredIssues,
+  handlePageChange,
+  selectedIssueForDetail,
+  closeDetailPanel,
+  handleIssueUpdated,
+  showAddIssueModal,
+  setShowAddIssueModal,
+  handleAddIssue,
+  isSubmitting,
+  currentUserId,
+  currentUser,
+  showEditIssueModal,
+  handleCloseEditModal,
+  selectedIssueForEdit,
+  handleEditIssue,
+  issueToDelete,
+  showDeleteModal,
+  confirmDeleteIssue,
+  cancelDeleteIssue,
+  issueToResolve,
+  showResolveModal,
+  setShowResolveModal,
+  handleResolveIssue,
+  handleLoginSuccess,
+  showLoginModal,
+  setShowLoginModal,
+  handleLogin,
+  showRegisterModal,
+  setShowRegisterModal,
+  handleRegister,
+  handleLogout,
+  searchTerm,
+  setSearchTerm,
+  statusFilter,
+  setStatusFilter,
+  handleAddProject,
+}) => {
+  if (isLoading && issues.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-100">
+        <div className="text-2xl font-semibold text-slate-700">
+          이슈 로딩 중...
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  return (
+    <div className="flex h-screen bg-white text-slate-800 font-sans">
+      <Sidebar
+        currentView={viewMode}
+        onSetViewMode={setViewMode}
+        onCreateProject={() => {
+          setShowAddProjectModal(true);
+          setError(null);
+        }}
+        projects={projects}
+        currentProjectId={currentProjectId}
+        onSelectProject={handleSelectProject}
+        isAdmin={isAdmin}
+        adminProjectIds={adminProjectIds}
+        onOpenProjectSettings={handleOpenProjectSettings}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopBar
+          currentView={viewMode}
+          onSetViewMode={setViewMode}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          statuses={currentProject?.statuses || []}
+          onCreateIssue={() => {
+            setShowAddIssueModal(true);
+            setError(null);
+          }}
+          currentUser={currentUser}
+          isAdmin={isAdmin}
+          onRequestLogout={handleLogout}
+          onRequestRegister={() => {
+            setShowRegisterModal(true);
+            setError(null);
+          }}
+        />
+        <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 p-4 sm:p-6">
+          {error && (
+            <div
+              className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md shadow-sm"
+              role="alert"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-bold">오류:</p>
+                  <p className="text-sm">{error}</p>
+                </div>
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-600 hover:text-red-800"
+                  aria-label="오류 메시지 닫기"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+          {projects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4">
+              <p className="text-lg">
+                프로젝트가 없습니다. 새 프로젝트를 추가하세요.
+              </p>
+              <button
+                onClick={() => {
+                  setShowAddProjectModal(true);
+                  setError(null);
+                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
+                프로젝트 생성
+              </button>
+            </div>
+          ) : (
+            <>
+              {viewMode === "board" && (
+                <BoardView
+                  columns={boardColumns}
+                  onSelectIssue={handleSelectIssueForDetail}
+                  onUpdateStatus={updateIssueStatus}
+                  users={users}
+                  project={currentProject}
+                />
+              )}
+              {viewMode === "list" && (
+                <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                  <IssueList
+                    issues={paginatedListIssues}
+                    onUpdateStatus={updateIssueStatus}
+                    onDeleteIssue={requestDeleteIssue}
+                    onViewIssue={handleSelectIssueForDetail}
+                    onEditIssue={handleOpenEditModal}
+                    currentPage={currentPage}
+                    totalIssues={baseFilteredIssues.length}
+                    itemsPerPage={ITEMS_PER_PAGE_LIST}
+                    onPageChange={handlePageChange}
+                    users={users}
+                    statuses={currentProject?.statuses || []}
+                    project={currentProject}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+
+      {selectedIssueForDetail && (
+        <IssueDetailPanel
+          issue={selectedIssueForDetail}
+          onClose={closeDetailPanel}
+          onEditIssue={() => handleOpenEditModal(selectedIssueForDetail)}
+          onDeleteIssue={() => requestDeleteIssue(selectedIssueForDetail.id)}
+          onUpdateStatus={updateIssueStatus}
+          users={users}
+          onIssueUpdated={handleIssueUpdated}
+          statuses={
+            projects.find((p) => p.id === selectedIssueForDetail.projectId)
+              ?.statuses || []
+          }
+          types={
+            projects.find((p) => p.id === selectedIssueForDetail.projectId)
+              ?.types || []
+          }
+          priorities={
+            projects.find((p) => p.id === selectedIssueForDetail.projectId)
+              ?.priorities || []
+          }
+          showCustomers={currentProject?.showCustomers}
+          showComponents={currentProject?.showComponents}
+        />
+      )}
+
+      <Modal
+        isOpen={showAddIssueModal}
+        onClose={() => {
+          setShowAddIssueModal(false);
+          setError(null);
+        }}
+        title="새 이슈 생성"
+      >
+        <IssueForm
+          onSubmit={handleAddIssue}
+          onCancel={() => {
+            setShowAddIssueModal(false);
+            setError(null);
+          }}
+          isSubmitting={isSubmitting}
+          submitButtonText="이슈 추가"
+          projects={projects}
+          selectedProjectId={currentProjectId}
+          users={users}
+          currentUserId={currentUserId}
+          currentUserName={currentUser}
+          statuses={currentProject?.statuses || []}
+          priorities={currentProject?.priorities || DEFAULT_PRIORITIES}
+          types={currentProject?.types || DEFAULT_ISSUE_TYPES}
+          components={currentProject?.components || []}
+          customers={currentProject?.customers || []}
+          showCustomers={currentProject?.showCustomers}
+          showComponents={currentProject?.showComponents}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showAddProjectModal}
+        onClose={() => {
+          setShowAddProjectModal(false);
+          setError(null);
+        }}
+        title="새 프로젝트 생성"
+      >
+        <ProjectForm
+          onSubmit={handleAddProject}
+          onCancel={() => {
+            setShowAddProjectModal(false);
+            setError(null);
+          }}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
+
+      {selectedIssueForEdit && (
+        <Modal
+          isOpen={showEditIssueModal}
+          onClose={handleCloseEditModal}
+          title="이슈 수정"
+        >
+          <IssueForm
+            onSubmit={(formData) =>
+              handleEditIssue(selectedIssueForEdit.id, formData)
+            }
+            initialData={selectedIssueForEdit}
+            onCancel={handleCloseEditModal}
+            isSubmitting={isSubmitting}
+            submitButtonText="변경사항 저장"
+            isEditMode={true}
+            projects={projects}
+            selectedProjectId={selectedIssueForEdit.projectId}
+            users={users}
+            currentUserId={currentUserId}
+            currentUserName={currentUser}
+            statuses={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.statuses || []
+            }
+            priorities={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.priorities || DEFAULT_PRIORITIES
+            }
+            types={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.types || DEFAULT_ISSUE_TYPES
+            }
+            components={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.components || []
+            }
+            customers={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.customers || []
+            }
+            showCustomers={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.showCustomers
+            }
+            showComponents={
+              projects.find((p) => p.id === selectedIssueForEdit.projectId)
+                ?.showComponents
+            }
+          />
+        </Modal>
+      )}
+
+      {showDeleteModal && issueToDelete && (
+        <ConfirmationModal
+          title="삭제 확인"
+          message={`정말로 이슈 "${
+            issues
+              .find((i) => i.id === issueToDelete)
+              ?.title.substring(0, 30) ?? "선택된 이슈"
+          }..."을(를) 삭제하시겠습니까?`}
+          onConfirm={confirmDeleteIssue}
+          onCancel={cancelDeleteIssue}
+          confirmText="삭제"
+          cancelText="취소"
+        />
+      )}
+
+      <Modal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false);
+          setError(null);
+        }}
+        title="로그인"
+      >
+        <LoginForm
+          onSubmit={handleLogin}
+          onCancel={() => {
+            setShowLoginModal(false);
+            setError(null);
+          }}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showRegisterModal}
+        onClose={() => {
+          setShowRegisterModal(false);
+          setError(null);
+        }}
+        title="회원가입"
+      >
+        <RegisterForm
+          onSubmit={handleRegister}
+          onCancel={() => {
+            setShowRegisterModal(false);
+            setError(null);
+          }}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
+
+      {issueToResolve && (
+        <ResolveIssueModal
+          isOpen={showResolveModal}
+          onClose={() => {
+            setShowResolveModal(false);
+            setIssueToResolve(null);
+          }}
+          onSubmit={handleResolveIssue}
+          projectId={issueToResolve.projectId}
+          users={users}
+          resolutions={
+            projects.find((p) => p.id === issueToResolve.projectId)
+              ?.resolutions || []
+          }
+          initialAssignee={issueToResolve.assignee}
+        />
+      )}
+    </div>
+  );
+}
+
 const App: React.FC = () => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Added
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,7 +450,7 @@ const App: React.FC = () => {
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [adminProjectIds, setAdminProjectIds] = useState<string[]>([]);
@@ -110,7 +501,7 @@ const App: React.FC = () => {
         if (res.ok) {
           const data = await res.json();
           setIsAuthenticated(true);
-          setCurrentUser(data.username);
+          setCurrentUser(data);
           setCurrentUserId(data.userid);
           setIsAdmin(!!data.isAdmin);
           setAdminProjectIds(data.adminProjectIds || []);
@@ -173,13 +564,13 @@ const App: React.FC = () => {
   }, []);
 
   const handleRegister = useCallback(
-    async (userid: string, username: string, password: string) => {
+    async (formData: any) => {
       setIsSubmitting(true);
       try {
         const res = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userid, username, password }),
+          body: JSON.stringify(formData),
         });
         if (!res.ok) {
           const errData = await res
@@ -207,7 +598,7 @@ const App: React.FC = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setCurrentUser(data.username);
+        setCurrentUser(data);
         setCurrentUserId(data.userid);
         setIsAdmin(!!data.isAdmin);
         setAdminProjectIds(data.adminProjectIds || []);
@@ -293,7 +684,6 @@ const App: React.FC = () => {
     }
   }, [isAuthenticated, fetchProjects]);
 
-  // 프로젝트 목록이 로드된 후, 현재 선택된 프로젝트가 없다면 첫 번째 프로젝트를 자동으로 선택합니다.
   useEffect(() => {
     if (projects.length > 0 && !currentProjectId) {
       setCurrentProjectId(projects[0].id);
@@ -647,12 +1037,11 @@ const App: React.FC = () => {
   const boardColumns = useMemo(() => {
     const statuses = currentProject?.statuses || [];
     return statuses.map((status) => {
-      // StatusItem 객체인지 문자열인지 확인 (하위 호환성)
       const statusName = typeof status === "object" ? status.name : status;
       const statusId = typeof status === "object" ? status.id : status;
 
       return {
-        id: statusName, // UI에서 사용할 상태 이름
+        id: statusName,
         title: statusName,
         issues: baseFilteredIssues.filter(
           (issue) => issue.statusId === statusId
@@ -661,333 +1050,17 @@ const App: React.FC = () => {
     });
   }, [baseFilteredIssues, currentProject]);
 
-  if (isLoading && issues.length === 0) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-slate-100">
-        <div className="text-2xl font-semibold text-slate-700">
-          이슈 로딩 중...
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
-  }
-
   return (
-    <div className="flex h-screen bg-white text-slate-800 font-sans">
-      <Sidebar
-        currentView={viewMode}
-        onSetViewMode={setViewMode}
-        onCreateProject={() => {
-          setShowAddProjectModal(true);
-          setError(null);
-        }}
-        projects={projects}
-        currentProjectId={currentProjectId}
-        onSelectProject={handleSelectProject}
-        isAdmin={isAdmin}
-        adminProjectIds={adminProjectIds}
-        onOpenProjectSettings={handleOpenProjectSettings}
-      />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar
-          currentView={viewMode}
-          onSetViewMode={setViewMode}
-          searchTerm={searchTerm}
-          onSearchTermChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          statuses={currentProject?.statuses || []}
-          onCreateIssue={() => {
-            setShowAddIssueModal(true);
-            setError(null);
-          }}
-          currentUser={currentUser}
-          isAdmin={isAdmin}
-          onRequestLogout={handleLogout}
-          onRequestRegister={() => {
-            setShowRegisterModal(true);
-            setError(null);
+    <Routes>
+      <Route path="/" element={
+        <MainContent 
+          {...{
+            isAuthenticated, isLoading, issues, viewMode, setViewMode, projects, currentProjectId, handleSelectProject, isAdmin, adminProjectIds, handleOpenProjectSettings, error, setError, showAddProjectModal, setShowAddProjectModal, handleAddProject, boardColumns, handleSelectIssueForDetail, updateIssueStatus, users, currentProject, paginatedListIssues, requestDeleteIssue, handleOpenEditModal, currentPage, baseFilteredIssues, handlePageChange, selectedIssueForDetail, closeDetailPanel, handleIssueUpdated, showAddIssueModal, setShowAddIssueModal, handleAddIssue, isSubmitting, currentUserId, currentUser, showEditIssueModal, handleCloseEditModal, selectedIssueForEdit, handleEditIssue, issueToDelete, showDeleteModal, confirmDeleteIssue, cancelDeleteIssue, issueToResolve, showResolveModal, setShowResolveModal, handleResolveIssue, handleLoginSuccess, showLoginModal, setShowLoginModal, handleLogin, showRegisterModal, setShowRegisterModal, handleRegister, handleLogout, searchTerm, setSearchTerm, statusFilter, setStatusFilter
           }}
         />
-        <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 p-4 sm:p-6">
-          {error && (
-            <div
-              className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md shadow-sm"
-              role="alert"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-bold">오류:</p>
-                  <p className="text-sm">{error}</p>
-                </div>
-                <button
-                  onClick={() => setError(null)}
-                  className="text-red-600 hover:text-red-800"
-                  aria-label="오류 메시지 닫기"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
-          {projects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4">
-              <p className="text-lg">
-                프로젝트가 없습니다. 새 프로젝트를 추가하세요.
-              </p>
-              <button
-                onClick={() => {
-                  setShowAddProjectModal(true);
-                  setError(null);
-                }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
-                프로젝트 생성
-              </button>
-            </div>
-          ) : (
-            <>
-              {viewMode === "board" && (
-                <BoardView
-                  columns={boardColumns}
-                  onSelectIssue={handleSelectIssueForDetail}
-                  onUpdateStatus={updateIssueStatus}
-                  users={users}
-                  project={currentProject}
-                />
-              )}
-              {viewMode === "list" && (
-                <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                  <IssueList
-                    issues={paginatedListIssues}
-                    onUpdateStatus={updateIssueStatus}
-                    onDeleteIssue={requestDeleteIssue}
-                    onViewIssue={handleSelectIssueForDetail}
-                    onEditIssue={handleOpenEditModal}
-                    currentPage={currentPage}
-                    totalIssues={baseFilteredIssues.length}
-                    itemsPerPage={ITEMS_PER_PAGE_LIST}
-                    onPageChange={handlePageChange}
-                    users={users}
-                    statuses={currentProject?.statuses || []}
-                    project={currentProject}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </main>
-      </div>
-
-      {selectedIssueForDetail && (
-        <IssueDetailPanel
-          issue={selectedIssueForDetail}
-          onClose={closeDetailPanel}
-          onEditIssue={() => handleOpenEditModal(selectedIssueForDetail)}
-          onDeleteIssue={() => requestDeleteIssue(selectedIssueForDetail.id)}
-          onUpdateStatus={updateIssueStatus}
-          users={users}
-          onIssueUpdated={handleIssueUpdated}
-          statuses={
-            projects.find((p) => p.id === selectedIssueForDetail.projectId)
-              ?.statuses || []
-          }
-          types={
-            projects.find((p) => p.id === selectedIssueForDetail.projectId)
-              ?.types || []
-          }
-          priorities={
-            projects.find((p) => p.id === selectedIssueForDetail.projectId)
-              ?.priorities || []
-          }
-          showCustomers={currentProject?.showCustomers}
-          showComponents={currentProject?.showComponents}
-        />
-      )}
-
-      <Modal
-        isOpen={showAddIssueModal}
-        onClose={() => {
-          setShowAddIssueModal(false);
-          setError(null);
-        }}
-        title="새 이슈 생성"
-      >
-        <IssueForm
-          onSubmit={handleAddIssue}
-          onCancel={() => {
-            setShowAddIssueModal(false);
-            setError(null);
-          }}
-          isSubmitting={isSubmitting}
-          submitButtonText="이슈 추가"
-          projects={projects}
-          selectedProjectId={currentProjectId}
-          users={users}
-          currentUserId={currentUserId}
-          currentUserName={currentUser}
-          statuses={currentProject?.statuses || []}
-          priorities={currentProject?.priorities || DEFAULT_PRIORITIES}
-          types={currentProject?.types || DEFAULT_ISSUE_TYPES}
-          components={currentProject?.components || []}
-          customers={currentProject?.customers || []}
-          showCustomers={currentProject?.showCustomers}
-          showComponents={currentProject?.showComponents}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={showAddProjectModal}
-        onClose={() => {
-          setShowAddProjectModal(false);
-          setError(null);
-        }}
-        title="새 프로젝트 생성"
-      >
-        <ProjectForm
-          onSubmit={handleAddProject}
-          onCancel={() => {
-            setShowAddProjectModal(false);
-            setError(null);
-          }}
-          isSubmitting={isSubmitting}
-        />
-      </Modal>
-
-      {selectedIssueForEdit && (
-        <Modal
-          isOpen={showEditIssueModal}
-          onClose={handleCloseEditModal}
-          title="이슈 수정"
-        >
-          <IssueForm
-            onSubmit={(formData) =>
-              handleEditIssue(selectedIssueForEdit.id, formData)
-            }
-            initialData={selectedIssueForEdit}
-            onCancel={handleCloseEditModal}
-            isSubmitting={isSubmitting}
-            submitButtonText="변경사항 저장"
-            isEditMode={true}
-            projects={projects}
-            selectedProjectId={selectedIssueForEdit.projectId}
-            users={users}
-            currentUserId={currentUserId}
-            currentUserName={currentUser}
-            statuses={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)
-                ?.statuses || []
-            }
-            priorities={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)
-                ?.priorities || DEFAULT_PRIORITIES
-            }
-            types={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)
-                ?.types || DEFAULT_ISSUE_TYPES
-            }
-            components={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)
-                ?.components || []
-            }
-            customers={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)
-                ?.customers || []
-            }
-            showCustomers={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)
-                ?.showCustomers
-            }
-            showComponents={
-              projects.find((p) => p.id === selectedIssueForEdit.projectId)
-                ?.showComponents
-            }
-          />
-        </Modal>
-      )}
-
-      {showDeleteModal && issueToDelete && (
-        <ConfirmationModal
-          title="삭제 확인"
-          message={`정말로 이슈 "${
-            issues
-              .find((i) => i.id === issueToDelete)
-              ?.title.substring(0, 30) ?? "선택된 이슈"
-          }..."을(를) 삭제하시겠습니까?`}
-          onConfirm={confirmDeleteIssue}
-          onCancel={cancelDeleteIssue}
-          confirmText="삭제"
-          cancelText="취소"
-        />
-      )}
-
-      <Modal
-        isOpen={showLoginModal}
-        onClose={() => {
-          setShowLoginModal(false);
-          setError(null);
-        }}
-        title="로그인"
-      >
-        <LoginForm
-          onSubmit={handleLogin}
-          onCancel={() => {
-            setShowLoginModal(false);
-            setError(null);
-          }}
-          isSubmitting={isSubmitting}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={showRegisterModal}
-        onClose={() => {
-          setShowRegisterModal(false);
-          setError(null);
-        }}
-        title="회원가입"
-      >
-        <RegisterForm
-          onSubmit={handleRegister}
-          onCancel={() => {
-            setShowRegisterModal(false);
-            setError(null);
-          }}
-          isSubmitting={isSubmitting}
-        />
-      </Modal>
-
-      {issueToResolve && (
-        <ResolveIssueModal
-          isOpen={showResolveModal}
-          onClose={() => {
-            setShowResolveModal(false);
-            setIssueToResolve(null);
-          }}
-          onSubmit={handleResolveIssue}
-          projectId={issueToResolve.projectId}
-          users={users}
-          resolutions={
-            projects.find((p) => p.id === issueToResolve.projectId)
-              ?.resolutions || []
-          }
-          initialAssignee={issueToResolve.assignee}
-        />
-      )}
-    </div>
+      } />
+      <Route path="/settings/user" element={<UserSettingsPage />} />
+    </Routes>
   );
 };
 

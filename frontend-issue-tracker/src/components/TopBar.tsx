@@ -1,11 +1,14 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { Menu } from "@headlessui/react";
 import type { ViewMode } from "../App";
 import type { ResolutionStatus, StatusItem } from "../types";
 import { SearchIcon } from "./icons/SearchIcon";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
-import { GlobeIcon } from "./icons/GlobeIcon";
-import { PlusIcon } from "./icons/PlusIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
+import { SettingsIcon } from "./icons/SettingsIcon";
+
+import { User } from "../types";
 
 interface TopBarProps {
   currentView: ViewMode;
@@ -16,7 +19,7 @@ interface TopBarProps {
   onStatusFilterChange: (status: ResolutionStatus | "ALL") => void;
   statuses: StatusItem[];
   onCreateIssue: () => void;
-  currentUser: string | null;
+  currentUser: User | null;
   isAdmin: boolean;
   onRequestLogout: () => void;
   onRequestRegister: () => void;
@@ -107,22 +110,43 @@ export const TopBar: React.FC<TopBarProps> = ({
             </select>
           </div>
 
-          <button
-            type="button"
-            className="p-1.5 rounded-full text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150"
-            title="Notifications (placeholder)"
-          >
-            <GlobeIcon className="h-5 w-5" />
-          </button>
-
-          <button
-            onClick={onRequestLogout}
-            type="button"
-            className="p-1.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
-            title="로그아웃"
-          >
-            <LogoutIcon className="h-5 w-5" />
-          </button>
+          <Menu as="div" className="relative">
+            <Menu.Button className="p-1.5 rounded-full text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150">
+              {currentUser?.profileImage ? (
+                <img src={currentUser.profileImage} alt="Profile" className="h-6 w-6 rounded-full" />
+              ) : (
+                <UserAvatarPlaceholderIcon className="h-6 w-6" />
+              )}
+            </Menu.Button>
+            <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white divide-y divide-slate-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <div className="px-1 py-1">
+                <Menu.Item>
+                  {({ active }) => (
+                    <Link
+                      to="/settings/user"
+                      className={`${active ? 'bg-indigo-500 text-white' : 'text-slate-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                    >
+                      <SettingsIcon className={`w-5 h-5 mr-2 ${active ? 'text-white' : 'text-slate-400'}`} />
+                      사용자 설정
+                    </Link>
+                  )}
+                </Menu.Item>
+              </div>
+              <div className="px-1 py-1">
+                <Menu.Item>
+                  {({ active }) => (
+                    <button
+                      onClick={onRequestLogout}
+                      className={`${active ? 'bg-red-500 text-white' : 'text-slate-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                    >
+                      <LogoutIcon className={`w-5 h-5 mr-2 ${active ? 'text-white' : 'text-red-400'}`} />
+                      로그아웃
+                    </button>
+                  )}
+                </Menu.Item>
+              </div>
+            </Menu.Items>
+          </Menu>
 
           {isAdmin && (
             <button
@@ -139,7 +163,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             type="button"
             className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150"
           >
-            {/* <PlusIcon className="w-4 h-4 mr-1.5 -ml-0.5" /> */}
             Create
           </button>
         </div>

@@ -366,8 +366,12 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                     const parts = c.text.split(/(@\w+)/g);
                     return (
                       <div key={idx} className="flex space-x-2">
-                        <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
-                          <UserAvatarPlaceholderIcon className="w-4 h-4 text-slate-500" />
+                        <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+                          {user?.profileImage ? (
+                            <img src={user.profileImage} alt={user.username} className="w-full h-full rounded-full object-cover" />
+                          ) : (
+                            <UserAvatarPlaceholderIcon className="w-4 h-4 text-slate-500" />
+                          )}
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">

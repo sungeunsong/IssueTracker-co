@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const DB_NAME = process.env.DB_NAME || "issuetracker";
@@ -77,42 +77,42 @@ const DEFAULT_RESOLUTIONS = [
 // 기존 문자열 값을 ID로 매핑하는 함수들
 function mapOldStatusToId(oldStatus) {
   const mapping = {
-    "열림": "open",
-    "수정 중": "in_progress", 
+    열림: "open",
+    "수정 중": "in_progress",
     "수정 완료": "resolved",
-    "검증": "verified",
-    "닫힘": "closed",
-    "원치 않음": "rejected"
+    검증: "verified",
+    닫힘: "closed",
+    "원치 않음": "rejected",
   };
   return mapping[oldStatus] || "open";
 }
 
 function mapOldTypeToId(oldType) {
   const mapping = {
-    "작업": "task",
-    "버그": "bug", 
+    작업: "task",
+    버그: "bug",
     "새 기능": "feature",
-    "개선": "improvement"
+    개선: "improvement",
   };
   return mapping[oldType] || "task";
 }
 
 function mapOldPriorityToId(oldPriority) {
   const mapping = {
-    "HIGHEST": "highest",
-    "HIGH": "high",
-    "MEDIUM": "medium", 
-    "LOW": "low",
-    "LOWEST": "lowest"
+    HIGHEST: "highest",
+    HIGH: "high",
+    MEDIUM: "medium",
+    LOW: "low",
+    LOWEST: "lowest",
   };
   return mapping[oldPriority] || "medium";
 }
 
 function mapOldResolutionToId(oldResolution) {
   const mapping = {
-    "완료": "completed",
+    완료: "completed",
     "원하지 않음": "rejected",
-    "재현 불가": "cannot_reproduce"
+    "재현 불가": "cannot_reproduce",
   };
   return mapping[oldResolution] || null;
 }
@@ -139,29 +139,42 @@ async function migrateProjects() {
   const cursor = projectsCollection.find({});
   for await (const proj of cursor) {
     const update = {};
-    
+
     // 기존 문자열 배열을 ID 기반 객체 배열로 변환
-    if (!proj.statuses || (Array.isArray(proj.statuses) && typeof proj.statuses[0] === "string")) {
+    if (
+      !proj.statuses ||
+      (Array.isArray(proj.statuses) && typeof proj.statuses[0] === "string")
+    ) {
       update.statuses = DEFAULT_STATUSES;
     }
-    
-    if (!proj.priorities || (Array.isArray(proj.priorities) && typeof proj.priorities[0] === "string")) {
+
+    if (
+      !proj.priorities ||
+      (Array.isArray(proj.priorities) && typeof proj.priorities[0] === "string")
+    ) {
       update.priorities = DEFAULT_PRIORITIES;
     }
-    
-    if (!proj.resolutions || (Array.isArray(proj.resolutions) && typeof proj.resolutions[0] === "string")) {
+
+    if (
+      !proj.resolutions ||
+      (Array.isArray(proj.resolutions) &&
+        typeof proj.resolutions[0] === "string")
+    ) {
       update.resolutions = DEFAULT_RESOLUTIONS;
     }
-    
-    if (!proj.types || (Array.isArray(proj.types) && typeof proj.types[0] === "string")) {
+
+    if (
+      !proj.types ||
+      (Array.isArray(proj.types) && typeof proj.types[0] === "string")
+    ) {
       update.types = DEFAULT_TYPES;
     }
-    
+
     if (!proj.components) update.components = DEFAULT_COMPONENTS;
     if (!proj.customers) update.customers = DEFAULT_CUSTOMERS;
     if (proj.showCustomers === undefined) update.showCustomers = true;
     if (proj.showComponents === undefined) update.showComponents = true;
-    
+
     if (Object.keys(update).length > 0) {
       await projectsCollection.updateOne({ _id: proj._id }, { $set: update });
       console.log(`Migrated project ${proj.name} to ID-based structure`);
@@ -175,10 +188,12 @@ async function migrateIssues() {
   const cursor = issuesCollection.find({});
   for await (const doc of cursor) {
     const updates = {};
-    
+
     // 프로젝트 정보 조회 (설정 기반 ID 매핑을 위해)
-    const project = await projectsCollection.findOne({ _id: new ObjectId(doc.projectId) });
-    
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(doc.projectId),
+    });
+
     // 기존 필드 마이그레이션
     if (!doc.updatedAt) {
       updates.updatedAt = doc.createdAt || new Date().toISOString();
@@ -192,16 +207,20 @@ async function migrateIssues() {
     if (!doc.priority) {
       updates.priority = DEFAULT_PRIORITY_ID;
     }
-    
+
     // 완전한 ID 기반 변환: 이제 status, type, priority를 ID로 저장
     if (doc.status && !doc.statusId) {
       // 프로젝트 설정에서 이름으로 ID 찾기
       let statusId = null;
       if (project?.statuses) {
-        const statusItem = project.statuses.find(s => 
-          (typeof s === 'object' ? s.name === doc.status : s === doc.status)
+        const statusItem = project.statuses.find((s) =>
+          typeof s === "object" ? s.name === doc.status : s === doc.status
         );
-        statusId = statusItem ? (typeof statusItem === 'object' ? statusItem.id : mapOldStatusToId(statusItem)) : mapOldStatusToId(doc.status);
+        statusId = statusItem
+          ? typeof statusItem === "object"
+            ? statusItem.id
+            : mapOldStatusToId(statusItem)
+          : mapOldStatusToId(doc.status);
       } else {
         statusId = mapOldStatusToId(doc.status);
       }
@@ -209,14 +228,18 @@ async function migrateIssues() {
       // 이제 status 필드는 ID로 저장
       updates.status = statusId;
     }
-    
+
     if (doc.type && !doc.typeId) {
       let typeId = null;
       if (project?.types) {
-        const typeItem = project.types.find(t => 
-          (typeof t === 'object' ? t.name === doc.type : t === doc.type)
+        const typeItem = project.types.find((t) =>
+          typeof t === "object" ? t.name === doc.type : t === doc.type
         );
-        typeId = typeItem ? (typeof typeItem === 'object' ? typeItem.id : mapOldTypeToId(typeItem)) : mapOldTypeToId(doc.type);
+        typeId = typeItem
+          ? typeof typeItem === "object"
+            ? typeItem.id
+            : mapOldTypeToId(typeItem)
+          : mapOldTypeToId(doc.type);
       } else {
         typeId = mapOldTypeToId(doc.type);
       }
@@ -224,14 +247,18 @@ async function migrateIssues() {
       // 이제 type 필드도 ID로 저장
       updates.type = typeId;
     }
-    
+
     if (doc.priority && typeof doc.priority === "string" && !doc.priorityId) {
       let priorityId = null;
       if (project?.priorities) {
-        const priorityItem = project.priorities.find(p => 
-          (typeof p === 'object' ? p.name === doc.priority : p === doc.priority)
+        const priorityItem = project.priorities.find((p) =>
+          typeof p === "object" ? p.name === doc.priority : p === doc.priority
         );
-        priorityId = priorityItem ? (typeof priorityItem === 'object' ? priorityItem.id : mapOldPriorityToId(priorityItem)) : mapOldPriorityToId(doc.priority);
+        priorityId = priorityItem
+          ? typeof priorityItem === "object"
+            ? priorityItem.id
+            : mapOldPriorityToId(priorityItem)
+          : mapOldPriorityToId(doc.priority);
       } else {
         priorityId = mapOldPriorityToId(doc.priority);
       }
@@ -239,14 +266,20 @@ async function migrateIssues() {
       // 이제 priority 필드도 ID로 저장
       updates.priority = priorityId;
     }
-    
+
     if (doc.resolution && !doc.resolutionId) {
       let resolutionId = null;
       if (project?.resolutions) {
-        const resolutionItem = project.resolutions.find(r =>
-          (typeof r === 'object' ? r.name === doc.resolution : r === doc.resolution)
+        const resolutionItem = project.resolutions.find((r) =>
+          typeof r === "object"
+            ? r.name === doc.resolution
+            : r === doc.resolution
         );
-        resolutionId = resolutionItem ? (typeof resolutionItem === 'object' ? resolutionItem.id : mapOldResolutionToId(resolutionItem)) : mapOldResolutionToId(doc.resolution);
+        resolutionId = resolutionItem
+          ? typeof resolutionItem === "object"
+            ? resolutionItem.id
+            : mapOldResolutionToId(resolutionItem)
+          : mapOldResolutionToId(doc.resolution);
       } else {
         resolutionId = mapOldResolutionToId(doc.resolution);
       }
@@ -294,7 +327,7 @@ async function migrateIssues() {
         updates.fixVersionId = ver._id.toString();
       }
     }
-    
+
     if (Object.keys(updates).length > 0) {
       await issuesCollection.updateOne({ _id: doc._id }, { $set: updates });
       console.log(`Migrated issue ${doc.issueKey} to full ID-based structure`);
@@ -364,25 +397,33 @@ function mapComponent(doc) {
 async function mapIssueWithLookups(doc) {
   const base = mapIssue(doc);
   if (doc.componentId) {
-    const comp = await componentsCollection.findOne({ _id: new ObjectId(doc.componentId) });
+    const comp = await componentsCollection.findOne({
+      _id: new ObjectId(doc.componentId),
+    });
     base.component = comp?.name;
   } else if (doc.component) {
     base.component = doc.component;
   }
   if (doc.customerId) {
-    const cust = await customersCollection.findOne({ _id: new ObjectId(doc.customerId) });
+    const cust = await customersCollection.findOne({
+      _id: new ObjectId(doc.customerId),
+    });
     base.customer = cust?.name;
   } else if (doc.customer) {
     base.customer = doc.customer;
   }
   if (doc.affectsVersionId) {
-    const ver = await versionsCollection.findOne({ _id: new ObjectId(doc.affectsVersionId) });
+    const ver = await versionsCollection.findOne({
+      _id: new ObjectId(doc.affectsVersionId),
+    });
     base.affectsVersion = ver?.name;
   } else if (doc.affectsVersion) {
     base.affectsVersion = doc.affectsVersion;
   }
   if (doc.fixVersionId) {
-    const ver = await versionsCollection.findOne({ _id: new ObjectId(doc.fixVersionId) });
+    const ver = await versionsCollection.findOne({
+      _id: new ObjectId(doc.fixVersionId),
+    });
     base.fixVersion = ver?.name;
   } else if (doc.fixVersion) {
     base.fixVersion = doc.fixVersion;
@@ -392,31 +433,34 @@ async function mapIssueWithLookups(doc) {
 
 app.get("/api/projects", async (req, res) => {
   const currentUserId = req.session.user?.userid;
-  
+
   if (!currentUserId) {
     return res.status(401).json({ message: "로그인이 필요합니다." });
   }
-  
+
   // 현재 사용자 정보 조회
   const currentUser = await usersCollection.findOne({ userid: currentUserId });
-  
+
   const projects = await projectsCollection.find().toArray();
-  
+
   // 관리자인 경우 모든 프로젝트 반환
   if (currentUser && currentUser.isAdmin) {
     return res.json(projects.map(mapProject));
   }
-  
+
   // 권한이 있는 프로젝트만 필터링
-  const filteredProjects = projects.filter(project => {
-    const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
-    const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
-    const hasAdminPermission = project.adminUsers && project.adminUsers.includes(currentUserId);
-    
+  const filteredProjects = projects.filter((project) => {
+    const hasReadPermission =
+      project.readUsers && project.readUsers.includes(currentUserId);
+    const hasWritePermission =
+      project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasAdminPermission =
+      project.adminUsers && project.adminUsers.includes(currentUserId);
+
     // 명시적으로 권한이 있는 경우만 표시
     return hasReadPermission || hasWritePermission || hasAdminPermission;
   });
-  
+
   res.json(filteredProjects.map(mapProject));
 });
 
@@ -496,7 +540,18 @@ app.post("/api/register", async (req, res) => {
       .status(403)
       .json({ message: "관리자만 사용자 등록이 가능합니다." });
   }
-  const { userid, username, password } = req.body;
+  const {
+    userid,
+    username,
+    password,
+    department,
+    position,
+    manager,
+    employeeId,
+    workPhone,
+    email,
+    role,
+  } = req.body;
   if (!userid || !username || !password) {
     return res
       .status(400)
@@ -512,6 +567,13 @@ app.post("/api/register", async (req, res) => {
     username,
     passwordHash,
     isAdmin: false,
+    department,
+    position,
+    manager,
+    employeeId,
+    workPhone,
+    email,
+    role,
   });
   res.status(201).json({ message: "등록 완료" });
 });
@@ -558,19 +620,27 @@ app.post("/api/logout", (req, res) => {
 
 app.get("/api/current-user", async (req, res) => {
   if (req.session.user) {
-    const currentUserId = req.session.user.userid;
-    
-    // 사용자가 관리자 권한을 가진 프로젝트 목록 조회
-    const projects = await projectsCollection.find({
-      adminUsers: currentUserId
-    }).toArray();
-    
-    const adminProjectIds = projects.map(project => project._id.toString());
-    
+    const user = await usersCollection.findOne(
+      { userid: req.session.user.userid },
+      { projection: { passwordHash: 0 } }
+    );
+    if (!user) {
+      return res.status(401).json({ message: "로그인이 필요합니다." });
+    }
+
+    const projects = await projectsCollection
+      .find({
+        adminUsers: user.userid,
+      })
+      .toArray();
+    const adminProjectIds = projects.map((project) => project._id.toString());
+
     return res.json({
-      userid: req.session.user.userid,
-      username: req.session.user.username,
-      isAdmin: req.session.user.isAdmin || false,
+      id: user._id.toString(),
+      userid: user.userid,
+      username: user.username,
+      isAdmin: user.isAdmin || false,
+      profileImage: user.profileImage,
       adminProjectIds: adminProjectIds,
     });
   }
@@ -579,18 +649,134 @@ app.get("/api/current-user", async (req, res) => {
 
 app.get("/api/users", async (req, res) => {
   const users = await usersCollection
-    .find({}, { projection: { userid: 1, username: 1, isAdmin: 1, _id: 1 } })
+    .find(
+      {},
+      {
+        projection: {
+          userid: 1,
+          username: 1,
+          isAdmin: 1,
+          _id: 1,
+          profileImage: 1,
+        },
+      }
+    )
     .toArray();
-  
-  const mappedUsers = users.map(user => ({
+
+  const mappedUsers = users.map((user) => ({
     id: user._id.toString(),
     userid: user.userid,
     username: user.username,
     name: user.username, // username을 name으로도 사용
-    isAdmin: user.isAdmin || false
+    isAdmin: user.isAdmin || false,
+    profileImage: user.profileImage,
   }));
-  
+
   res.json(mappedUsers);
+});
+
+app.get("/api/users/:userId", async (req, res) => {
+  const { userId } = req.params;
+  const user = await usersCollection.findOne(
+    { userid: userId },
+    { projection: { passwordHash: 0 } }
+  );
+  if (!user) {
+    return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+  }
+  res.json({
+    id: user._id.toString(),
+    userid: user.userid,
+    username: user.username,
+    name: user.username,
+    isAdmin: user.isAdmin || false,
+    profileImage: user.profileImage,
+  });
+});
+
+app.put("/api/users/:userId/password", async (req, res) => {
+  const { userId } = req.params;
+  const { currentPassword, newPassword } = req.body;
+
+  if (req.session.user?.userid !== userId) {
+    return res.status(403).json({ message: "권한이 없습니다." });
+  }
+
+  const user = await usersCollection.findOne({ userid: userId });
+  if (!user) {
+    return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+  }
+
+  const match = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!match) {
+    return res
+      .status(400)
+      .json({ message: "현재 비밀번호가 일치하지 않습니다." });
+  }
+
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  await usersCollection.updateOne(
+    { userid: userId },
+    { $set: { passwordHash: newPasswordHash } }
+  );
+
+  res.json({ message: "비밀번호가 성공적으로 변경되었습니다." });
+});
+
+app.post(
+  "/api/users/:userId/profile-image",
+  upload.single("profileImage"),
+  async (req, res) => {
+    const { userId } = req.params;
+
+    if (req.session.user?.userid !== userId) {
+      return res.status(403).json({ message: "권한이 없습니다." });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "이미지 파일이 필요합니다." });
+    }
+
+    const profileImage = `/uploads/${req.file.filename}`;
+    await usersCollection.updateOne(
+      { userid: userId },
+      { $set: { profileImage } }
+    );
+
+    res.json({
+      message: "프로필 이미지가 성공적으로 업로드되었습니다.",
+      profileImage,
+    });
+  }
+);
+
+app.put("/api/users/:userId/details", async (req, res) => {
+  const { userId } = req.params;
+  const { department, position, manager, employeeId, workPhone, email, role } =
+    req.body;
+
+  if (req.session.user?.userid !== userId) {
+    return res.status(403).json({ message: "권한이 없습니다." });
+  }
+
+  const user = await usersCollection.findOne({ userid: userId });
+  if (!user) {
+    return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+  }
+
+  const updateFields = {
+    department,
+    position,
+    manager,
+    employeeId,
+    workPhone,
+    email,
+    role,
+  };
+
+  await usersCollection.updateOne({ userid: userId }, { $set: updateFields });
+
+  res.json({ message: "프로필 정보가 성공적으로 업데이트되었습니다." });
 });
 
 app.get("/api/projects/:projectId/issue-settings", async (req, res) => {
@@ -896,74 +1082,79 @@ app.get("/api/projects/:projectId/permissions", async (req, res) => {
   res.json({
     readUsers: project.readUsers || [],
     writeUsers: project.writeUsers || [],
-    adminUsers: project.adminUsers || []
+    adminUsers: project.adminUsers || [],
   });
 });
 
 app.put("/api/projects/:projectId/permissions", async (req, res) => {
   const { projectId } = req.params;
   const { readUsers, writeUsers, adminUsers } = req.body;
-  
+
   const project = await projectsCollection.findOne({
     _id: new ObjectId(projectId),
   });
   if (!project) {
     return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
   }
-  
+
   await projectsCollection.updateOne(
     { _id: new ObjectId(projectId) },
-    { 
-      $set: { 
+    {
+      $set: {
         readUsers: readUsers || [],
         writeUsers: writeUsers || [],
         adminUsers: adminUsers || [],
-        updatedAt: new Date().toISOString()
-      }
+        updatedAt: new Date().toISOString(),
+      },
     }
   );
-  
+
   res.json({ message: "권한이 성공적으로 업데이트되었습니다." });
 });
 
 app.get("/api/issues", async (req, res) => {
   const { projectId } = req.query;
   const currentUserId = req.session.user?.userid;
-  
+
   if (!currentUserId) {
     return res.status(401).json({ message: "로그인이 필요합니다." });
   }
-  
+
   // 현재 사용자 정보 조회
   const currentUser = await usersCollection.findOne({ userid: currentUserId });
-  
+
   const filter = projectId ? { projectId } : {};
-  
+
   // 프로젝트 권한 확인 (관리자는 모든 권한)
   if (projectId && (!currentUser || !currentUser.isAdmin)) {
     const project = await projectsCollection.findOne({
       _id: new ObjectId(projectId),
     });
-    
+
     if (!project) {
       return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
-    
-    const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
-    const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
-    const hasAdminPermission = project.adminUsers && project.adminUsers.includes(currentUserId);
-    
+
+    const hasReadPermission =
+      project.readUsers && project.readUsers.includes(currentUserId);
+    const hasWritePermission =
+      project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasAdminPermission =
+      project.adminUsers && project.adminUsers.includes(currentUserId);
+
     // 권한이 없으면 접근 거부
     if (!hasReadPermission && !hasWritePermission && !hasAdminPermission) {
-      return res.status(403).json({ message: "이 프로젝트에 접근할 권한이 없습니다." });
+      return res
+        .status(403)
+        .json({ message: "이 프로젝트에 접근할 권한이 없습니다." });
     }
-    
+
     // 쓰기 권한만 있는 경우 본인이 작성한 이슈만 필터링 (관리자 권한이나 읽기 권한이 있으면 모든 이슈 조회)
     if (hasWritePermission && !hasReadPermission && !hasAdminPermission) {
       filter.createdBy = currentUserId;
     }
   }
-  
+
   const issues = await issuesCollection
     .find(filter)
     .sort({ createdAt: -1 })
@@ -1039,31 +1230,39 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   if (!projectId) {
     return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
   }
-  
+
   const currentUserId = req.session.user?.userid;
   if (!currentUserId) {
     return res.status(401).json({ message: "로그인이 필요합니다." });
   }
-  
+
   // 현재 사용자 정보 조회
   const currentUser = await usersCollection.findOne({ userid: currentUserId });
-  
+
   // 관리자가 아닌 경우 프로젝트 권한 확인
   if (!currentUser || !currentUser.isAdmin) {
     const project = await projectsCollection.findOne({
       _id: new ObjectId(projectId),
     });
-    
+
     if (!project) {
       return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
-    
-    const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
-    const hasAdminPermission = project.adminUsers && project.adminUsers.includes(currentUserId);
-    
+
+    const hasWritePermission =
+      project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasAdminPermission =
+      project.adminUsers && project.adminUsers.includes(currentUserId);
+
     // 쓰기 권한 또는 관리자 권한 확인 (읽기 권한만으로는 이슈 생성 불가)
-    if (!hasWritePermission && !hasAdminPermission && (project.writeUsers || project.readUsers || project.adminUsers)) {
-      return res.status(403).json({ message: "이슈를 생성할 권한이 없습니다." });
+    if (
+      !hasWritePermission &&
+      !hasAdminPermission &&
+      (project.writeUsers || project.readUsers || project.adminUsers)
+    ) {
+      return res
+        .status(403)
+        .json({ message: "이슈를 생성할 권한이 없습니다." });
     }
   }
   const projectResult = await projectsCollection.findOneAndUpdate(
@@ -1075,7 +1274,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
   }
   const allowedTypes = projectResult.types || DEFAULT_TYPES;
-  const typeObj = allowedTypes.find(t => (typeof t === 'object' ? t.id === type : t === type));
+  const typeObj = allowedTypes.find((t) =>
+    typeof t === "object" ? t.id === type : t === type
+  );
   if (!type || !typeObj) {
     return res
       .status(400)
@@ -1092,9 +1293,18 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     .project({ name: 1 })
     .toArray();
   const allowedCustomers = custs.map((c) => c.name);
-  const priorityObj = allowedPriorities.find(p => (typeof p === 'object' ? p.id === priority : p === priority));
-  const issuePriority = priorityObj ? (typeof priorityObj === 'object' ? priorityObj.id : priorityObj) : 
-    (allowedPriorities[0] ? (typeof allowedPriorities[0] === 'object' ? allowedPriorities[0].id : allowedPriorities[0]) : DEFAULT_PRIORITY_ID);
+  const priorityObj = allowedPriorities.find((p) =>
+    typeof p === "object" ? p.id === priority : p === priority
+  );
+  const issuePriority = priorityObj
+    ? typeof priorityObj === "object"
+      ? priorityObj.id
+      : priorityObj
+    : allowedPriorities[0]
+    ? typeof allowedPriorities[0] === "object"
+      ? allowedPriorities[0].id
+      : allowedPriorities[0]
+    : DEFAULT_PRIORITY_ID;
   if (component && !allowedComponents.includes(component)) {
     return res
       .status(400)
@@ -1112,13 +1322,21 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   )}`;
 
   const initialStatusObj = projectResult.statuses?.[0];
-  const initialStatus = typeof initialStatusObj === 'object' ? initialStatusObj.name : (initialStatusObj || INITIAL_ISSUE_STATUS);
-  const initialStatusId = typeof initialStatusObj === 'object' ? initialStatusObj.id : mapOldStatusToId(initialStatus);
+  const initialStatus =
+    typeof initialStatusObj === "object"
+      ? initialStatusObj.name
+      : initialStatusObj || INITIAL_ISSUE_STATUS;
+  const initialStatusId =
+    typeof initialStatusObj === "object"
+      ? initialStatusObj.id
+      : mapOldStatusToId(initialStatus);
 
   let componentId;
   if (component) {
     if (ObjectId.isValid(component)) {
-      const comp = await componentsCollection.findOne({ _id: new ObjectId(component) });
+      const comp = await componentsCollection.findOne({
+        _id: new ObjectId(component),
+      });
       componentId = comp?._id.toString();
     } else {
       const comp = comps.find((c) => c.name === component);
@@ -1129,7 +1347,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   let customerId;
   if (customer) {
     if (ObjectId.isValid(customer)) {
-      const cust = await customersCollection.findOne({ _id: new ObjectId(customer) });
+      const cust = await customersCollection.findOne({
+        _id: new ObjectId(customer),
+      });
       customerId = cust?._id.toString();
     } else {
       const cust = custs.find((c) => c.name === customer);
@@ -1140,10 +1360,15 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   let affectsVersionId;
   if (affectsVersion) {
     if (ObjectId.isValid(affectsVersion)) {
-      const ver = await versionsCollection.findOne({ _id: new ObjectId(affectsVersion) });
+      const ver = await versionsCollection.findOne({
+        _id: new ObjectId(affectsVersion),
+      });
       affectsVersionId = ver?._id.toString();
     } else {
-      const ver = await versionsCollection.findOne({ projectId, name: affectsVersion });
+      const ver = await versionsCollection.findOne({
+        projectId,
+        name: affectsVersion,
+      });
       affectsVersionId = ver?._id.toString();
     }
   }
@@ -1157,8 +1382,8 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     // 이제 모든 값들을 ID로 저장
     status: initialStatusId,
     statusId: initialStatusId,
-    type: typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj),
-    typeId: typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj),
+    type: typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj),
+    typeId: typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj),
     priority: issuePriority,
     priorityId: issuePriority,
     affectsVersionId,
@@ -1195,7 +1420,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     ],
   };
   const result = await issuesCollection.insertOne(newIssue);
-  res.status(201).json(await mapIssueWithLookups({ _id: result.insertedId, ...newIssue }));
+  res
+    .status(201)
+    .json(await mapIssueWithLookups({ _id: result.insertedId, ...newIssue }));
 });
 
 app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
@@ -1204,15 +1431,15 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (!existing) {
     return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
   }
-  
+
   const currentUserId = req.session.user?.userid;
   if (!currentUserId) {
     return res.status(401).json({ message: "로그인이 필요합니다." });
   }
-  
+
   // 현재 사용자 정보 조회
   const currentUser = await usersCollection.findOne({ userid: currentUserId });
-  
+
   const {
     title,
     content,
@@ -1235,13 +1462,16 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (!project) {
     return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
   }
-  
+
   // 관리자가 아닌 경우 권한 확인
   if (!currentUser || !currentUser.isAdmin) {
-    const hasWritePermission = project.writeUsers && project.writeUsers.includes(currentUserId);
-    const hasReadPermission = project.readUsers && project.readUsers.includes(currentUserId);
-    const hasAdminPermission = project.adminUsers && project.adminUsers.includes(currentUserId);
-    
+    const hasWritePermission =
+      project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasReadPermission =
+      project.readUsers && project.readUsers.includes(currentUserId);
+    const hasAdminPermission =
+      project.adminUsers && project.adminUsers.includes(currentUserId);
+
     // 권한 확인
     if (project.writeUsers || project.readUsers || project.adminUsers) {
       // 쓰기 권한 또는 관리자 권한이 있으면 모든 이슈 수정 가능
@@ -1249,10 +1479,14 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         // 권한이 있으면 통과
       } else if (hasReadPermission) {
         // 읽기 권한만 있으면 수정 불가
-        return res.status(403).json({ message: "읽기 권한만으로는 이슈를 수정할 수 없습니다." });
+        return res
+          .status(403)
+          .json({ message: "읽기 권한만으로는 이슈를 수정할 수 없습니다." });
       } else {
         // 권한이 없으면 수정 불가
-        return res.status(403).json({ message: "이슈를 수정할 권한이 없습니다." });
+        return res
+          .status(403)
+          .json({ message: "이슈를 수정할 권한이 없습니다." });
       }
     }
   }
@@ -1280,36 +1514,47 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   }
   if (resolution !== undefined) {
     const trimmedResolution = resolution.trim();
-    updateFields.resolution = trimmedResolution === "" ? undefined : trimmedResolution;
+    updateFields.resolution =
+      trimmedResolution === "" ? undefined : trimmedResolution;
     if (trimmedResolution) {
-      const resolutionObj = project.resolutions?.find(r => 
-        (typeof r === 'object' ? r.id === trimmedResolution || r.name === trimmedResolution : r === trimmedResolution)
+      const resolutionObj = project.resolutions?.find((r) =>
+        typeof r === "object"
+          ? r.id === trimmedResolution || r.name === trimmedResolution
+          : r === trimmedResolution
       );
-      const resolutionId = resolutionObj ? 
-        (typeof resolutionObj === 'object' ? resolutionObj.id : mapOldResolutionToId(resolutionObj)) : 
-        mapOldResolutionToId(trimmedResolution);
-      updateFields.resolution = resolutionId;  // ID로 저장
+      const resolutionId = resolutionObj
+        ? typeof resolutionObj === "object"
+          ? resolutionObj.id
+          : mapOldResolutionToId(resolutionObj)
+        : mapOldResolutionToId(trimmedResolution);
+      updateFields.resolution = resolutionId; // ID로 저장
       updateFields.resolutionId = resolutionId;
     } else {
-      updateFields.resolution = undefined;  // ID로 저장
+      updateFields.resolution = undefined; // ID로 저장
       updateFields.resolutionId = undefined;
     }
   }
   if (status !== undefined) {
-    const statusObj = project.statuses?.find(s => 
-      (typeof s === 'object' ? s.id === status || s.name === status : s === status)
+    const statusObj = project.statuses?.find((s) =>
+      typeof s === "object"
+        ? s.id === status || s.name === status
+        : s === status
     );
     if (!statusObj) {
       return res
         .status(400)
         .json({ message: "유효한 상태 값을 제공해야 합니다." });
     }
-    const statusName = typeof statusObj === 'object' ? statusObj.name : statusObj;
-    const statusId = typeof statusObj === 'object' ? statusObj.id : mapOldStatusToId(statusObj);
-    
-    updateFields.status = statusId;  // 이제 status도 ID로 저장
+    const statusName =
+      typeof statusObj === "object" ? statusObj.name : statusObj;
+    const statusId =
+      typeof statusObj === "object"
+        ? statusObj.id
+        : mapOldStatusToId(statusObj);
+
+    updateFields.status = statusId; // 이제 status도 ID로 저장
     updateFields.statusId = statusId;
-    
+
     if (existing.status !== statusName) {
       statusChanged = true;
       fromStatus = existing.status;
@@ -1320,28 +1565,38 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     }
   }
   if (type !== undefined) {
-    const typeObj = project.types?.find(t => 
-      (typeof t === 'object' ? t.id === type || t.name === type : t === type)
+    const typeObj = project.types?.find((t) =>
+      typeof t === "object" ? t.id === type || t.name === type : t === type
     );
     if (!typeObj) {
       return res
         .status(400)
         .json({ message: "유효한 업무 유형을 제공해야 합니다." });
     }
-    updateFields.type = typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj);  // ID로 저장
-    updateFields.typeId = typeof typeObj === 'object' ? typeObj.id : mapOldTypeToId(typeObj);
+    updateFields.type =
+      typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj); // ID로 저장
+    updateFields.typeId =
+      typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj);
   }
   if (priority !== undefined) {
-    const priorityObj = project.priorities?.find(p => 
-      (typeof p === 'object' ? p.id === priority || p.name === priority : p === priority)
+    const priorityObj = project.priorities?.find((p) =>
+      typeof p === "object"
+        ? p.id === priority || p.name === priority
+        : p === priority
     );
     if (!priorityObj) {
       return res
         .status(400)
         .json({ message: "유효한 우선순위를 제공해야 합니다." });
     }
-    updateFields.priority = typeof priorityObj === 'object' ? priorityObj.id : mapOldPriorityToId(priorityObj);  // ID로 저장
-    updateFields.priorityId = typeof priorityObj === 'object' ? priorityObj.id : mapOldPriorityToId(priorityObj);
+    updateFields.priority =
+      typeof priorityObj === "object"
+        ? priorityObj.id
+        : mapOldPriorityToId(priorityObj); // ID로 저장
+    updateFields.priorityId =
+      typeof priorityObj === "object"
+        ? priorityObj.id
+        : mapOldPriorityToId(priorityObj);
   }
   if (component !== undefined) {
     const comps = await componentsCollection
@@ -1383,7 +1638,10 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     if (affectsVersion.trim() === "") {
       updateFields.affectsVersionId = undefined;
     } else {
-      const ver = await versionsCollection.findOne({ projectId: project._id.toString(), name: affectsVersion });
+      const ver = await versionsCollection.findOne({
+        projectId: project._id.toString(),
+        name: affectsVersion,
+      });
       updateFields.affectsVersionId = ver?._id.toString();
     }
   }
@@ -1391,7 +1649,10 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     if (fixVersion.trim() === "") {
       updateFields.fixVersionId = undefined;
     } else {
-      const ver = await versionsCollection.findOne({ projectId: project._id.toString(), name: fixVersion });
+      const ver = await versionsCollection.findOne({
+        projectId: project._id.toString(),
+        name: fixVersion,
+      });
       updateFields.fixVersionId = ver?._id.toString();
     }
   }

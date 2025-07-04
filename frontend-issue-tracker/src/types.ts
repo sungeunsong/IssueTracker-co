@@ -129,6 +129,14 @@ export interface User {
   username: string;
   name: string;
   isAdmin?: boolean;
+  profileImage?: string;
+  department?: string;
+  position?: string;
+  manager?: string;
+  employeeId?: string;
+  workPhone?: string;
+  email?: string;
+  role?: string;
 }
 
 export interface Project {
