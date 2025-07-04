@@ -303,7 +303,7 @@ const MainContent: React.FC<any> = ({
           selectedProjectId={currentProjectId}
           users={users}
           currentUserId={currentUserId}
-          currentUserName={currentUser}
+          currentUserName={currentUser?.username}
           statuses={currentProject?.statuses || []}
           priorities={currentProject?.priorities || DEFAULT_PRIORITIES}
           types={currentProject?.types || DEFAULT_ISSUE_TYPES}
@@ -351,7 +351,7 @@ const MainContent: React.FC<any> = ({
             selectedProjectId={selectedIssueForEdit.projectId}
             users={users}
             currentUserId={currentUserId}
-            currentUserName={currentUser}
+            currentUserName={currentUser?.username}
             statuses={
               projects.find((p) => p.id === selectedIssueForEdit.projectId)
                 ?.statuses || []

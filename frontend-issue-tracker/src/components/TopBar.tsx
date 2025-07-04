@@ -61,7 +61,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Right Section: User Menu, Admin Controls, Create Button */}
         <div className="flex items-center space-x-2 sm:space-x-3">
 
-          <Menu as="div" className="relative">
+          <Menu as="div" className="relative z-50">
             <Menu.Button className="p-1.5 rounded-full text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150">
               {currentUser?.profileImage ? (
                 <img src={currentUser.profileImage} alt="Profile" className="h-6 w-6 rounded-full" />
@@ -69,7 +69,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <UserAvatarPlaceholderIcon className="h-6 w-6" />
               )}
             </Menu.Button>
-            <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white divide-y divide-slate-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white divide-y divide-slate-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
               <div className="px-1 py-1">
                 <Menu.Item>
                   {({ active }) => (
