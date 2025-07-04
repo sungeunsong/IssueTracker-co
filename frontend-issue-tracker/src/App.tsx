@@ -789,6 +789,7 @@ const App: React.FC = () => {
         }
         const created: Project = await response.json();
         await fetchProjects();
+        await handleLoginSuccess(); // Refresh user's project admin permissions
         setCurrentProjectId(created.id);
         setShowAddProjectModal(false);
       } catch (err) {

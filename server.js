@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const DB_NAME = process.env.DB_NAME || "issuetracker";
@@ -477,6 +477,11 @@ app.post("/api/projects", async (req, res) => {
       .status(409)
       .json({ message: "이미 존재하는 프로젝트 키입니다." });
   }
+  const currentUserId = req.session.user?.userid;
+  if (!currentUserId) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+
   const result = await projectsCollection.insertOne({
     name: name.trim(),
     key: key.trim().toUpperCase(),
@@ -489,6 +494,9 @@ app.post("/api/projects", async (req, res) => {
     customers: DEFAULT_CUSTOMERS,
     showCustomers: true,
     showComponents: true,
+    adminUsers: [currentUserId],
+    readUsers: [currentUserId],
+    writeUsers: [currentUserId],
   });
   res.status(201).json({
     id: result.insertedId.toString(),
