@@ -44,7 +44,7 @@ export type IssueFormData = {
 
 export type ViewMode = "board" | "list";
 
-const MainContent: React.FC<any> = ({ // Define props for MainContent
+const MainContent: React.FC<any> = ({
   isAuthenticated,
   isLoading,
   issues,
@@ -104,6 +104,14 @@ const MainContent: React.FC<any> = ({ // Define props for MainContent
   setSearchTerm,
   statusFilter,
   setStatusFilter,
+  assigneeFilter,
+  setAssigneeFilter,
+  reporterFilter,
+  setReporterFilter,
+  typeFilter,
+  setTypeFilter,
+  priorityFilter,
+  setPriorityFilter,
   handleAddProject,
 }) => {
   if (isLoading && issues.length === 0) {
@@ -145,6 +153,17 @@ const MainContent: React.FC<any> = ({ // Define props for MainContent
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           statuses={currentProject?.statuses || []}
+          onAssigneeFilterChange={setAssigneeFilter}
+          onReporterFilterChange={setReporterFilter}
+          onTypeFilterChange={setTypeFilter}
+          onPriorityFilterChange={setPriorityFilter}
+          assigneeFilter={assigneeFilter}
+          reporterFilter={reporterFilter}
+          typeFilter={typeFilter}
+          priorityFilter={priorityFilter}
+          users={users}
+          types={currentProject?.types || []}
+          priorities={currentProject?.priorities || []}
           onCreateIssue={() => {
             setShowAddIssueModal(true);
             setError(null);
@@ -475,6 +494,10 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusEnum | "ALL">("ALL");
+  const [assigneeFilter, setAssigneeFilter] = useState<string | "ALL">("ALL");
+  const [reporterFilter, setReporterFilter] = useState<string | "ALL">("ALL");
+  const [typeFilter, setTypeFilter] = useState<string | "ALL">("ALL");
+  const [priorityFilter, setPriorityFilter] = useState<string | "ALL">("ALL");
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -531,7 +554,15 @@ const App: React.FC = () => {
     setError(null);
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/issues?projectId=${currentProjectId}`);
+      const queryParams = new URLSearchParams();
+      queryParams.append("projectId", currentProjectId);
+      if (statusFilter !== "ALL") queryParams.append("status", statusFilter);
+      if (assigneeFilter !== "ALL") queryParams.append("assignee", assigneeFilter);
+      if (reporterFilter !== "ALL") queryParams.append("reporter", reporterFilter);
+      if (typeFilter !== "ALL") queryParams.append("type", typeFilter);
+      if (priorityFilter !== "ALL") queryParams.append("priority", priorityFilter);
+
+      const response = await fetch(`/api/issues?${queryParams.toString()}`);
       if (!response.ok) {
         throw new Error(
           `데이터를 불러오는데 실패했습니다: ${response.statusText}`
@@ -545,7 +576,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentProjectId]);
+  }, [currentProjectId, statusFilter, assigneeFilter, reporterFilter, typeFilter, priorityFilter]);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -698,11 +729,25 @@ const App: React.FC = () => {
 
   const baseFilteredIssues = useMemo(() => {
     let tempIssues = issues;
+
     if (statusFilter !== "ALL") {
       tempIssues = tempIssues.filter(
         (issue) => issue.statusId === statusFilter
       );
     }
+    if (assigneeFilter !== "ALL") {
+      tempIssues = tempIssues.filter((issue) => issue.assignee === assigneeFilter);
+    }
+    if (reporterFilter !== "ALL") {
+      tempIssues = tempIssues.filter((issue) => issue.reporter === reporterFilter);
+    }
+    if (typeFilter !== "ALL") {
+      tempIssues = tempIssues.filter((issue) => issue.typeId === typeFilter);
+    }
+    if (priorityFilter !== "ALL") {
+      tempIssues = tempIssues.filter((issue) => issue.priorityId === priorityFilter);
+    }
+
     if (searchTerm.trim()) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       tempIssues = tempIssues.filter(
@@ -714,7 +759,7 @@ const App: React.FC = () => {
             issue.assignee.toLowerCase().includes(lowerSearchTerm)) ||
           (issue.comment &&
             issue.comment.toLowerCase().includes(lowerSearchTerm)) ||
-          issue.id.toLowerCase().includes(lowerSearchTerm) || // Search by ID
+          issue.issueKey.toLowerCase().includes(lowerSearchTerm) || // Search by issueKey
           (issue.affectsVersion &&
             issue.affectsVersion.toLowerCase().includes(lowerSearchTerm)) ||
           (issue.fixVersion &&
@@ -722,7 +767,15 @@ const App: React.FC = () => {
       );
     }
     return tempIssues;
-  }, [issues, searchTerm, statusFilter]);
+  }, [
+    issues,
+    searchTerm,
+    statusFilter,
+    assigneeFilter,
+    reporterFilter,
+    typeFilter,
+    priorityFilter,
+  ]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -1056,7 +1109,7 @@ const App: React.FC = () => {
       <Route path="/" element={
         <MainContent 
           {...{
-            isAuthenticated, isLoading, issues, viewMode, setViewMode, projects, currentProjectId, handleSelectProject, isAdmin, adminProjectIds, handleOpenProjectSettings, error, setError, showAddProjectModal, setShowAddProjectModal, handleAddProject, boardColumns, handleSelectIssueForDetail, updateIssueStatus, users, currentProject, paginatedListIssues, requestDeleteIssue, handleOpenEditModal, currentPage, baseFilteredIssues, handlePageChange, selectedIssueForDetail, closeDetailPanel, handleIssueUpdated, showAddIssueModal, setShowAddIssueModal, handleAddIssue, isSubmitting, currentUserId, currentUser, showEditIssueModal, handleCloseEditModal, selectedIssueForEdit, handleEditIssue, issueToDelete, showDeleteModal, confirmDeleteIssue, cancelDeleteIssue, issueToResolve, showResolveModal, setShowResolveModal, handleResolveIssue, handleLoginSuccess, showLoginModal, setShowLoginModal, handleLogin, showRegisterModal, setShowRegisterModal, handleRegister, handleLogout, searchTerm, setSearchTerm, statusFilter, setStatusFilter
+            isAuthenticated, isLoading, issues, viewMode, setViewMode, projects, currentProjectId, handleSelectProject, isAdmin, adminProjectIds, handleOpenProjectSettings, error, setError, showAddProjectModal, setShowAddProjectModal, handleAddProject, boardColumns, handleSelectIssueForDetail, updateIssueStatus, users, currentProject, paginatedListIssues, requestDeleteIssue, handleOpenEditModal, currentPage, baseFilteredIssues, handlePageChange, selectedIssueForDetail, closeDetailPanel, handleIssueUpdated, showAddIssueModal, setShowAddIssueModal, handleAddIssue, isSubmitting, currentUserId, currentUser, showEditIssueModal, handleCloseEditModal, selectedIssueForEdit, handleEditIssue, issueToDelete, showDeleteModal, confirmDeleteIssue, cancelDeleteIssue, issueToResolve, showResolveModal, setShowResolveModal, handleResolveIssue, handleLoginSuccess, showLoginModal, setShowLoginModal, handleLogin, showRegisterModal, setShowRegisterModal, handleRegister, handleLogout, searchTerm, setSearchTerm, statusFilter, setStatusFilter, assigneeFilter, setAssigneeFilter, reporterFilter, setReporterFilter, typeFilter, setTypeFilter, priorityFilter, setPriorityFilter
           }}
         />
       } />

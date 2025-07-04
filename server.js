@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const DB_NAME = process.env.DB_NAME || "issuetracker";
@@ -1121,7 +1121,15 @@ app.put("/api/projects/:projectId/permissions", async (req, res) => {
 });
 
 app.get("/api/issues", async (req, res) => {
-  const { projectId } = req.query;
+  const { projectId, assignee, reporter, type, priority } = req.query;
+  console.log("Received query parameters:", {
+    projectId,
+    assignee,
+    reporter,
+    type,
+    priority,
+  });
+
   const currentUserId = req.session.user?.userid;
 
   if (!currentUserId) {
@@ -1132,6 +1140,22 @@ app.get("/api/issues", async (req, res) => {
   const currentUser = await usersCollection.findOne({ userid: currentUserId });
 
   const filter = projectId ? { projectId } : {};
+
+  // 고급 검색 필터 추가
+  if (assignee && assignee !== "ALL") {
+    filter.assignee = assignee;
+  }
+  if (reporter && reporter !== "ALL") {
+    filter.reporter = reporter;
+  }
+  if (type && type !== "ALL") {
+    filter.typeId = type; // type은 typeId로 필터링
+  }
+  if (priority && priority !== "ALL") {
+    filter.priorityId = priority; // priority는 priorityId로 필터링
+  }
+
+  console.log("MongoDB filter object:", filter);
 
   // 프로젝트 권한 확인 (관리자는 모든 권한)
   if (projectId && (!currentUser || !currentUser.isAdmin)) {

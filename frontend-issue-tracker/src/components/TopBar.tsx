@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Menu } from "@headlessui/react";
 import type { ViewMode } from "../App";
-import type { ResolutionStatus, StatusItem } from "../types";
+import type { ResolutionStatus, StatusItem, TypeItem, PriorityItem } from "../types";
 import { SearchIcon } from "./icons/SearchIcon";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
@@ -18,6 +18,17 @@ interface TopBarProps {
   statusFilter: ResolutionStatus | "ALL";
   onStatusFilterChange: (status: ResolutionStatus | "ALL") => void;
   statuses: StatusItem[];
+  onAssigneeFilterChange: (assignee: string | "ALL") => void;
+  onReporterFilterChange: (reporter: string | "ALL") => void;
+  onTypeFilterChange: (type: string | "ALL") => void;
+  onPriorityFilterChange: (priority: string | "ALL") => void;
+  assigneeFilter: string | "ALL";
+  reporterFilter: string | "ALL";
+  typeFilter: string | "ALL";
+  priorityFilter: string | "ALL";
+  users: User[];
+  types: TypeItem[];
+  priorities: PriorityItem[];
   onCreateIssue: () => void;
   currentUser: User | null;
   isAdmin: boolean;
@@ -38,6 +49,17 @@ export const TopBar: React.FC<TopBarProps> = ({
   onRequestLogout,
   onRequestRegister,
   statuses,
+  onAssigneeFilterChange,
+  onReporterFilterChange,
+  onTypeFilterChange,
+  onPriorityFilterChange,
+  assigneeFilter,
+  reporterFilter,
+  typeFilter,
+  priorityFilter,
+  users,
+  types,
+  priorities,
 }) => {
   const navItems = [
     { id: "board" as ViewMode, label: "Board" },
@@ -103,8 +125,76 @@ export const TopBar: React.FC<TopBarProps> = ({
             >
               <option value="ALL">All Statuses</option>
               {statuses.map((status) => (
-                <option key={status.id} value={status.name}>
+                <option key={status.id} value={status.id}>
                   {status.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="relative hidden md:block">
+            <select
+              id="assignee-filter-topbar"
+              value={assigneeFilter}
+              onChange={(e) => onAssigneeFilterChange(e.target.value)}
+              className="block w-full pl-3 pr-8 py-2 border border-slate-300 bg-white rounded-md shadow-sm text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow duration-150 hover:shadow"
+              aria-label="Filter by assignee"
+            >
+              <option value="ALL">All Assignees</option>
+              {users.map((user) => (
+                <option key={user.userid} value={user.userid}>
+                  {user.username}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="relative hidden md:block">
+            <select
+              id="reporter-filter-topbar"
+              value={reporterFilter}
+              onChange={(e) => onReporterFilterChange(e.target.value)}
+              className="block w-full pl-3 pr-8 py-2 border border-slate-300 bg-white rounded-md shadow-sm text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow duration-150 hover:shadow"
+              aria-label="Filter by reporter"
+            >
+              <option value="ALL">All Reporters</option>
+              {users.map((user) => (
+                <option key={user.userid} value={user.userid}>
+                  {user.username}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="relative hidden md:block">
+            <select
+              id="type-filter-topbar"
+              value={typeFilter}
+              onChange={(e) => onTypeFilterChange(e.target.value)}
+              className="block w-full pl-3 pr-8 py-2 border border-slate-300 bg-white rounded-md shadow-sm text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow duration-150 hover:shadow"
+              aria-label="Filter by type"
+            >
+              <option value="ALL">All Types</option>
+              {types.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="relative hidden md:block">
+            <select
+              id="priority-filter-topbar"
+              value={priorityFilter}
+              onChange={(e) => onPriorityFilterChange(e.target.value)}
+              className="block w-full pl-3 pr-8 py-2 border border-slate-300 bg-white rounded-md shadow-sm text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow duration-150 hover:shadow"
+              aria-label="Filter by priority"
+            >
+              <option value="ALL">All Priorities</option>
+              {priorities.map((priority) => (
+                <option key={priority.id} value={priority.id}>
+                  {priority.name}
                 </option>
               ))}
             </select>
