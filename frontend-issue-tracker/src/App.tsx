@@ -9,6 +9,7 @@ import { ProjectForm } from "./components/ProjectForm";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
 import { TopBar } from "./components/TopBar";
+import { FilterBar } from "./components/FilterBar";
 import { BoardView } from "./components/BoardView";
 import { IssueDetailPanel } from "./components/IssueDetailPanel";
 import ResolveIssueModal from "./components/ResolveIssueModal";
@@ -139,22 +140,6 @@ const MainContent: React.FC<any> = ({
         <TopBar
           currentView={viewMode}
           onSetViewMode={setViewMode}
-          searchTerm={searchTerm}
-          onSearchTermChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          statuses={currentProject?.statuses || []}
-          onAssigneeFilterChange={setAssigneeFilter}
-          onReporterFilterChange={setReporterFilter}
-          onTypeFilterChange={setTypeFilter}
-          onPriorityFilterChange={setPriorityFilter}
-          assigneeFilter={assigneeFilter}
-          reporterFilter={reporterFilter}
-          typeFilter={typeFilter}
-          priorityFilter={priorityFilter}
-          users={users}
-          types={currentProject?.types || []}
-          priorities={currentProject?.priorities || []}
           onCreateIssue={() => {
             setShowAddIssueModal(true);
             setError(null);
@@ -166,6 +151,24 @@ const MainContent: React.FC<any> = ({
             setShowRegisterModal(true);
             setError(null);
           }}
+        />
+        <FilterBar
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          statuses={currentProject?.statuses || []}
+          assigneeFilter={assigneeFilter}
+          onAssigneeFilterChange={setAssigneeFilter}
+          reporterFilter={reporterFilter}
+          onReporterFilterChange={setReporterFilter}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          priorityFilter={priorityFilter}
+          onPriorityFilterChange={setPriorityFilter}
+          users={users}
+          types={currentProject?.types || []}
+          priorities={currentProject?.priorities || []}
         />
         <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 p-4 sm:p-6">
           {error && (
