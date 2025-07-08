@@ -87,52 +87,67 @@ export const IssueDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <Link to="/" className="text-indigo-600 hover:underline">← Back</Link>
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">
-          {issue.issueKey} - {issue.title}
-        </h1>
-        <button
-          onClick={() => setShowEdit(true)}
-          className="px-3 py-1.5 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
-        >
-          Edit
-        </button>
+    <div className="bg-slate-50 min-h-screen">
+      <div className="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="mb-6">
+          <div className="mb-4">
+            <Link to="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+              &larr; 모든 이슈 보기
+            </Link>
+          </div>
+          <div className="md:flex md:items-center md:justify-between">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold leading-7 text-slate-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                {issue.title}
+              </h1>
+              <p className="mt-1 text-sm text-slate-500">{issue.issueKey}</p>
+            </div>
+            <div className="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
+              <button
+                onClick={() => setShowEdit(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                이슈 수정
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <IssueDetailsView
+          issue={issue}
+          users={users}
+          statuses={project?.statuses || []}
+          types={project?.types || []}
+          priorities={project?.priorities || []}
+          showCustomers={issue.showCustomers}
+          showComponents={issue.showComponents}
+        />
+        
+        <Modal isOpen={showEdit} onClose={() => setShowEdit(false)} title="이슈 수정">
+          {project && (
+            <IssueForm
+              onSubmit={handleEditIssue}
+              initialData={issue}
+              onCancel={() => setShowEdit(false)}
+              isSubmitting={isSubmitting}
+              submitButtonText="변경사항 저장"
+              isEditMode={true}
+              projects={[project]}
+              selectedProjectId={project.id}
+              users={users}
+              currentUserId={issue.reporter}
+              currentUserName={users.find(u => u.userid === issue.reporter)?.username || ''}
+              statuses={project.statuses || []}
+              priorities={project.priorities || []}
+              types={project.types || []}
+              components={project.components || []}
+              customers={project.customers || []}
+              showCustomers={project.showCustomers}
+              showComponents={project.showComponents}
+            />
+          )}
+        </Modal>
       </div>
-      <IssueDetailsView
-        issue={issue}
-        users={users}
-        statuses={project?.statuses || []}
-        types={project?.types || []}
-        priorities={project?.priorities || []}
-        showCustomers={issue.showCustomers}
-        showComponents={issue.showComponents}
-      />
-      <Modal isOpen={showEdit} onClose={() => setShowEdit(false)} title="이슈 수정">
-        {project && (
-          <IssueForm
-            onSubmit={handleEditIssue}
-            initialData={issue}
-            onCancel={() => setShowEdit(false)}
-            isSubmitting={isSubmitting}
-            submitButtonText="변경사항 저장"
-            isEditMode={true}
-            projects={[project]}
-            selectedProjectId={project.id}
-            users={users}
-            currentUserId={issue.reporter}
-            currentUserName={users.find(u => u.userid === issue.reporter)?.username || ''}
-            statuses={project.statuses || []}
-            priorities={project.priorities || []}
-            types={project.types || []}
-            components={project.components || []}
-            customers={project.customers || []}
-            showCustomers={project.showCustomers}
-            showComponents={project.showComponents}
-          />
-        )}
-      </Modal>
     </div>
   );
 };
