@@ -6,6 +6,7 @@ import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
 import { SettingsIcon } from "./icons/SettingsIcon";
 
+import NotificationIcon from "./NotificationIcon";
 import { User } from "../types";
 
 interface TopBarProps {
@@ -16,9 +17,13 @@ interface TopBarProps {
   isAdmin: boolean;
   onRequestLogout: () => void;
   onRequestRegister: () => void;
+  onToggleSidebar: () => void;
+  user: User | null;
+  hasUnreadNotifications: boolean;
+  onToggleNotifications: () => void;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({
+const TopBar: React.FC<TopBarProps> = ({
   currentView,
   onSetViewMode,
   onCreateIssue,
@@ -26,6 +31,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   isAdmin,
   onRequestLogout,
   onRequestRegister,
+  onToggleSidebar,
+  user,
+  hasUnreadNotifications,
+  onToggleNotifications,
 }) => {
   const navItems = [
     { id: "board" as ViewMode, label: "Board" },
@@ -60,11 +69,19 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Right Section: User Menu, Admin Controls, Create Button */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+          <NotificationIcon
+            onClick={onToggleNotifications}
+            hasUnread={hasUnreadNotifications}
+          />
 
           <Menu as="div" className="relative z-50">
             <Menu.Button className="p-1.5 rounded-full text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150">
               {currentUser?.profileImage ? (
-                <img src={currentUser.profileImage} alt="Profile" className="h-6 w-6 rounded-full" />
+                <img
+                  src={currentUser.profileImage}
+                  alt="Profile"
+                  className="h-6 w-6 rounded-full"
+                />
               ) : (
                 <UserAvatarPlaceholderIcon className="h-6 w-6" />
               )}
@@ -75,9 +92,15 @@ export const TopBar: React.FC<TopBarProps> = ({
                   {({ active }) => (
                     <Link
                       to="/settings/user"
-                      className={`${active ? 'bg-indigo-500 text-white' : 'text-slate-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                      className={`${
+                        active ? "bg-indigo-500 text-white" : "text-slate-900"
+                      } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                     >
-                      <SettingsIcon className={`w-5 h-5 mr-2 ${active ? 'text-white' : 'text-slate-400'}`} />
+                      <SettingsIcon
+                        className={`w-5 h-5 mr-2 ${
+                          active ? "text-white" : "text-slate-400"
+                        }`}
+                      />
                       사용자 설정
                     </Link>
                   )}
@@ -88,9 +111,15 @@ export const TopBar: React.FC<TopBarProps> = ({
                   {({ active }) => (
                     <button
                       onClick={onRequestLogout}
-                      className={`${active ? 'bg-red-500 text-white' : 'text-slate-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                      className={`${
+                        active ? "bg-red-500 text-white" : "text-slate-900"
+                      } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                     >
-                      <LogoutIcon className={`w-5 h-5 mr-2 ${active ? 'text-white' : 'text-red-400'}`} />
+                      <LogoutIcon
+                        className={`w-5 h-5 mr-2 ${
+                          active ? "text-white" : "text-red-400"
+                        }`}
+                      />
                       로그아웃
                     </button>
                   )}
@@ -121,3 +150,5 @@ export const TopBar: React.FC<TopBarProps> = ({
     </header>
   );
 };
+
+export default TopBar;

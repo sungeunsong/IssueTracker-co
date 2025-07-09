@@ -8,7 +8,7 @@ import { Sidebar } from "./components/Sidebar";
 import { ProjectForm } from "./components/ProjectForm";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
-import { TopBar } from "./components/TopBar";
+import TopBar from "./components/TopBar";
 import { FilterBar } from "./components/FilterBar";
 import { BoardView } from "./components/BoardView";
 import { IssueDetailPanel } from "./components/IssueDetailPanel";
@@ -20,9 +20,11 @@ import type {
   IssuePriority as PriorityEnum,
   Project,
   User,
+  Notification,
 } from "./types";
 import { DEFAULT_ISSUE_TYPES, DEFAULT_PRIORITIES } from "./types";
 import { LoginScreen } from "./components/LoginScreen";
+import NotificationList from "./components/NotificationList";
 
 const ITEMS_PER_PAGE_LIST = 10;
 
@@ -45,7 +47,90 @@ export type IssueFormData = {
 
 export type ViewMode = "board" | "list";
 
-const MainContent: React.FC<any> = ({
+const MainContent: React.FC<{
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  issues: Issue[];
+  viewMode: ViewMode;
+  setViewMode: React.Dispatch<React.SetStateAction<ViewMode>>;
+  projects: Project[];
+  currentProjectId: string | null;
+  handleSelectProject: (id: string) => void;
+  isAdmin: boolean;
+  adminProjectIds: string[];
+  handleOpenProjectSettings: (pid: string) => void;
+  error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+  showAddProjectModal: boolean;
+  setShowAddProjectModal: React.Dispatch<React.SetStateAction<boolean>>;
+  boardColumns: any[];
+  handleSelectIssueForDetail: (issue: Issue | null) => void;
+  updateIssueStatus: (issueId: string, newStatus: StatusEnum) => void;
+  users: User[];
+  currentProject: Project | null;
+  paginatedListIssues: Issue[];
+  requestDeleteIssue: (issueId: string) => void;
+  handleOpenEditModal: (issue: Issue) => void;
+  currentPage: number;
+  baseFilteredIssues: Issue[];
+  handlePageChange: (newPage: number) => void;
+  selectedIssueForDetail: Issue | null;
+  closeDetailPanel: () => void;
+  handleIssueUpdated: (updated: Issue) => void;
+  showAddIssueModal: boolean;
+  setShowAddIssueModal: React.Dispatch<React.SetStateAction<boolean>>;
+  handleAddIssue: (formData: IssueFormData) => Promise<void>;
+  isSubmitting: boolean;
+  currentUserId: string | null;
+  currentUser: User | null;
+  showEditIssueModal: boolean;
+  handleCloseEditModal: () => void;
+  selectedIssueForEdit: Issue | null;
+  handleEditIssue: (issueId: string, formData: IssueFormData) => Promise<void>;
+  issueToDelete: string | null;
+  showDeleteModal: boolean;
+  confirmDeleteIssue: () => Promise<void>;
+  cancelDeleteIssue: () => void;
+  issueToResolve: Issue | null;
+  showResolveModal: boolean;
+  setShowResolveModal: React.Dispatch<React.SetStateAction<boolean>>;
+  handleResolveIssue: (data: {
+    assignee?: string;
+    resolution: string;
+    fixVersion?: string;
+    attachments: File[];
+    comment?: string;
+  }) => Promise<void>;
+  handleLoginSuccess: () => Promise<void>;
+  showLoginModal: boolean;
+  setShowLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
+  handleLogin: (userid: string, password: string) => Promise<void>;
+  showRegisterModal: boolean;
+  setShowRegisterModal: React.Dispatch<React.SetStateAction<boolean>>;
+  handleRegister: (formData: any) => Promise<void>;
+  handleLogout: () => Promise<void>;
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  statusFilter: StatusEnum | "ALL";
+  setStatusFilter: React.Dispatch<React.SetStateAction<StatusEnum | "ALL">>;
+  assigneeFilter: string | "ALL";
+  setAssigneeFilter: React.Dispatch<React.SetStateAction<string | "ALL">>;
+  reporterFilter: string | "ALL";
+  setReporterFilter: React.Dispatch<React.SetStateAction<string | "ALL">>;
+  typeFilter: string | "ALL";
+  setTypeFilter: React.Dispatch<React.SetStateAction<string | "ALL">>;
+  priorityFilter: string | "ALL";
+  setPriorityFilter: React.Dispatch<React.SetStateAction<string | "ALL">>;
+  handleAddProject: (name: string, key: string) => Promise<void>;
+  notifications: Notification[];
+  showNotifications: boolean;
+  hasUnread: boolean;
+  handleToggleNotifications: () => void;
+  handleReadNotification: (id: string) => Promise<void>;
+  onToggleSidebar: () => void; // 추가
+  setShowNotifications: (flag: boolean) => void;
+  setIssueToResolve: (issue: Issue | null) => void;
+}> = ({
   isAuthenticated,
   isLoading,
   issues,
@@ -114,8 +199,15 @@ const MainContent: React.FC<any> = ({
   priorityFilter,
   setPriorityFilter,
   handleAddProject,
+  notifications,
+  showNotifications,
+  hasUnread,
+  handleToggleNotifications,
+  handleReadNotification,
+  onToggleSidebar,
+  setShowNotifications,
+  setIssueToResolve,
 }) => {
-
   if (!isAuthenticated) {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
@@ -151,6 +243,10 @@ const MainContent: React.FC<any> = ({
             setShowRegisterModal(true);
             setError(null);
           }}
+          hasUnreadNotifications={hasUnread}
+          onToggleNotifications={handleToggleNotifications}
+          onToggleSidebar={onToggleSidebar}
+          user={currentUser}
         />
         <FilterBar
           searchTerm={searchTerm}
@@ -220,7 +316,9 @@ const MainContent: React.FC<any> = ({
             <div className="flex items-center justify-center h-64">
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                <span className="text-slate-600 font-medium">이슈 로딩 중...</span>
+                <span className="text-slate-600 font-medium">
+                  이슈 로딩 중...
+                </span>
               </div>
             </div>
           ) : (
@@ -452,9 +550,17 @@ const MainContent: React.FC<any> = ({
           initialAssignee={issueToResolve.assignee}
         />
       )}
+
+      {showNotifications && (
+        <NotificationList
+          notifications={notifications}
+          onClose={() => setShowNotifications(false)}
+          onRead={handleReadNotification}
+        />
+      )}
     </div>
   );
-}
+};
 
 const App: React.FC = () => {
   const navigate = useNavigate();
@@ -478,6 +584,12 @@ const App: React.FC = () => {
   const [selectedIssueForDetail, setSelectedIssueForDetail] =
     useState<Issue | null>(null);
 
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+
+  const onToggleSidebar = useCallback(() => {
+    setSidebarOpen((prev) => !prev);
+  }, []);
+
   const currentProject = useMemo(
     () => projects.find((p) => p.id === currentProjectId) || null,
     [projects, currentProjectId]
@@ -500,6 +612,26 @@ const App: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string | "ALL">("ALL");
   const [priorityFilter, setPriorityFilter] = useState<string | "ALL">("ALL");
 
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const hasUnread = useMemo(
+    () => notifications.some((n) => !n.read),
+    [notifications]
+  );
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications", { credentials: "include" });
+      if (!res.ok) {
+        throw new Error("알림 정보를 불러오는데 실패했습니다.");
+      }
+      const data: Notification[] = await res.json();
+      setNotifications(data);
+    } catch (err) {
+      console.error("알림 로딩 중 오류:", err);
+    }
+  }, []);
+
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/users", { credentials: "include" });
@@ -513,6 +645,24 @@ const App: React.FC = () => {
       setUsers(data);
     } catch (err) {
       console.error("사용자 로딩 중 오류:", err);
+    }
+  }, []);
+
+  const handleToggleNotifications = () => {
+    setShowNotifications((prev) => !prev);
+  };
+
+  const handleReadNotification = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/notifications/${id}/read`, {
+        method: "POST",
+        credentials: "include",
+      });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch (err) {
+      console.error("알림 읽음 처리 중 오류:", err);
     }
   }, []);
 
@@ -530,6 +680,7 @@ const App: React.FC = () => {
           setIsAdmin(!!data.isAdmin);
           setAdminProjectIds(data.adminProjectIds || []);
           fetchUsers();
+          fetchNotifications();
         } else {
           setIsAuthenticated(false);
           setIsLoading(false);
@@ -558,10 +709,13 @@ const App: React.FC = () => {
       const queryParams = new URLSearchParams();
       queryParams.append("projectId", currentProjectId);
       if (statusFilter !== "ALL") queryParams.append("status", statusFilter);
-      if (assigneeFilter !== "ALL") queryParams.append("assignee", assigneeFilter);
-      if (reporterFilter !== "ALL") queryParams.append("reporter", reporterFilter);
+      if (assigneeFilter !== "ALL")
+        queryParams.append("assignee", assigneeFilter);
+      if (reporterFilter !== "ALL")
+        queryParams.append("reporter", reporterFilter);
       if (typeFilter !== "ALL") queryParams.append("type", typeFilter);
-      if (priorityFilter !== "ALL") queryParams.append("priority", priorityFilter);
+      if (priorityFilter !== "ALL")
+        queryParams.append("priority", priorityFilter);
 
       const response = await fetch(`/api/issues?${queryParams.toString()}`);
       if (!response.ok) {
@@ -577,7 +731,14 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentProjectId, statusFilter, assigneeFilter, reporterFilter, typeFilter, priorityFilter]);
+  }, [
+    currentProjectId,
+    statusFilter,
+    assigneeFilter,
+    reporterFilter,
+    typeFilter,
+    priorityFilter,
+  ]);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -635,6 +796,7 @@ const App: React.FC = () => {
         setIsAdmin(!!data.isAdmin);
         setAdminProjectIds(data.adminProjectIds || []);
         await fetchUsers();
+        fetchNotifications(); // 로그인 성공 시 알림 가져오기
         setIsAuthenticated(true); // 이 상태 변경이 프로젝트 및 이슈 로딩을 트리거합니다.
       } else {
         setIsAuthenticated(false);
@@ -737,16 +899,22 @@ const App: React.FC = () => {
       );
     }
     if (assigneeFilter !== "ALL") {
-      tempIssues = tempIssues.filter((issue) => issue.assignee === assigneeFilter);
+      tempIssues = tempIssues.filter(
+        (issue) => issue.assignee === assigneeFilter
+      );
     }
     if (reporterFilter !== "ALL") {
-      tempIssues = tempIssues.filter((issue) => issue.reporter === reporterFilter);
+      tempIssues = tempIssues.filter(
+        (issue) => issue.reporter === reporterFilter
+      );
     }
     if (typeFilter !== "ALL") {
       tempIssues = tempIssues.filter((issue) => issue.typeId === typeFilter);
     }
     if (priorityFilter !== "ALL") {
-      tempIssues = tempIssues.filter((issue) => issue.priorityId === priorityFilter);
+      tempIssues = tempIssues.filter(
+        (issue) => issue.priorityId === priorityFilter
+      );
     }
 
     if (searchTerm.trim()) {
@@ -1107,13 +1275,92 @@ const App: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/" element={
-        <MainContent 
-          {...{
-            isAuthenticated, isLoading, issues, viewMode, setViewMode, projects, currentProjectId, handleSelectProject, isAdmin, adminProjectIds, handleOpenProjectSettings, error, setError, showAddProjectModal, setShowAddProjectModal, handleAddProject, boardColumns, handleSelectIssueForDetail, updateIssueStatus, users, currentProject, paginatedListIssues, requestDeleteIssue, handleOpenEditModal, currentPage, baseFilteredIssues, handlePageChange, selectedIssueForDetail, closeDetailPanel, handleIssueUpdated, showAddIssueModal, setShowAddIssueModal, handleAddIssue, isSubmitting, currentUserId, currentUser, showEditIssueModal, handleCloseEditModal, selectedIssueForEdit, handleEditIssue, issueToDelete, showDeleteModal, confirmDeleteIssue, cancelDeleteIssue, issueToResolve, showResolveModal, setShowResolveModal, handleResolveIssue, handleLoginSuccess, showLoginModal, setShowLoginModal, handleLogin, showRegisterModal, setShowRegisterModal, handleRegister, handleLogout, searchTerm, setSearchTerm, statusFilter, setStatusFilter, assigneeFilter, setAssigneeFilter, reporterFilter, setReporterFilter, typeFilter, setTypeFilter, priorityFilter, setPriorityFilter
-          }}
-        />
-      } />
+      <Route
+        path="/"
+        element={
+          <MainContent
+            {...{
+              isAuthenticated,
+              isLoading,
+              issues,
+              viewMode,
+              setViewMode,
+              projects,
+              currentProjectId,
+              handleSelectProject,
+              isAdmin,
+              adminProjectIds,
+              handleOpenProjectSettings,
+              error,
+              setError,
+              showAddProjectModal,
+              setShowAddProjectModal,
+              handleAddProject,
+              boardColumns,
+              handleSelectIssueForDetail,
+              updateIssueStatus,
+              users,
+              currentProject,
+              paginatedListIssues,
+              requestDeleteIssue,
+              handleOpenEditModal,
+              currentPage,
+              baseFilteredIssues,
+              handlePageChange,
+              selectedIssueForDetail,
+              closeDetailPanel,
+              handleIssueUpdated,
+              showAddIssueModal,
+              setShowAddIssueModal,
+              handleAddIssue,
+              isSubmitting,
+              currentUserId,
+              currentUser,
+              showEditIssueModal,
+              handleCloseEditModal,
+              selectedIssueForEdit,
+              handleEditIssue,
+              issueToDelete,
+              showDeleteModal,
+              confirmDeleteIssue,
+              cancelDeleteIssue,
+              issueToResolve,
+              showResolveModal,
+              setShowResolveModal,
+              handleResolveIssue,
+              handleLoginSuccess,
+              showLoginModal,
+              setShowLoginModal,
+              handleLogin,
+              showRegisterModal,
+              setShowRegisterModal,
+              handleRegister,
+              handleLogout,
+              searchTerm,
+              setSearchTerm,
+              statusFilter,
+              setStatusFilter,
+              assigneeFilter,
+              setAssigneeFilter,
+              reporterFilter,
+              setReporterFilter,
+              typeFilter,
+              setTypeFilter,
+              priorityFilter,
+              setPriorityFilter,
+              notifications,
+              showNotifications,
+              hasUnread,
+              handleToggleNotifications,
+              handleReadNotification,
+              onToggleSidebar,
+              user: currentUser,
+              setShowNotifications: setShowNotifications,
+              setIssueToResolve: setIssueToResolve,
+            }}
+          />
+        }
+      />
       <Route path="/settings/user" element={<UserSettingsPage />} />
     </Routes>
   );

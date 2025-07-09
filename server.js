@@ -40,6 +40,7 @@ const usersCollection = db.collection("users");
 const versionsCollection = db.collection("versions");
 const componentsCollection = db.collection("components");
 const customersCollection = db.collection("customers");
+const notificationsCollection = db.collection("notifications");
 
 const ADMIN_USERID = "apadmin";
 const ADMIN_USERNAME = "관리자";
@@ -1452,6 +1453,16 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     ],
   };
   const result = await issuesCollection.insertOne(newIssue);
+
+  if (newIssue.assignee) {
+    createNotification(
+      newIssue.assignee,
+      "new-issue",
+      `새로운 이슈 '${newIssue.title}'가 할당되었습니다.`,
+      result.insertedId,
+      newIssue.issueKey
+    );
+  }
   res
     .status(201)
     .json(await mapIssueWithLookups({ _id: result.insertedId, ...newIssue }));
@@ -1724,6 +1735,18 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (!result) {
     return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
   }
+
+  // 담당자 변경 알림
+  if (updateFields.assignee && updateFields.assignee !== existing.assignee) {
+    createNotification(
+      updateFields.assignee,
+      "new-issue", // 'new-issue' 타입을 재사용하여 할당 알림을 보냅니다.
+      `이슈 '${result.title}'가 회원님에게 할당되었습니다.`,
+      result._id,
+      result.issueKey
+    );
+  }
+
   res.json(await mapIssueWithLookups(result));
 });
 
@@ -1760,7 +1783,84 @@ app.post("/api/issues/:id/comments", async (req, res) => {
   if (!result) {
     return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
   }
+
+  // 멘션 알림 처리
+  const mentionRegex = /@(\w+)/g;
+  let match;
+  const mentionedUsers = new Set();
+  while ((match = mentionRegex.exec(text)) !== null) {
+    mentionedUsers.add(match[1]);
+  }
+
+  if (mentionedUsers.size > 0) {
+    const issue = result;
+    for (const mentionedUserId of mentionedUsers) {
+      if (mentionedUserId !== req.session.user.userid) {
+        createNotification(
+          mentionedUserId,
+          "mention",
+          `'${issue.title}' 이슈에서 ${req.session.user.username}님이 회원님을 멘션했습니다.`,
+          issue._id,
+          issue.issueKey
+        );
+      }
+    }
+  }
+
   res.json(await mapIssueWithLookups(result));
+});
+
+
+async function createNotification(
+  userId,
+  type,
+  message,
+  issueId,
+  issueKey
+) {
+  if (!userId) return;
+  await notificationsCollection.insertOne({
+    userId,
+    type,
+    message,
+    issueId: issueId.toString(),
+    issueKey,
+    read: false,
+    createdAt: new Date().toISOString(),
+  });
+}
+
+app.get("/api/notifications", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  const notifications = await notificationsCollection
+    .find({ userId: req.session.user.userid })
+    .sort({ createdAt: -1 })
+    .toArray();
+  res.json(
+    notifications.map((n) => ({
+      id: n._id.toString(),
+      ...n,
+    }))
+  );
+});
+
+app.post("/api/notifications/:id/read", async (req, res) => {
+  const { id } = req.params;
+  if (!req.session.user) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  const result = await notificationsCollection.updateOne(
+    { _id: new ObjectId(id), userId: req.session.user.userid },
+    { $set: { read: true } }
+  );
+  if (result.modifiedCount === 0) {
+    return res
+      .status(404)
+      .json({ message: "알림을 찾을 수 없거나 권한이 없습니다." });
+  }
+  res.status(200).json({ message: "알림을 읽음으로 표시했습니다." });
 });
 
 app.delete("/api/issues/:id", async (req, res) => {

@@ -179,24 +179,34 @@ export const issuePriorityColors: Record<string, string> = {
 };
 
 // 색상 매핑 유틸리티 함수들
-export function getStatusColor(statusName: string, statuses: StatusItem[]): string {
-  const status = statuses.find(s => s.name === statusName);
+export function getStatusColor(
+  statusName: string,
+  statuses: StatusItem[]
+): string {
+  const status = statuses.find((s) => s.name === statusName);
   if (status) {
     return `bg-${status.color}-100 text-${status.color}-800 ring-${status.color}-600/20`;
   }
-  return statusColors[statusName] || "bg-gray-100 text-gray-800 ring-gray-600/20";
+  return (
+    statusColors[statusName] || "bg-gray-100 text-gray-800 ring-gray-600/20"
+  );
 }
 
 export function getTypeColor(typeName: string, types: TypeItem[]): string {
-  const type = types.find(t => t.name === typeName);
+  const type = types.find((t) => t.name === typeName);
   if (type) {
     return `bg-${type.color}-100 text-${type.color}-800 ring-${type.color}-600/20`;
   }
-  return issueTypeColors[typeName] || "bg-gray-100 text-gray-800 ring-gray-600/20";
+  return (
+    issueTypeColors[typeName] || "bg-gray-100 text-gray-800 ring-gray-600/20"
+  );
 }
 
-export function getPriorityColor(priorityName: string, priorities: PriorityItem[]): string {
-  const priority = priorities.find(p => p.name === priorityName);
+export function getPriorityColor(
+  priorityName: string,
+  priorities: PriorityItem[]
+): string {
+  const priority = priorities.find((p) => p.name === priorityName);
   if (priority) {
     return `border-${priority.color}-500`;
   }
@@ -204,49 +214,68 @@ export function getPriorityColor(priorityName: string, priorities: PriorityItem[
 }
 
 // ID로 이름을 찾는 유틸리티 함수들
-export function getStatusNameById(statusId: string, statuses: StatusItem[]): string {
-  const status = statuses.find(s => s.id === statusId);
+export function getStatusNameById(
+  statusId: string,
+  statuses: StatusItem[]
+): string {
+  const status = statuses.find((s) => s.id === statusId);
   return status?.name || statusId;
 }
 
 export function getTypeNameById(typeId: string, types: TypeItem[]): string {
-  const type = types.find(t => t.id === typeId);
+  const type = types.find((t) => t.id === typeId);
   return type?.name || typeId;
 }
 
-export function getPriorityNameById(priorityId: string, priorities: PriorityItem[]): string {
-  const priority = priorities.find(p => p.id === priorityId);
+export function getPriorityNameById(
+  priorityId: string,
+  priorities: PriorityItem[]
+): string {
+  const priority = priorities.find((p) => p.id === priorityId);
   return priority?.name || priorityId;
 }
 
-export function getResolutionNameById(resolutionId: string, resolutions: ResolutionItem[]): string {
-  const resolution = resolutions.find(r => r.id === resolutionId);
+export function getResolutionNameById(
+  resolutionId: string,
+  resolutions: ResolutionItem[]
+): string {
+  const resolution = resolutions.find((r) => r.id === resolutionId);
   return resolution?.name || resolutionId;
 }
 
 // ID로 색상을 찾는 유틸리티 함수들
-export function getStatusColorById(statusId: string, statuses: StatusItem[]): string {
-  const status = statuses.find(s => s.id === statusId);
+export function getStatusColorById(
+  statusId: string,
+  statuses: StatusItem[]
+): string {
+  const status = statuses.find((s) => s.id === statusId);
   if (status) {
     return `bg-${status.color}-100 text-${status.color}-800 ring-${status.color}-600/20`;
   }
   // Fallback to name-based lookup for backward compatibility
   const statusName = getStatusNameById(statusId, statuses);
-  return statusColors[statusName] || "bg-gray-100 text-gray-800 ring-gray-600/20";
+  return (
+    statusColors[statusName] || "bg-gray-100 text-gray-800 ring-gray-600/20"
+  );
 }
 
 export function getTypeColorById(typeId: string, types: TypeItem[]): string {
-  const type = types.find(t => t.id === typeId);
+  const type = types.find((t) => t.id === typeId);
   if (type) {
     return `bg-${type.color}-100 text-${type.color}-800 ring-${type.color}-600/20`;
   }
   // Fallback to name-based lookup for backward compatibility
   const typeName = getTypeNameById(typeId, types);
-  return issueTypeColors[typeName] || "bg-gray-100 text-gray-800 ring-gray-600/20";
+  return (
+    issueTypeColors[typeName] || "bg-gray-100 text-gray-800 ring-gray-600/20"
+  );
 }
 
-export function getPriorityColorById(priorityId: string, priorities: PriorityItem[]): string {
-  const priority = priorities.find(p => p.id === priorityId);
+export function getPriorityColorById(
+  priorityId: string,
+  priorities: PriorityItem[]
+): string {
+  const priority = priorities.find((p) => p.id === priorityId);
   if (priority) {
     return `border-${priority.color}-500`;
   }
@@ -288,4 +317,15 @@ export interface Customer {
   description?: string;
   owners: string[];
   issueCount?: number;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: "new-issue" | "mention";
+  message: string;
+  issueId: string;
+  issueKey: string;
+  read: boolean;
+  createdAt: string;
 }

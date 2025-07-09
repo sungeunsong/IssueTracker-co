@@ -26,7 +26,7 @@ interface IssueFormProps {
   selectedProjectId: string | null;
   users: User[];
   currentUserId: string | null;
-  currentUserName: string | null;
+  currentUserName: string | null | undefined;
   statuses: StatusItem[];
   priorities: PriorityItem[];
   types: TypeItem[];
@@ -69,13 +69,25 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const [assignee, setAssignee] = useState("");
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState<StatusEnum>(
-    statuses[0] ? (typeof statuses[0] === 'object' ? statuses[0].name : statuses[0]) : ""
+    statuses[0]
+      ? typeof statuses[0] === "object"
+        ? statuses[0].name
+        : statuses[0]
+      : ""
   );
   const [type, setType] = useState<string>(
-    types[0] ? (typeof types[0] === 'object' ? types[0].id : types[0]) : (DEFAULT_ISSUE_TYPES[0]?.id || "")
+    types[0]
+      ? typeof types[0] === "object"
+        ? types[0].id
+        : types[0]
+      : DEFAULT_ISSUE_TYPES[0]?.id || ""
   );
   const [priority, setPriority] = useState<PriorityEnum>(
-    priorities[0] ? (typeof priorities[0] === 'object' ? priorities[0].id : priorities[0]) : ""
+    priorities[0]
+      ? typeof priorities[0] === "object"
+        ? priorities[0].id
+        : priorities[0]
+      : ""
   );
   const [componentValue, setComponentValue] = useState("");
   const [customerValue, setCustomerValue] = useState("");
@@ -94,9 +106,9 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const typesWithIcon = useMemo<TypeOption[]>(() => {
     return types.map((type): TypeOption => {
       // type이 TypeItem 객체인지 문자열인지 확인
-      const typeName = typeof type === 'object' ? type.name : type;
-      const typeValue = typeof type === 'object' ? type.id : type;
-      
+      const typeName = typeof type === "object" ? type.name : type;
+      const typeValue = typeof type === "object" ? type.id : type;
+
       if (typeName === "버그") {
         return { label: typeName, value: typeValue, icon: "🐞" };
       } else if (typeName === "개선") {
@@ -115,9 +127,11 @@ export const IssueForm: React.FC<IssueFormProps> = ({
   const prioritiesWithIcon = useMemo<TypeOption[]>(() => {
     return priorities.map((priority): TypeOption => {
       // priority가 PriorityItem 객체인지 문자열인지 확인
-      const priorityName = typeof priority === 'object' ? priority.name : priority;
-      const priorityValue = typeof priority === 'object' ? priority.id : priority;
-      
+      const priorityName =
+        typeof priority === "object" ? priority.name : priority;
+      const priorityValue =
+        typeof priority === "object" ? priority.id : priority;
+
       let upString = priorityName.toUpperCase();
       if (upString === "HIGHEST") {
         return { label: priorityName, value: priorityValue, icon: "🔥" }; // 가장 시급
@@ -144,9 +158,32 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(reporterUser ? reporterUser.username : "");
       setAssignee(initialData.assignee || "");
       setComment(initialData.comment || "");
-      setStatus(initialData.status || (statuses[0] ? (typeof statuses[0] === 'object' ? statuses[0].name : statuses[0]) : ""));
-      setType(initialData.typeId || initialData.type || (types[0] ? (typeof types[0] === 'object' ? types[0].id : types[0]) : (DEFAULT_ISSUE_TYPES[0]?.id || "")));
-      setPriority(initialData.priorityId || initialData.priority || (priorities[0] ? (typeof priorities[0] === 'object' ? priorities[0].id : priorities[0]) : ""));
+      setStatus(
+        initialData.status ||
+          (statuses[0]
+            ? typeof statuses[0] === "object"
+              ? statuses[0].name
+              : statuses[0]
+            : "")
+      );
+      setType(
+        initialData.typeId ||
+          initialData.type ||
+          (types[0]
+            ? typeof types[0] === "object"
+              ? types[0].id
+              : types[0]
+            : DEFAULT_ISSUE_TYPES[0]?.id || "")
+      );
+      setPriority(
+        initialData.priorityId ||
+          initialData.priority ||
+          (priorities[0]
+            ? typeof priorities[0] === "object"
+              ? priorities[0].id
+              : priorities[0]
+            : "")
+      );
       setComponentValue(initialData.component || "");
       setCustomerValue(initialData.customer || "");
       setAffectsVersion(initialData.affectsVersion || "");
@@ -162,9 +199,27 @@ export const IssueForm: React.FC<IssueFormProps> = ({
       setReporterName(currentUserName || "");
       setAssignee("");
       setComment("");
-      setStatus(statuses[0] ? (typeof statuses[0] === 'object' ? statuses[0].name : statuses[0]) : "");
-      setType(types[0] ? (typeof types[0] === 'object' ? types[0].id : types[0]) : (DEFAULT_ISSUE_TYPES[0]?.id || ""));
-      setPriority(priorities[0] ? (typeof priorities[0] === 'object' ? priorities[0].id : priorities[0]) : "");
+      setStatus(
+        statuses[0]
+          ? typeof statuses[0] === "object"
+            ? statuses[0].name
+            : statuses[0]
+          : ""
+      );
+      setType(
+        types[0]
+          ? typeof types[0] === "object"
+            ? types[0].id
+            : types[0]
+          : DEFAULT_ISSUE_TYPES[0]?.id || ""
+      );
+      setPriority(
+        priorities[0]
+          ? typeof priorities[0] === "object"
+            ? priorities[0].id
+            : priorities[0]
+          : ""
+      );
       setComponentValue("");
       setCustomerValue("");
       setAffectsVersion("");
@@ -481,8 +536,8 @@ export const IssueForm: React.FC<IssueFormProps> = ({
               disabled={isSubmitting}
             >
               {statuses.map((st) => {
-                const statusName = typeof st === 'object' ? st.name : st;
-                const statusValue = typeof st === 'object' ? st.id : st;
+                const statusName = typeof st === "object" ? st.name : st;
+                const statusValue = typeof st === "object" ? st.id : st;
                 return (
                   <option key={statusValue} value={statusName}>
                     {statusName}
