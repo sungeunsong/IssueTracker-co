@@ -13,6 +13,7 @@ import type {
 import { DEFAULT_ISSUE_TYPES } from "../types";
 import { PlusIcon } from "./icons/PlusIcon";
 import { RichTextEditor } from "./RichTextEditor";
+import { MentionTextarea } from "./MentionTextarea";
 import type { IssueFormData } from "../App";
 
 interface IssueFormProps {
@@ -605,14 +606,12 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         >
           코멘트
         </label>
-        <textarea
-          id="issue-comment"
+        <MentionTextarea
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          rows={2}
-          className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-          placeholder="추가 코멘트 (선택)"
-          disabled={isSubmitting}
+          onChange={(val) => setComment(val)}
+          projectId={projectId}
+          placeholder="추가 코멘트 (선택) - @를 입력하면 사용자 멘션 가능"
+          rows={3}
         />
       </div>
 

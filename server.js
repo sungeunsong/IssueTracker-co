@@ -703,6 +703,76 @@ app.get("/api/users/:userId", async (req, res) => {
   });
 });
 
+app.get("/api/projects/:projectId/users", async (req, res) => {
+  const { projectId } = req.params;
+  const currentUserId = req.session.user?.userid;
+
+  if (!currentUserId) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+
+  const project = await projectsCollection.findOne({
+    _id: new ObjectId(projectId),
+  });
+
+  if (!project) {
+    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+  }
+
+  // 현재 사용자 정보 조회
+  const currentUser = await usersCollection.findOne({ userid: currentUserId });
+  
+  // 관리자가 아닌 경우 프로젝트 권한 확인
+  if (!currentUser || !currentUser.isAdmin) {
+    const hasReadPermission = 
+      project.readUsers && project.readUsers.includes(currentUserId);
+    const hasWritePermission = 
+      project.writeUsers && project.writeUsers.includes(currentUserId);
+    const hasAdminPermission = 
+      project.adminUsers && project.adminUsers.includes(currentUserId);
+
+    if (!hasReadPermission && !hasWritePermission && !hasAdminPermission) {
+      return res
+        .status(403)
+        .json({ message: "이 프로젝트에 접근할 권한이 없습니다." });
+    }
+  }
+
+  // 프로젝트에 읽기 또는 쓰기 권한을 가진 사용자 ID 수집
+  const authorizedUserIds = new Set([
+    ...(project.readUsers || []),
+    ...(project.writeUsers || []),
+    ...(project.adminUsers || []),
+  ]);
+
+  // 권한을 가진 사용자들의 정보 조회
+  const users = await usersCollection
+    .find(
+      { userid: { $in: Array.from(authorizedUserIds) } },
+      {
+        projection: {
+          userid: 1,
+          username: 1,
+          isAdmin: 1,
+          _id: 1,
+          profileImage: 1,
+        },
+      }
+    )
+    .toArray();
+
+  const mappedUsers = users.map((user) => ({
+    id: user._id.toString(),
+    userid: user.userid,
+    username: user.username,
+    name: user.username,
+    isAdmin: user.isAdmin || false,
+    profileImage: user.profileImage,
+  }));
+
+  res.json(mappedUsers);
+});
+
 app.put("/api/users/:userId/password", async (req, res) => {
   const { userId } = req.params;
   const { currentPassword, newPassword } = req.body;

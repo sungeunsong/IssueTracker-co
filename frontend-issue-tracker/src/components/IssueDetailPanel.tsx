@@ -20,6 +20,7 @@ import { PencilIcon } from "./icons/PencilIcon";
 import { TrashIcon } from "./icons/TrashIcon";
 import { XIcon } from "./icons/XIcon";
 import { RichTextViewer } from "./RichTextViewer";
+import { MentionTextarea } from "./MentionTextarea";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 import { HistoryIcon } from "./icons/HistoryIcon";
 
@@ -403,12 +404,12 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                 </div>
               )}
               <div className="mt-4">
-                <textarea
-                  className="w-full text-sm p-2 border border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                  rows={2}
-                  placeholder="Add a comment..."
+                <MentionTextarea
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  onChange={setNewComment}
+                  projectId={issue.projectId}
+                  placeholder="댓글을 입력하세요... (@를 입력하면 사용자 멘션 가능)"
+                  rows={3}
                 />
                 <button
                   onClick={async () => {
@@ -430,7 +431,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
                   }}
                   className="mt-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                 >
-                  Add Comment
+                  댓글 추가
                 </button>
               </div>
             </div>
