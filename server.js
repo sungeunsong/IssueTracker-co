@@ -1634,15 +1634,30 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     }
   }
   let updateFields = {};
+  let changedFields = []; // 실제로 변경된 필드를 추적
   let statusChanged = false;
   let fromStatus;
   let toStatus;
-  if (title !== undefined) updateFields.title = title.trim();
-  if (content !== undefined) updateFields.content = content.trim();
-  if (reporter !== undefined) updateFields.reporter = reporter.trim();
-  if (assignee !== undefined)
-    updateFields.assignee =
-      assignee.trim() === "" ? undefined : assignee.trim();
+  
+  if (title !== undefined && title.trim() !== existing.title) {
+    updateFields.title = title.trim();
+    changedFields.push('title');
+  }
+  if (content !== undefined && content.trim() !== existing.content) {
+    updateFields.content = content.trim();
+    changedFields.push('content');
+  }
+  if (reporter !== undefined && reporter.trim() !== existing.reporter) {
+    updateFields.reporter = reporter.trim();
+    changedFields.push('reporter');
+  }
+  if (assignee !== undefined) {
+    const newAssignee = assignee.trim() === "" ? undefined : assignee.trim();
+    if (newAssignee !== existing.assignee) {
+      updateFields.assignee = newAssignee;
+      changedFields.push('assignee');
+    }
+  }
   let commentEntry;
   if (comment !== undefined) {
     const trimmed = comment.trim();
@@ -1657,24 +1672,28 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   }
   if (resolution !== undefined) {
     const trimmedResolution = resolution.trim();
-    updateFields.resolution =
-      trimmedResolution === "" ? undefined : trimmedResolution;
+    const newResolution = trimmedResolution === "" ? undefined : trimmedResolution;
+    let newResolutionId;
+    
     if (trimmedResolution) {
       const resolutionObj = project.resolutions?.find((r) =>
         typeof r === "object"
           ? r.id === trimmedResolution || r.name === trimmedResolution
           : r === trimmedResolution
       );
-      const resolutionId = resolutionObj
+      newResolutionId = resolutionObj
         ? typeof resolutionObj === "object"
           ? resolutionObj.id
           : mapOldResolutionToId(resolutionObj)
         : mapOldResolutionToId(trimmedResolution);
-      updateFields.resolution = resolutionId; // ID로 저장
-      updateFields.resolutionId = resolutionId;
     } else {
-      updateFields.resolution = undefined; // ID로 저장
-      updateFields.resolutionId = undefined;
+      newResolutionId = undefined;
+    }
+    
+    if (newResolutionId !== existing.resolutionId) {
+      updateFields.resolution = newResolutionId;
+      updateFields.resolutionId = newResolutionId;
+      changedFields.push('resolution');
     }
   }
   if (status !== undefined) {
@@ -1695,10 +1714,10 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         ? statusObj.id
         : mapOldStatusToId(statusObj);
 
-    updateFields.status = statusId; // 이제 status도 ID로 저장
-    updateFields.statusId = statusId;
-
-    if (existing.status !== statusName) {
+    if (statusId !== existing.statusId && statusName !== existing.status) {
+      updateFields.status = statusId;
+      updateFields.statusId = statusId;
+      changedFields.push('status');
       statusChanged = true;
       fromStatus = existing.status;
       toStatus = statusName;
@@ -1716,10 +1735,13 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 업무 유형을 제공해야 합니다." });
     }
-    updateFields.type =
-      typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj); // ID로 저장
-    updateFields.typeId =
-      typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj);
+    const typeId = typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj);
+    
+    if (typeId !== existing.typeId) {
+      updateFields.type = typeId;
+      updateFields.typeId = typeId;
+      changedFields.push('type');
+    }
   }
   if (priority !== undefined) {
     const priorityObj = project.priorities?.find((p) =>
@@ -1732,14 +1754,15 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 우선순위를 제공해야 합니다." });
     }
-    updateFields.priority =
-      typeof priorityObj === "object"
-        ? priorityObj.id
-        : mapOldPriorityToId(priorityObj); // ID로 저장
-    updateFields.priorityId =
-      typeof priorityObj === "object"
-        ? priorityObj.id
-        : mapOldPriorityToId(priorityObj);
+    const priorityId = typeof priorityObj === "object"
+      ? priorityObj.id
+      : mapOldPriorityToId(priorityObj);
+      
+    if (priorityId !== existing.priorityId) {
+      updateFields.priority = priorityId;
+      updateFields.priorityId = priorityId;
+      changedFields.push('priority');
+    }
   }
   if (component !== undefined) {
     const comps = await componentsCollection
@@ -1752,11 +1775,18 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 컴포넌트를 제공해야 합니다." });
     }
+    
+    let newComponentId;
     if (component.trim() === "") {
-      updateFields.componentId = undefined;
+      newComponentId = undefined;
     } else {
       const comp = comps.find((c) => c.name === component);
-      updateFields.componentId = comp?._id.toString();
+      newComponentId = comp?._id.toString();
+    }
+    
+    if (newComponentId !== existing.componentId) {
+      updateFields.componentId = newComponentId;
+      changedFields.push('component');
     }
   }
   if (customer !== undefined) {
@@ -1770,55 +1800,99 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 고객사를 제공해야 합니다." });
     }
+    
+    let newCustomerId;
     if (customer.trim() === "") {
-      updateFields.customerId = undefined;
+      newCustomerId = undefined;
     } else {
       const cust = custs.find((c) => c.name === customer);
-      updateFields.customerId = cust?._id.toString();
+      newCustomerId = cust?._id.toString();
+    }
+    
+    if (newCustomerId !== existing.customerId) {
+      updateFields.customerId = newCustomerId;
+      changedFields.push('customer');
     }
   }
   if (affectsVersion !== undefined) {
+    let newAffectsVersionId;
     if (affectsVersion.trim() === "") {
-      updateFields.affectsVersionId = undefined;
+      newAffectsVersionId = undefined;
     } else {
       const ver = await versionsCollection.findOne({
         projectId: project._id.toString(),
         name: affectsVersion,
       });
-      updateFields.affectsVersionId = ver?._id.toString();
+      newAffectsVersionId = ver?._id.toString();
+    }
+    
+    if (newAffectsVersionId !== existing.affectsVersionId) {
+      updateFields.affectsVersionId = newAffectsVersionId;
+      changedFields.push('affectsVersion');
     }
   }
   if (fixVersion !== undefined) {
+    let newFixVersionId;
     if (fixVersion.trim() === "") {
-      updateFields.fixVersionId = undefined;
+      newFixVersionId = undefined;
     } else {
       const ver = await versionsCollection.findOne({
         projectId: project._id.toString(),
         name: fixVersion,
       });
-      updateFields.fixVersionId = ver?._id.toString();
+      newFixVersionId = ver?._id.toString();
+    }
+    
+    if (newFixVersionId !== existing.fixVersionId) {
+      updateFields.fixVersionId = newFixVersionId;
+      changedFields.push('fixVersion');
     }
   }
-  if (projectId !== undefined) updateFields.projectId = projectId;
-  updateFields.updatedAt = new Date().toISOString();
-  const historyEntry = {
-    userId: req.session.user.userid,
-    action: "updated",
-    timestamp: new Date().toISOString(),
-    changes: Object.keys(updateFields),
-  };
-  if (statusChanged) {
+  if (projectId !== undefined && projectId !== existing.projectId) {
+    updateFields.projectId = projectId;
+    changedFields.push('project');
+  }
+  
+  // 실제로 변경된 필드가 있는 경우에만 updatedAt과 기록 추가
+  if (changedFields.length > 0 || commentEntry) {
+    updateFields.updatedAt = new Date().toISOString();
+  }
+  
+  let historyEntry;
+  if (changedFields.length > 0) {
+    historyEntry = {
+      userId: req.session.user.userid,
+      action: "updated",
+      timestamp: new Date().toISOString(),
+      changes: changedFields,
+    };
+  }
+  if (statusChanged && historyEntry) {
     historyEntry.fromStatus = fromStatus;
     historyEntry.toStatus = toStatus;
   }
+  
   const updateOperation = {
     $set: updateFields,
-    $push: { history: historyEntry },
   };
+  
+  // 기록 또는 댓글이 있는 경우에만 $push 추가
+  if (historyEntry || commentEntry) {
+    updateOperation.$push = {};
+    if (historyEntry) {
+      updateOperation.$push.history = historyEntry;
+    }
+  }
   if (commentEntry) {
+    if (!updateOperation.$push) {
+      updateOperation.$push = {};
+    }
     updateOperation.$push.comments = commentEntry;
   }
   if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    if (!updateOperation.$push) {
+      updateOperation.$push = {};
+    }
     updateOperation.$push.attachments = {
       $each: req.files.map((f) => ({
         filename: f.filename,
@@ -1827,13 +1901,18 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     };
   }
 
-  const result = await issuesCollection.findOneAndUpdate(
-    { _id: new ObjectId(id) },
-    updateOperation,
-    { returnDocument: "after" }
-  );
-  if (!result) {
-    return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
+  // 실제 변경사항이 있는 경우에만 업데이트 수행
+  let result = existing;
+  if (Object.keys(updateFields).length > 0 || updateOperation.$push) {
+    const updatedResult = await issuesCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      updateOperation,
+      { returnDocument: "after" }
+    );
+    if (!updatedResult) {
+      return res.status(404).json({ message: "이슈를 찾을 수 없습니다." });
+    }
+    result = updatedResult;
   }
 
   // 담당자 변경 알림
