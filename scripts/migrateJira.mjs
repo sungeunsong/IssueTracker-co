@@ -8,7 +8,7 @@ const JIRA_API_TOKEN = "";
 
 const ISSUETRACKER_API_BASE_URL = "http://localhost:3000/api"; // Your IssueTracker API URL
 const ISSUETRACKER_ADMIN_USERID = "apadmin"; // IssueTracker admin username
-const ISSUETRACKER_ADMIN_PASSWORD = "ehfpal!!"; // IssueTracker admin password (CHANGE THIS IN PRODUCTION)
+const ISSUETRACKER_ADMIN_PASSWORD = "0000"; // IssueTracker admin password (CHANGE THIS IN PRODUCTION)
 
 // --- Mappings (will be populated during migration) ---
 const projectMap = new Map(); // Jira Project ID -> IssueTracker Project ID
@@ -78,6 +78,29 @@ function convertAdfToMarkdown(adfDoc) {
     console.error("Error converting ADF to Markdown:", e);
     return ""; // Return empty string on error
   }
+}
+
+// --- Status Mapping Helper ---
+function mapJiraStatusToIssueTrackerStatus(jiraStatusName) {
+  const mapping = {
+    // --- Mappings for Korean Jira Statuses ---
+    완료: "닫힘",
+    해결됨: "수정 완료",
+    "진행 중": "수정 중",
+    "할 일": "열림",
+
+    // --- Mappings for English Jira Statuses ---
+    Done: "닫힘",
+    Closed: "닫힘",
+    Resolved: "수정 완료",
+    "In Progress": "수정 중",
+    "To Do": "열림",
+    Open: "열림",
+    Reopened: "열림",
+    Verified: "검증",
+    Rejected: "원치 않음",
+  };
+  return mapping[jiraStatusName] || jiraStatusName; // Fallback to original name if no mapping found
 }
 
 // --- IssueTracker Helpers ---
@@ -231,6 +254,9 @@ async function processJiraIssue(jiraIssue) {
   ); // Ensure it's a string
 
   // 5. Map other fields to IssueTracker's IssueFormData
+  const issueTrackerStatusName = mapJiraStatusToIssueTrackerStatus(
+    jiraIssue.fields.status.name
+  );
   const issueFormData = {
     projectId: issueTrackerProjectId,
     title: String(jiraIssue.fields.summary || ""), // Ensure title is a string
@@ -243,10 +269,15 @@ async function processJiraIssue(jiraIssue) {
     priority:
       priorityMap.get(jiraIssue.fields.priority.name) ||
       jiraIssue.fields.priority.name, // Use mapped ID, fallback to name
-    status:
-      statusMap.get(jiraIssue.fields.status.name) ||
-      statusMap.get(jiraIssue.fields.status.name), // Use mapped ID, fallback to name
+    status: statusMap.get(issueTrackerStatusName), // Use mapped ID
   };
+
+  // DEBUG: Log status values
+  console.log(`  [DEBUG] Jira Status: ${jiraIssue.fields.status.name}`);
+  console.log(
+    `  [DEBUG] Mapped Status ID: ${statusMap.get(jiraIssue.fields.status.name)}`
+  );
+  console.log(`  [DEBUG] FormData Status: ${issueFormData.status}`);
 
   // 6. Create Issue in IssueTracker
   const formData = new FormData();
@@ -265,6 +296,69 @@ async function processJiraIssue(jiraIssue) {
       `Successfully created IssueTracker issue: ${newIssueResponse.data.issueKey}`
     );
     // Store mapping if needed: Jira Issue ID -> IssueTracker Issue ID
+    const issueTrackerIssueId = newIssueResponse.data.id;
+
+    // 7. Migrate Comments
+    if (jiraIssue.fields.comment && jiraIssue.fields.comment.comments) {
+      for (const jiraComment of jiraIssue.fields.comment.comments) {
+        const commentAuthorId = await getOrCreateIssueTrackerUser(
+          jiraComment.author
+        );
+        if (commentAuthorId) {
+          try {
+            await issueTrackerApi.post(
+              `/issues/${issueTrackerIssueId}/comments`,
+              {
+                text: convertAdfToMarkdown(jiraComment.body),
+                userId: commentAuthorId,
+                createdAt: jiraComment.created,
+              }
+            );
+            console.log(
+              `  -> Migrated comment by ${jiraComment.author.displayName} on ${jiraComment.created}`
+            );
+          } catch (commentError) {
+            console.error(
+              `    Failed to migrate comment for issue ${jiraIssue.key}:`,
+              commentError.message
+            );
+          }
+        }
+      }
+    }
+
+    // 8. Migrate Attachments
+    if (jiraIssue.fields.attachment && jiraIssue.fields.attachment.length > 0) {
+      for (const jiraAttachment of jiraIssue.fields.attachment) {
+        try {
+          // Download the attachment from Jira
+          const attachmentResponse = await jiraApi.get(jiraAttachment.content, {
+            responseType: "arraybuffer", // Important for binary files
+          });
+
+          // Prepare form data to upload to IssueTracker
+          const attachmentFormData = new FormData();
+          attachmentFormData.append("files", attachmentResponse.data, {
+            filename: jiraAttachment.filename,
+          });
+
+          // Upload to IssueTracker
+          await issueTrackerApi.put(
+            `/issues/${issueTrackerIssueId}`,
+            attachmentFormData,
+            {
+              headers: attachmentFormData.getHeaders(),
+            }
+          );
+          console.log(`  -> Migrated attachment: ${jiraAttachment.filename}`);
+        } catch (attachmentError) {
+          console.error(
+            `    Failed to migrate attachment ${jiraAttachment.filename}:`,
+            attachmentError.message
+          );
+        }
+      }
+    }
   } catch (error) {
     console.error(
       `Failed to create IssueTracker issue for Jira issue ${jiraIssue.key}:`,
@@ -274,9 +368,6 @@ async function processJiraIssue(jiraIssue) {
       console.error("Response data:", error.response.data);
     }
   }
-
-  // 7. Migrate Comments (TO BE IMPLEMENTED)
-  // 8. Migrate Attachments (TO BE IMPLEMENTED)
 }
 
 // --- Main Migration Function ---

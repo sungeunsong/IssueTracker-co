@@ -657,19 +657,22 @@ app.get("/api/current-user", async (req, res) => {
 });
 
 app.get("/api/users", async (req, res) => {
+  const { username } = req.query;
+  const filter = {};
+  if (username) {
+    filter.username = username;
+  }
+
   const users = await usersCollection
-    .find(
-      {},
-      {
-        projection: {
-          userid: 1,
-          username: 1,
-          isAdmin: 1,
-          _id: 1,
-          profileImage: 1,
-        },
-      }
-    )
+    .find(filter, {
+      projection: {
+        userid: 1,
+        username: 1,
+        isAdmin: 1,
+        _id: 1,
+        profileImage: 1,
+      },
+    })
     .toArray();
 
   const mappedUsers = users.map((user) => ({
@@ -1320,6 +1323,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     comment,
     type,
     priority,
+    status, // status 추가
     affectsVersion,
     component,
     customer,
@@ -1426,15 +1430,37 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     "0"
   )}`;
 
-  const initialStatusObj = projectResult.statuses?.[0];
-  const initialStatus =
-    typeof initialStatusObj === "object"
-      ? initialStatusObj.name
-      : initialStatusObj || INITIAL_ISSUE_STATUS;
-  const initialStatusId =
-    typeof initialStatusObj === "object"
-      ? initialStatusObj.id
-      : mapOldStatusToId(initialStatus);
+  // Determine issue status
+  let issueStatusId;
+  // Admin can override status for migration
+  if (currentUser.isAdmin && status) {
+    const allowedStatuses = projectResult.statuses || DEFAULT_STATUSES;
+    const statusObj = allowedStatuses.find(
+      (s) => s.id === status || s.name === status
+    );
+    if (statusObj) {
+      issueStatusId =
+        typeof statusObj === "object"
+          ? statusObj.id
+          : mapOldStatusToId(statusObj);
+    } else {
+      // If status is not in the project's list, still use it (for migration)
+      issueStatusId = status;
+    }
+  }
+
+  // Fallback to initial status if not set by admin
+  if (!issueStatusId) {
+    const initialStatusObj = projectResult.statuses?.[0];
+    const initialStatus =
+      typeof initialStatusObj === "object"
+        ? initialStatusObj.name
+        : initialStatusObj || INITIAL_ISSUE_STATUS;
+    issueStatusId =
+      typeof initialStatusObj === "object"
+        ? initialStatusObj.id
+        : mapOldStatusToId(initialStatus);
+  }
 
   let componentId;
   if (component) {
@@ -1485,8 +1511,8 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     assignee: assignee?.trim() || undefined,
     comment: comment?.trim() || undefined,
     // 이제 모든 값들을 ID로 저장
-    status: initialStatusId,
-    statusId: initialStatusId,
+    status: issueStatusId,
+    statusId: issueStatusId,
     type: typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj),
     typeId: typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj),
     priority: issuePriority,
@@ -1824,17 +1850,22 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
 
 app.post("/api/issues/:id/comments", async (req, res) => {
   const { id } = req.params;
-  const { text } = req.body;
+  const { text, userId, createdAt } = req.body; // Added userId and createdAt
   if (!text || !text.trim()) {
     return res.status(400).json({ message: "댓글 내용은 비워둘 수 없습니다." });
   }
   if (!req.session.user) {
     return res.status(401).json({ message: "로그인이 필요합니다." });
   }
+
+  const isAdmin = req.session.user.isAdmin;
+  const authorId = isAdmin && userId ? userId : req.session.user.userid;
+  const commentDate = isAdmin && createdAt ? createdAt : new Date().toISOString();
+
   const comment = {
-    userId: req.session.user.userid,
+    userId: authorId,
     text: text.trim(),
-    createdAt: new Date().toISOString(),
+    createdAt: commentDate,
   };
   const result = await issuesCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
