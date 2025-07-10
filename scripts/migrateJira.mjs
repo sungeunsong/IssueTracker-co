@@ -340,6 +340,7 @@ async function processJiraIssue(jiraIssue) {
                 text: convertAdfToMarkdown(jiraComment.body),
                 userId: commentAuthorId,
                 createdAt: jiraComment.created,
+                isMigration: true, // 마이그레이션 모드 플래그 추가
               }
             );
             console.log(
@@ -370,7 +371,7 @@ async function processJiraIssue(jiraIssue) {
             filename: jiraAttachment.filename,
           });
 
-          attachmentFormData.append("isMigration", "true");
+          attachmentFormData.append("isMigration", "true"); // 마이그레이션 모드 플래그
 
           // Upload to IssueTracker
           await issueTrackerApi.put(

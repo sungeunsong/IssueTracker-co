@@ -1920,8 +1920,11 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     updateFields.updatedAt = new Date().toISOString();
   }
   
+  // 마이그레이션 모드 확인
+  const isMigration = req.body.isMigration === 'true' || req.body.isMigration === true;
+  
   let historyEntry;
-  if (changedFields.length > 0) {
+  if (changedFields.length > 0 && !isMigration) {
     historyEntry = {
       userId: req.session.user.userid,
       action: "updated",
@@ -1994,7 +1997,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
 
 app.post("/api/issues/:id/comments", async (req, res) => {
   const { id } = req.params;
-  const { text, userId, createdAt } = req.body; // Added userId and createdAt
+  const { text, userId, createdAt, isMigration } = req.body; // Added isMigration flag
   if (!text || !text.trim()) {
     return res.status(400).json({ message: "댓글 내용은 비워둘 수 없습니다." });
   }
@@ -2011,20 +2014,28 @@ app.post("/api/issues/:id/comments", async (req, res) => {
     text: text.trim(),
     createdAt: commentDate,
   };
+  
+  // 마이그레이션 모드일 때는 히스토리 엔트리를 생성하지 않음
+  const updateOperation = {
+    $push: {
+      comments: comment,
+    },
+    $set: { updatedAt: new Date().toISOString() },
+  };
+  
+  // 마이그레이션이 아닐 때만 히스토리 엔트리 추가
+  if (!isMigration) {
+    updateOperation.$push.history = {
+      userId: comment.userId,
+      action: "commented",
+      timestamp: comment.createdAt,
+      comment: comment.text,
+    };
+  }
+  
   const result = await issuesCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
-    {
-      $push: {
-        comments: comment,
-        history: {
-          userId: comment.userId,
-          action: "commented",
-          timestamp: comment.createdAt,
-          comment: comment.text,
-        },
-      },
-      $set: { updatedAt: new Date().toISOString() },
-    },
+    updateOperation,
     { returnDocument: "after" }
   );
   if (!result) {

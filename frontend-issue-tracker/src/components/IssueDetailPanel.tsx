@@ -22,7 +22,6 @@ import { XIcon } from "./icons/XIcon";
 import { RichTextViewer } from "./RichTextViewer";
 import { MentionTextarea } from "./MentionTextarea";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
-import { HistoryIcon } from "./icons/HistoryIcon";
 
 interface IssueDetailPanelProps {
   issue: Issue;
