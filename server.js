@@ -721,14 +721,14 @@ app.get("/api/projects/:projectId/users", async (req, res) => {
 
   // 현재 사용자 정보 조회
   const currentUser = await usersCollection.findOne({ userid: currentUserId });
-  
+
   // 관리자가 아닌 경우 프로젝트 권한 확인
   if (!currentUser || !currentUser.isAdmin) {
-    const hasReadPermission = 
+    const hasReadPermission =
       project.readUsers && project.readUsers.includes(currentUserId);
-    const hasWritePermission = 
+    const hasWritePermission =
       project.writeUsers && project.writeUsers.includes(currentUserId);
-    const hasAdminPermission = 
+    const hasAdminPermission =
       project.adminUsers && project.adminUsers.includes(currentUserId);
 
     if (!hasReadPermission && !hasWritePermission && !hasAdminPermission) {
@@ -1325,10 +1325,9 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     customer,
     projectId,
   } = req.body;
-  if (!title || !content || !reporter) {
-    return res
-      .status(400)
-      .json({ message: "제목, 내용과 등록자는 필수입니다." });
+  if (!title || !reporter) {
+    // content is now optional
+    return res.status(400).json({ message: "제목과 등록자는 필수입니다." }); // Updated message
   }
   if (!projectId) {
     return res.status(400).json({ message: "프로젝트 ID가 필요합니다." });
@@ -1380,7 +1379,10 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
   const typeObj = allowedTypes.find((t) =>
     typeof t === "object" ? t.id === type : t === type
   );
+
   if (!type || !typeObj) {
+    console.log("type", type);
+    console.log("typeObj", typeObj);
     return res
       .status(400)
       .json({ message: "유효한 업무 유형을 선택해야 합니다." });
@@ -1880,14 +1882,7 @@ app.post("/api/issues/:id/comments", async (req, res) => {
   res.json(await mapIssueWithLookups(result));
 });
 
-
-async function createNotification(
-  userId,
-  type,
-  message,
-  issueId,
-  issueKey
-) {
+async function createNotification(userId, type, message, issueId, issueKey) {
   if (!userId) return;
   await notificationsCollection.insertOne({
     userId,
