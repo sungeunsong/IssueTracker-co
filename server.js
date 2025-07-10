@@ -26,10 +26,39 @@ const storage = multer.diskStorage({
   destination: UPLOAD_DIR,
   filename: (req, file, cb) => {
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
+    // 한글 파일명 인코딩 처리
+    const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    cb(null, unique + path.extname(originalname));
   },
 });
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  // 한글 파일명 지원을 위한 설정
+  fileFilter: (req, file, cb) => {
+    // 여러 방법으로 파일명 디코딩 시도
+    const attempts = [
+      { method: 'original', value: file.originalname },
+      { method: 'latin1->utf8', value: Buffer.from(file.originalname, 'latin1').toString('utf8') },
+      { method: 'utf8->latin1->utf8', value: Buffer.from(Buffer.from(file.originalname, 'utf8').toString('latin1'), 'latin1').toString('utf8') }
+    ];
+    
+    // 한글이 제대로 보이는 방법 선택
+    for (const attempt of attempts) {
+      if (/[가-힣]/.test(attempt.value)) {
+        file.originalname = attempt.value;
+        break;
+      }
+    }
+    
+    // 한글이 없다면 latin1->utf8 시도
+    if (!/[가-힣]/.test(file.originalname)) {
+      const decoded = Buffer.from(file.originalname, 'latin1').toString('utf8');
+      file.originalname = decoded;
+    }
+    
+    cb(null, true);
+  }
+});
 
 const client = new MongoClient(MONGO_URI);
 await client.connect();
@@ -1960,10 +1989,22 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       updateOperation.$push = {};
     }
     updateOperation.$push.attachments = {
-      $each: req.files.map((f) => ({
-        filename: f.filename,
-        originalName: f.originalname,
-      })),
+      $each: req.files.map((f, index) => {
+        // 마이그레이션에서 전송한 원본 파일명이 있으면 사용
+        let originalName;
+        if (req.body.originalFilename) {
+          originalName = Array.isArray(req.body.originalFilename) 
+            ? req.body.originalFilename[index] 
+            : req.body.originalFilename;
+        } else {
+          originalName = Buffer.from(f.originalname, "latin1").toString("utf8");
+        }
+        
+        return {
+          filename: f.filename,
+          originalName: originalName,
+        };
+      }),
     };
   }
 

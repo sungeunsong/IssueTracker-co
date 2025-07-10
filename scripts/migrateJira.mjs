@@ -1,5 +1,6 @@
 import axios from "axios";
 import adfToMd from "adf-to-md";
+import { Buffer } from "buffer";
 
 // --- Configuration ---
 const JIRA_BASE_URL = "https://pentalinkss.atlassian.net"; // Your Jira Cloud URL
@@ -367,18 +368,86 @@ async function processJiraIssue(jiraIssue) {
 
           // Prepare form data to upload to IssueTracker
           const attachmentFormData = new FormData();
-          attachmentFormData.append("files", attachmentResponse.data, {
-            filename: jiraAttachment.filename,
+
+          // 한글 파일명 처리
+          let filename = jiraAttachment.filename;
+
+          // 여러 방법으로 파일명 디코딩 시도
+          const attempts = [
+            { method: "original", value: filename },
+            {
+              method: "decodeURIComponent",
+              value: (() => {
+                try {
+                  return decodeURIComponent(filename);
+                } catch {
+                  return null;
+                }
+              })(),
+            },
+            {
+              method: "latin1->utf8",
+              value: Buffer.from(filename, "latin1").toString("utf8"),
+            },
+            {
+              method: "base64->utf8",
+              value: (() => {
+                try {
+                  return Buffer.from(filename, "base64").toString("utf8");
+                } catch {
+                  return null;
+                }
+              })(),
+            },
+          ];
+
+          // 가장 적절한 디코딩 방법 선택 (한글이 제대로 보이는 것)
+          for (const attempt of attempts) {
+            if (attempt.value && /[가-힣]/.test(attempt.value)) {
+              filename = attempt.value;
+              break;
+            }
+          }
+
+          // 한글이 없다면 원본 사용
+          if (!/[가-힣]/.test(filename)) {
+            filename = jiraAttachment.filename;
+          }
+
+          // FormData에 파일 추가 - 한글 파일명을 위한 특별한 처리
+          const buffer = Buffer.from(attachmentResponse.data);
+
+          // ASCII가 아닌 문자가 있으면 URL 인코딩
+          let safeFilename = filename;
+          if (!/^[\x00-\x7F]*$/.test(filename)) {
+            // 한글이 포함된 경우, percent-encoding 사용
+            safeFilename = encodeURIComponent(filename);
+          }
+
+          attachmentFormData.append("files", buffer, {
+            filename: safeFilename,
+            contentType: jiraAttachment.mimeType || "application/octet-stream",
+            knownLength: buffer.length,
           });
+
+          // 원본 파일명도 별도 필드로 전송
+          attachmentFormData.append("originalFilename", filename);
 
           attachmentFormData.append("isMigration", "true"); // 마이그레이션 모드 플래그
 
           // Upload to IssueTracker
+          const headers = attachmentFormData.getHeaders();
+
           await issueTrackerApi.put(
             `/issues/${issueTrackerIssueId}`,
             attachmentFormData,
             {
-              headers: attachmentFormData.getHeaders(),
+              headers: {
+                ...headers,
+                // FormData 라이브러리가 생성한 Content-Type 유지 (boundary 포함)
+              },
+              maxContentLength: Infinity,
+              maxBodyLength: Infinity,
             }
           );
           console.log(`  -> Migrated attachment: ${jiraAttachment.filename}`);
