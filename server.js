@@ -1635,6 +1635,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   }
   let updateFields = {};
   let changedFields = []; // 실제로 변경된 필드를 추적
+  let fieldChanges = {}; // 필드별 변경사항 (이전값 → 새값)
   let statusChanged = false;
   let fromStatus;
   let toStatus;
@@ -1642,20 +1643,24 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   if (title !== undefined && title.trim() !== existing.title) {
     updateFields.title = title.trim();
     changedFields.push('title');
+    fieldChanges.title = { from: existing.title, to: title.trim() };
   }
   if (content !== undefined && content.trim() !== existing.content) {
     updateFields.content = content.trim();
     changedFields.push('content');
+    fieldChanges.content = { from: existing.content, to: content.trim() };
   }
   if (reporter !== undefined && reporter.trim() !== existing.reporter) {
     updateFields.reporter = reporter.trim();
     changedFields.push('reporter');
+    fieldChanges.reporter = { from: existing.reporter, to: reporter.trim() };
   }
   if (assignee !== undefined) {
     const newAssignee = assignee.trim() === "" ? undefined : assignee.trim();
     if (newAssignee !== existing.assignee) {
       updateFields.assignee = newAssignee;
       changedFields.push('assignee');
+      fieldChanges.assignee = { from: existing.assignee, to: newAssignee };
     }
   }
   let commentEntry;
@@ -1694,6 +1699,14 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       updateFields.resolution = newResolutionId;
       updateFields.resolutionId = newResolutionId;
       changedFields.push('resolution');
+      // 해결책 이름 찾기
+      const oldResolutionName = existing.resolutionId ? 
+        (project.resolutions?.find(r => (typeof r === 'object' ? r.id : r) === existing.resolutionId)?.name || existing.resolutionId) : 
+        undefined;
+      const newResolutionName = newResolutionId ? 
+        (project.resolutions?.find(r => (typeof r === 'object' ? r.id : r) === newResolutionId)?.name || newResolutionId) : 
+        undefined;
+      fieldChanges.resolution = { from: oldResolutionName, to: newResolutionName };
     }
   }
   if (status !== undefined) {
@@ -1721,6 +1734,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       statusChanged = true;
       fromStatus = existing.status;
       toStatus = statusName;
+      fieldChanges.status = { from: existing.status, to: statusName };
     }
     if (["수정 완료", "닫힘", "원치 않음"].includes(statusName)) {
       updateFields.resolvedAt = new Date().toISOString();
@@ -1741,6 +1755,12 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       updateFields.type = typeId;
       updateFields.typeId = typeId;
       changedFields.push('type');
+      // 타입 이름 찾기
+      const oldTypeName = existing.typeId ? 
+        (project.types?.find(t => (typeof t === 'object' ? t.id : t) === existing.typeId)?.name || existing.typeId) : 
+        undefined;
+      const newTypeName = project.types?.find(t => (typeof t === 'object' ? t.id : t) === typeId)?.name || typeId;
+      fieldChanges.type = { from: oldTypeName, to: newTypeName };
     }
   }
   if (priority !== undefined) {
@@ -1762,6 +1782,12 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       updateFields.priority = priorityId;
       updateFields.priorityId = priorityId;
       changedFields.push('priority');
+      // 우선순위 이름 찾기
+      const oldPriorityName = existing.priorityId ? 
+        (project.priorities?.find(p => (typeof p === 'object' ? p.id : p) === existing.priorityId)?.name || existing.priorityId) : 
+        undefined;
+      const newPriorityName = project.priorities?.find(p => (typeof p === 'object' ? p.id : p) === priorityId)?.name || priorityId;
+      fieldChanges.priority = { from: oldPriorityName, to: newPriorityName };
     }
   }
   if (component !== undefined) {
@@ -1787,6 +1813,14 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     if (newComponentId !== existing.componentId) {
       updateFields.componentId = newComponentId;
       changedFields.push('component');
+      // 컴포넌트 이름 찾기
+      const oldComponentName = existing.componentId ? 
+        comps.find(c => c._id.toString() === existing.componentId)?.name : 
+        undefined;
+      const newComponentName = newComponentId ? 
+        comps.find(c => c._id.toString() === newComponentId)?.name : 
+        undefined;
+      fieldChanges.component = { from: oldComponentName, to: newComponentName };
     }
   }
   if (customer !== undefined) {
@@ -1812,6 +1846,14 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     if (newCustomerId !== existing.customerId) {
       updateFields.customerId = newCustomerId;
       changedFields.push('customer');
+      // 고객사 이름 찾기
+      const oldCustomerName = existing.customerId ? 
+        custs.find(c => c._id.toString() === existing.customerId)?.name : 
+        undefined;
+      const newCustomerName = newCustomerId ? 
+        custs.find(c => c._id.toString() === newCustomerId)?.name : 
+        undefined;
+      fieldChanges.customer = { from: oldCustomerName, to: newCustomerName };
     }
   }
   if (affectsVersion !== undefined) {
@@ -1829,6 +1871,14 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     if (newAffectsVersionId !== existing.affectsVersionId) {
       updateFields.affectsVersionId = newAffectsVersionId;
       changedFields.push('affectsVersion');
+      // 영향 받는 버전 이름 찾기
+      const oldAffectsVersionName = existing.affectsVersionId ? 
+        (await versionsCollection.findOne({ _id: new ObjectId(existing.affectsVersionId) }))?.name : 
+        undefined;
+      const newAffectsVersionName = newAffectsVersionId ? 
+        (await versionsCollection.findOne({ _id: new ObjectId(newAffectsVersionId) }))?.name : 
+        undefined;
+      fieldChanges.affectsVersion = { from: oldAffectsVersionName, to: newAffectsVersionName };
     }
   }
   if (fixVersion !== undefined) {
@@ -1846,11 +1896,23 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     if (newFixVersionId !== existing.fixVersionId) {
       updateFields.fixVersionId = newFixVersionId;
       changedFields.push('fixVersion');
+      // 수정 버전 이름 찾기
+      const oldFixVersionName = existing.fixVersionId ? 
+        (await versionsCollection.findOne({ _id: new ObjectId(existing.fixVersionId) }))?.name : 
+        undefined;
+      const newFixVersionName = newFixVersionId ? 
+        (await versionsCollection.findOne({ _id: new ObjectId(newFixVersionId) }))?.name : 
+        undefined;
+      fieldChanges.fixVersion = { from: oldFixVersionName, to: newFixVersionName };
     }
   }
   if (projectId !== undefined && projectId !== existing.projectId) {
     updateFields.projectId = projectId;
     changedFields.push('project');
+    // 프로젝트 이름 찾기
+    const oldProject = await projectsCollection.findOne({ _id: new ObjectId(existing.projectId) });
+    const newProject = await projectsCollection.findOne({ _id: new ObjectId(projectId) });
+    fieldChanges.project = { from: oldProject?.name, to: newProject?.name };
   }
   
   // 실제로 변경된 필드가 있는 경우에만 updatedAt과 기록 추가
@@ -1865,6 +1927,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       action: "updated",
       timestamp: new Date().toISOString(),
       changes: changedFields,
+      fieldChanges: fieldChanges,
     };
   }
   if (statusChanged && historyEntry) {

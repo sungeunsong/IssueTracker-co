@@ -138,6 +138,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
 
     let actionLabel = "";
     let detailText = "";
+    
     if (entry.action === "created") {
       actionLabel = "이슈 생성";
     } else if (entry.action === "updated" && entry.fromStatus && entry.toStatus) {
@@ -145,7 +146,18 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
       detailText = `${entry.fromStatus} → ${entry.toStatus}`;
     } else if (entry.action === "updated") {
       actionLabel = "업데이트됨";
-      if (entry.changes && entry.changes.length > 0) {
+      
+      // fieldChanges가 있으면 상세한 변경 정보 표시
+      if (entry.fieldChanges && Object.keys(entry.fieldChanges).length > 0) {
+        const changeDetails = Object.entries(entry.fieldChanges).map(([field, change]) => {
+          const fieldName = getFieldDisplayName(field);
+          const fromValue = change.from || "없음";
+          const toValue = change.to || "없음";
+          return `${fieldName}: ${fromValue} → ${toValue}`;
+        });
+        detailText = changeDetails.join("\n");
+      } else if (entry.changes && entry.changes.length > 0) {
+        // 구버전 호환성을 위해 기존 changes 필드도 지원
         detailText = entry.changes.join(", ");
       }
     } else if (entry.action === "commented") {
@@ -176,6 +188,26 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
         </div>
       </li>
     );
+  };
+
+  // 필드명을 한국어로 변환하는 헬퍼 함수
+  const getFieldDisplayName = (field: string): string => {
+    const fieldNames: Record<string, string> = {
+      title: "제목",
+      content: "내용",
+      reporter: "보고자",
+      assignee: "담당자",
+      status: "상태",
+      resolution: "해결책",
+      type: "유형",
+      priority: "우선순위",
+      component: "컴포넌트",
+      customer: "고객사",
+      affectsVersion: "영향받는 버전",
+      fixVersion: "수정 버전",
+      project: "프로젝트",
+    };
+    return fieldNames[field] || field;
   };
 
   return (

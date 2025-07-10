@@ -121,6 +121,7 @@ export interface IssueHistoryEntry {
   comment?: string;
   fromStatus?: ResolutionStatus;
   toStatus?: ResolutionStatus;
+  fieldChanges?: Record<string, { from: any; to: any }>;
 }
 
 export interface User {
