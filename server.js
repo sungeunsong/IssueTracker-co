@@ -463,6 +463,7 @@ async function mapIssueWithLookups(doc) {
 
 app.get("/api/projects", async (req, res) => {
   const currentUserId = req.session.user?.userid;
+  const { key, name } = req.query; // 쿼리 파라미터 추가
 
   if (!currentUserId) {
     return res.status(401).json({ message: "로그인이 필요합니다." });
@@ -471,7 +472,16 @@ app.get("/api/projects", async (req, res) => {
   // 현재 사용자 정보 조회
   const currentUser = await usersCollection.findOne({ userid: currentUserId });
 
-  const projects = await projectsCollection.find().toArray();
+  // 필터 조건 생성
+  let filter = {};
+  if (key) {
+    filter.key = key;
+  }
+  if (name) {
+    filter.name = name;
+  }
+
+  const projects = await projectsCollection.find(filter).toArray();
 
   // 관리자인 경우 모든 프로젝트 반환
   if (currentUser && currentUser.isAdmin) {

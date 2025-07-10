@@ -14,9 +14,7 @@ const ISSUETRACKER_ADMIN_PASSWORD = "0000"; // IssueTracker admin password (CHAN
 // --- Mappings (will be populated during migration) ---
 const projectMap = new Map(); // Jira Project ID -> IssueTracker Project ID
 const userMap = new Map(); // Jira Account ID -> IssueTracker User ID
-const statusMap = new Map(); // Jira Status Name -> IssueTracker Status ID
-const typeMap = new Map(); // Jira Type Name -> IssueTracker Type ID
-const priorityMap = new Map(); // Jira Priority Name -> IssueTracker Priority ID
+const projectMetadataMap = new Map(); // IssueTracker Project ID -> { statusMap, typeMap, priorityMap }
 
 // --- Helper function for Jira API calls ---
 const jiraApi = axios.create({
@@ -112,18 +110,52 @@ async function getOrCreateIssueTrackerProject(jiraProject) {
   }
 
   try {
+    console.log(
+      `Looking for IssueTracker project with key: ${jiraProject.key}, name: ${jiraProject.name}`
+    );
+
     // Try to find by key first
-    const response = await issueTrackerApi.get(
+    const keyResponse = await issueTrackerApi.get(
       `/projects?key=${jiraProject.key}`
     );
-    if (response.data && response.data.length > 0) {
-      const issueTrackerProject = response.data[0];
-      projectMap.set(jiraProject.id, issueTrackerProject.id);
-      console.log(
-        `Mapped existing IssueTracker project: ${jiraProject.name} -> ${issueTrackerProject.name}`
+    console.log(`Key search response:`, keyResponse.data);
+
+    if (keyResponse.data && keyResponse.data.length > 0) {
+      // 정확히 같은 키를 가진 프로젝트 찾기
+      const exactKeyMatch = keyResponse.data.find(
+        (p) => p.key === jiraProject.key
       );
-      return issueTrackerProject.id;
+      if (exactKeyMatch) {
+        projectMap.set(jiraProject.id, exactKeyMatch.id);
+        console.log(
+          `✓ Mapped existing IssueTracker project by key: ${jiraProject.name} (${jiraProject.key}) -> ${exactKeyMatch.name} (${exactKeyMatch.key})`
+        );
+        return exactKeyMatch.id;
+      }
     }
+
+    // If not found by key, try to find by name
+    console.log(`Key not found, searching by name: ${jiraProject.name}`);
+    const nameResponse = await issueTrackerApi.get(
+      `/projects?name=${jiraProject.name}`
+    );
+    console.log(`Name search response:`, nameResponse.data);
+
+    if (nameResponse.data && nameResponse.data.length > 0) {
+      // 정확히 같은 이름을 가진 프로젝트 찾기
+      const exactNameMatch = nameResponse.data.find(
+        (p) => p.name === jiraProject.name
+      );
+      if (exactNameMatch) {
+        projectMap.set(jiraProject.id, exactNameMatch.id);
+        console.log(
+          `✓ Mapped existing IssueTracker project by name: ${jiraProject.name} -> ${exactNameMatch.name} (${exactNameMatch.key})`
+        );
+        return exactNameMatch.id;
+      }
+    }
+
+    console.log(`No matching project found by key or name`);
   } catch (error) {
     console.error("Error checking for existing IssueTracker project:", error);
     // Not found, proceed to create
@@ -202,9 +234,14 @@ async function getOrCreateIssueTrackerUser(jiraUser) {
 }
 
 // --- Metadata Mapping Helpers ---
-async function populateMetadataMaps(issueTrackerProjectId) {
+async function getProjectMetadata(issueTrackerProjectId) {
+  // 이미 캐시된 메타데이터가 있으면 반환
+  if (projectMetadataMap.has(issueTrackerProjectId)) {
+    return projectMetadataMap.get(issueTrackerProjectId);
+  }
+
   console.log(
-    `Populating IssueTracker metadata maps for project ${issueTrackerProjectId}...`
+    `Loading metadata for IssueTracker project ${issueTrackerProjectId}...`
   );
   try {
     const response = await issueTrackerApi.get(
@@ -212,20 +249,28 @@ async function populateMetadataMaps(issueTrackerProjectId) {
     );
     const { statuses, types, priorities } = response.data;
 
+    const statusMap = new Map();
+    const typeMap = new Map();
+    const priorityMap = new Map();
+
     statuses.forEach((s) => statusMap.set(s.name, s.id));
     types.forEach((t) => typeMap.set(t.name, t.id));
     priorities.forEach((p) => priorityMap.set(p.name, p.id));
 
-    console.log("Metadata maps populated.");
+    const metadata = { statusMap, typeMap, priorityMap };
+    projectMetadataMap.set(issueTrackerProjectId, metadata);
+
+    console.log(`Metadata loaded for project ${issueTrackerProjectId}.`);
+    return metadata;
   } catch (error) {
     console.error(
-      `Failed to populate metadata maps for project ${issueTrackerProjectId}:`,
+      `Failed to load metadata for project ${issueTrackerProjectId}:`,
       error.message
     );
     if (error.response) {
       console.error("Response data:", error.response.data);
     }
-    throw error; // Re-throw to stop migration if metadata cannot be fetched
+    throw error;
   }
 }
 
@@ -236,12 +281,17 @@ async function processJiraIssue(jiraIssue) {
     jiraIssue.fields.project
   );
 
-  // 2. Get or Create Reporter
+  // 2. Get project-specific metadata
+  const { statusMap, typeMap, priorityMap } = await getProjectMetadata(
+    issueTrackerProjectId
+  );
+
+  // 3. Get or Create Reporter
   const reporterUserId = await getOrCreateIssueTrackerUser(
     jiraIssue.fields.reporter
   );
 
-  // 3. Get or Create Assignee (if exists)
+  // 4. Get or Create Assignee (if exists)
   let assigneeUserId = null;
   if (jiraIssue.fields.assignee) {
     assigneeUserId = await getOrCreateIssueTrackerUser(
@@ -249,12 +299,12 @@ async function processJiraIssue(jiraIssue) {
     );
   }
 
-  // 4. Convert Description (ADF to Markdown)
+  // 5. Convert Description (ADF to Markdown)
   const markdownDescription = String(
     convertAdfToMarkdown(jiraIssue.fields.description) || ""
   ); // Ensure it's a string
 
-  // 5. Map other fields to IssueTracker's IssueFormData
+  // 6. Map other fields to IssueTracker's IssueFormData using project-specific metadata
   const issueTrackerStatusName = mapJiraStatusToIssueTrackerStatus(
     jiraIssue.fields.status.name
   );
@@ -266,11 +316,11 @@ async function processJiraIssue(jiraIssue) {
     assignee: assigneeUserId,
     type:
       typeMap.get(jiraIssue.fields.issuetype.name) ||
-      jiraIssue.fields.issuetype.name, // Use mapped ID, fallback to name
+      jiraIssue.fields.issuetype.name, // Use project-specific mapped ID, fallback to name
     priority:
       priorityMap.get(jiraIssue.fields.priority.name) ||
-      jiraIssue.fields.priority.name, // Use mapped ID, fallback to name
-    status: statusMap.get(issueTrackerStatusName), // Use mapped ID
+      jiraIssue.fields.priority.name, // Use project-specific mapped ID, fallback to name
+    status: statusMap.get(issueTrackerStatusName), // Use project-specific mapped ID
     createdAt: jiraIssue.fields.created, // Pass original creation time
     updatedAt: jiraIssue.fields.updated, // Pass original update time
   };
@@ -483,33 +533,16 @@ async function migrateJiraIssues() {
     // 1. Migrate Projects
     console.log("Migrating Jira projects...");
     const jiraProjectsResponse = await jiraApi.get("/rest/api/3/project");
-    let firstIssueTrackerProjectId = null;
     for (const jiraProject of jiraProjectsResponse.data) {
-      const issueTrackerProjectId = await getOrCreateIssueTrackerProject(
-        jiraProject
-      );
-      if (!firstIssueTrackerProjectId) {
-        firstIssueTrackerProjectId = issueTrackerProjectId;
-      }
+      await getOrCreateIssueTrackerProject(jiraProject);
     }
     console.log(`Migrated ${projectMap.size} projects.`);
-
-    // Ensure at least one project was migrated to fetch metadata
-    if (!firstIssueTrackerProjectId) {
-      console.error(
-        "No projects migrated. Cannot populate metadata maps. Aborting."
-      );
-      return;
-    }
 
     // 2. Migrate Users (This is a simplified approach. A full migration would involve fetching all users from Jira's user API)
     // For now, we'll rely on users being created on demand when issues are migrated.
     console.log("User migration will happen on demand during issue migration.");
 
-    // 3. Populate Metadata Maps
-    await populateMetadataMaps(firstIssueTrackerProjectId);
-
-    // 4. Migrate Issues
+    // 3. Migrate Issues (metadata will be loaded per project as needed)
     console.log("Migrating Jira issues...");
     let startAt = 0;
     const maxResults = 50; // Fetch 50 issues at a time
