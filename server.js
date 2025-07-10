@@ -1542,13 +1542,15 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
             },
           ]
         : [],
-    history: [
-      {
-        userId: reporter.trim(),
-        action: "created",
-        timestamp: new Date().toISOString(),
-      },
-    ],
+    history: req.body.history
+      ? JSON.parse(req.body.history)
+      : [
+          {
+            userId: reporter.trim(),
+            action: "created",
+            timestamp: new Date().toISOString(),
+          },
+        ],
   };
   const result = await issuesCollection.insertOne(newIssue);
 

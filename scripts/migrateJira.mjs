@@ -270,17 +270,45 @@ async function processJiraIssue(jiraIssue) {
       priorityMap.get(jiraIssue.fields.priority.name) ||
       jiraIssue.fields.priority.name, // Use mapped ID, fallback to name
     status: statusMap.get(issueTrackerStatusName), // Use mapped ID
+    createdAt: jiraIssue.fields.created, // Pass original creation time
+    updatedAt: jiraIssue.fields.updated, // Pass original update time
   };
 
-  // DEBUG: Log status values
-  console.log(`  [DEBUG] Jira Status: ${jiraIssue.fields.status.name}`);
-  console.log(
-    `  [DEBUG] Mapped Status ID: ${statusMap.get(jiraIssue.fields.status.name)}`
-  );
-  console.log(`  [DEBUG] FormData Status: ${issueFormData.status}`);
+  // 7. Process and add full history
+  const history = [
+    {
+      userId: reporterUserId,
+      action: "created",
+      timestamp: jiraIssue.fields.created,
+    },
+  ];
 
-  // 6. Create Issue in IssueTracker
+  if (jiraIssue.changelog && jiraIssue.changelog.histories) {
+    for (const change of jiraIssue.changelog.histories) {
+      const authorId = await getOrCreateIssueTrackerUser(change.author);
+      for (const item of change.items) {
+        history.push({
+          userId: authorId,
+          action: `updated - ${item.field}`,
+          timestamp: change.created,
+          from: item.fromString,
+          to: item.toString,
+        });
+      }
+    }
+  }
+  issueFormData.history = history.sort((a, b) => {
+    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+  });
+
+  // 8. Create Issue in IssueTracker
   const formData = new FormData();
+
+  // Convert history array to JSON string before appending
+  if (issueFormData.history) {
+    issueFormData.history = JSON.stringify(issueFormData.history);
+  }
+
   for (const key in issueFormData) {
     const value = issueFormData[key];
     if (value !== undefined && value !== null) {
@@ -341,6 +369,8 @@ async function processJiraIssue(jiraIssue) {
           attachmentFormData.append("files", attachmentResponse.data, {
             filename: jiraAttachment.filename,
           });
+
+          attachmentFormData.append("isMigration", "true");
 
           // Upload to IssueTracker
           await issueTrackerApi.put(
@@ -446,7 +476,17 @@ async function migrateJiraIssues() {
       }
 
       for (const jiraIssue of issues) {
-        console.log(`Processing Jira issue: ${jiraIssue.key}`);
+        // 위의 search api에서는 json 크기 때문인지 changelog값이 들어오지 않는다.
+        // 그래서 별도로 해당 이슈키로 changelog를 가져온다.
+        const issueResponse = await jiraApi.get(
+          `/rest/api/3/issue/${jiraIssue.key}`,
+          {
+            params: {
+              expand: "changelog",
+            },
+          }
+        );
+        jiraIssue.changelog = issueResponse.data.changelog; // Attach changelog to the issue
         await processJiraIssue(jiraIssue);
       }
 
