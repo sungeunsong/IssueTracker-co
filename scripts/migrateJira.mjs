@@ -520,11 +520,28 @@ async function processJiraIssue(jiraIssue) {
   }
 }
 
-// --- Issue Range Filtering ---
-function parseIssueRange() {
+// --- Command Line Argument Parsing ---
+function parseArguments() {
   const args = process.argv.slice(2);
+  const result = {
+    mode: "migrate",
+    startNumber: null,
+    endNumber: null,
+  };
+
+  // Check for verify mode
+  if (args.includes("--verify") || args.includes("-v")) {
+    result.mode = "verify";
+    // Remove verify flag from args for further processing
+    const verifyIndex = args.findIndex(
+      (arg) => arg === "--verify" || arg === "-v"
+    );
+    args.splice(verifyIndex, 1);
+  }
+
+  // Parse issue range
   if (args.length === 0) {
-    return { startNumber: null, endNumber: null };
+    return result;
   }
 
   if (args.length === 1) {
@@ -533,7 +550,8 @@ function parseIssueRange() {
       console.error("Invalid start issue number:", args[0]);
       process.exit(1);
     }
-    return { startNumber, endNumber: null };
+    result.startNumber = startNumber;
+    return result;
   }
 
   if (args.length === 2) {
@@ -547,11 +565,13 @@ function parseIssueRange() {
       console.error("Start number must be less than or equal to end number");
       process.exit(1);
     }
-    return { startNumber, endNumber };
+    result.startNumber = startNumber;
+    result.endNumber = endNumber;
+    return result;
   }
 
   console.error(
-    "Too many arguments. Usage: node migrateJira.mjs [startNumber] [endNumber]"
+    "Too many arguments. Usage: node migrateJira.mjs [--verify] [startNumber] [endNumber]"
   );
   process.exit(1);
 }
@@ -581,37 +601,234 @@ function shouldProcessIssue(issueKey, startNumber, endNumber) {
   return true;
 }
 
+// --- Verification Functions ---
+async function verifyMigration(startNumber, endNumber) {
+  console.log("Starting migration verification...");
+
+  const loggedIn = await loginToIssueTracker();
+  if (!loggedIn) {
+    console.error("Aborting verification due to failed IssueTracker login.");
+    return;
+  }
+
+  const results = {
+    jiraIssues: new Map(), // issueNumber -> jiraIssue
+    trackerIssues: new Map(), // issueNumber -> trackerIssue
+    missingInTracker: [], // Issues in Jira but not in Tracker
+    missingInJira: [], // Issues in Tracker but not in Jira
+    numberMismatches: [], // Issues where GA-X number doesn't match
+    totalJiraIssues: 0,
+    totalTrackerIssues: 0,
+  };
+
+  try {
+    // 1. Fetch all Jira issues
+    console.log("Fetching Jira issues...");
+    let startAt = 0;
+    const maxResults = 100;
+
+    while (true) {
+      const searchResponse = await jiraApi.post("/rest/api/3/search", {
+        jql: "ORDER BY created ASC",
+        startAt: startAt,
+        maxResults: maxResults,
+        fields: ["summary", "created", "project"],
+      });
+
+      const issues = searchResponse.data.issues;
+      if (issues.length === 0) break;
+
+      for (const jiraIssue of issues) {
+        const match = jiraIssue.key.match(/-(\d+)$/);
+        if (match) {
+          const issueNumber = parseInt(match[1]);
+          if (shouldProcessIssue(jiraIssue.key, startNumber, endNumber)) {
+            results.jiraIssues.set(issueNumber, {
+              key: jiraIssue.key,
+              summary: jiraIssue.fields.summary,
+              created: jiraIssue.fields.created,
+              projectKey: jiraIssue.fields.project.key,
+            });
+            results.totalJiraIssues++;
+          }
+        }
+      }
+
+      startAt += issues.length;
+      if (startAt >= searchResponse.data.total) break;
+    }
+
+    // 2. Fetch all IssueTracker issues
+    console.log("Fetching IssueTracker issues...");
+
+    // Get all projects first to create a project map
+    const projectsResponse = await issueTrackerApi.get("/projects");
+    const projects = projectsResponse.data;
+    const projectMap = new Map();
+    projects.forEach((project) => {
+      projectMap.set(project.id, project);
+    });
+
+    // Get all issues using the existing API
+    const issuesResponse = await issueTrackerApi.get("/issues");
+    const issues = issuesResponse.data;
+
+    for (const trackerIssue of issues) {
+      const match = trackerIssue.issueKey.match(/-(\d+)$/);
+      if (match) {
+        const issueNumber = parseInt(match[1]);
+        if (shouldProcessIssue(trackerIssue.issueKey, startNumber, endNumber)) {
+          const project = projectMap.get(trackerIssue.projectId);
+          results.trackerIssues.set(issueNumber, {
+            key: trackerIssue.issueKey,
+            title: trackerIssue.title,
+            createdAt: trackerIssue.createdAt,
+            projectKey: project ? project.key : "UNKNOWN",
+          });
+          results.totalTrackerIssues++;
+        }
+      }
+    }
+
+    // 3. Compare and find discrepancies
+    console.log("Comparing issues...");
+
+    // Find missing issues in tracker
+    for (const [issueNumber, jiraIssue] of results.jiraIssues) {
+      if (!results.trackerIssues.has(issueNumber)) {
+        results.missingInTracker.push({
+          number: issueNumber,
+          jiraKey: jiraIssue.key,
+          summary: jiraIssue.summary,
+        });
+      }
+    }
+
+    // Find missing issues in Jira (shouldn't happen but good to check)
+    for (const [issueNumber, trackerIssue] of results.trackerIssues) {
+      if (!results.jiraIssues.has(issueNumber)) {
+        results.missingInJira.push({
+          number: issueNumber,
+          trackerKey: trackerIssue.key,
+          title: trackerIssue.title,
+        });
+      }
+    }
+
+    // Find number mismatches
+    for (const [issueNumber, jiraIssue] of results.jiraIssues) {
+      const trackerIssue = results.trackerIssues.get(issueNumber);
+      if (trackerIssue && jiraIssue.key !== trackerIssue.key) {
+        results.numberMismatches.push({
+          number: issueNumber,
+          jiraKey: jiraIssue.key,
+          trackerKey: trackerIssue.key,
+        });
+      }
+    }
+
+    // 4. Report results
+    console.log("\n=== MIGRATION VERIFICATION RESULTS ===");
+    console.log(`Jira Issues: ${results.totalJiraIssues}`);
+    console.log(`IssueTracker Issues: ${results.totalTrackerIssues}`);
+    console.log(`Missing in IssueTracker: ${results.missingInTracker.length}`);
+    console.log(`Missing in Jira: ${results.missingInJira.length}`);
+    console.log(`Number Mismatches: ${results.numberMismatches.length}`);
+
+    if (results.missingInTracker.length > 0) {
+      console.log("\n📋 MISSING IN ISSUETRACKER:");
+      results.missingInTracker.sort((a, b) => a.number - b.number);
+      for (const missing of results.missingInTracker) {
+        console.log(`  ${missing.jiraKey}: ${missing.summary}`);
+      }
+    }
+
+    if (results.missingInJira.length > 0) {
+      console.log("\n🔍 MISSING IN JIRA (unexpected):");
+      results.missingInJira.sort((a, b) => a.number - b.number);
+      for (const missing of results.missingInJira) {
+        console.log(`  ${missing.trackerKey}: ${missing.title}`);
+      }
+    }
+
+    if (results.numberMismatches.length > 0) {
+      console.log("\n⚠️  NUMBER MISMATCHES:");
+      results.numberMismatches.sort((a, b) => a.number - b.number);
+      for (const mismatch of results.numberMismatches) {
+        console.log(
+          `  Number ${mismatch.number}: Jira=${mismatch.jiraKey}, Tracker=${mismatch.trackerKey}`
+        );
+      }
+    }
+
+    if (
+      results.missingInTracker.length === 0 &&
+      results.numberMismatches.length === 0
+    ) {
+      console.log(
+        "\n✅ Migration verification passed! All issues are properly migrated."
+      );
+    } else {
+      console.log(
+        "\n❌ Migration verification found issues that need attention."
+      );
+    }
+  } catch (error) {
+    console.error("Verification failed:", error.message);
+    if (error.response) {
+      console.error("Response data:", error.response.data);
+    }
+  }
+}
+
 // --- Usage Help ---
 function showUsage() {
   console.log(`
 Jira to IssueTracker Migration Script
 
 Usage:
-  node migrateJira.mjs                    # Migrate all issues
-  node migrateJira.mjs 200                # Migrate from issue number 200 to end
-  node migrateJira.mjs 200 300            # Migrate issues 200 to 300
+  node migrateJira.mjs [--verify] [startNumber] [endNumber]
+
+Modes:
+  Default mode         Migrate issues from Jira to IssueTracker
+  --verify, -v         Verify migration by comparing Jira and IssueTracker issues
 
 Arguments:
-  startNumber   Issue number to start migration from (e.g., 200 for GA-200)
-  endNumber     Issue number to end migration at (optional)
+  startNumber   Issue number to start from (e.g., 200 for GA-200)
+  endNumber     Issue number to end at (optional)
 
 Examples:
   node migrateJira.mjs                    # Migrate all issues
   node migrateJira.mjs 150                # Migrate GA-150, GA-151, GA-152, etc.
   node migrateJira.mjs 100 200            # Migrate GA-100 through GA-200
+  
+  node migrateJira.mjs --verify           # Verify all migrated issues
+  node migrateJira.mjs --verify 100       # Verify issues from GA-100 onwards
+  node migrateJira.mjs --verify 100 200   # Verify issues GA-100 through GA-200
 `);
 }
 
-// --- Main Migration Function ---
-async function migrateJiraIssues() {
+// --- Main Function ---
+async function main() {
   // Check for help flag
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
     showUsage();
     return;
   }
 
-  const { startNumber, endNumber } = parseIssueRange();
+  const { mode, startNumber, endNumber } = parseArguments();
 
+  if (mode === "verify") {
+    await verifyMigration(startNumber, endNumber);
+    return;
+  }
+
+  // Original migration logic
+  await migrateJiraIssues(startNumber, endNumber);
+}
+
+// --- Main Migration Function ---
+async function migrateJiraIssues(startNumber, endNumber) {
   if (startNumber || endNumber) {
     console.log(
       `Starting Jira issue migration (range: ${startNumber || "start"} to ${
@@ -717,5 +934,5 @@ async function migrateJiraIssues() {
   }
 }
 
-// --- Run the migration ---
-migrateJiraIssues();
+// --- Run the script ---
+main();
