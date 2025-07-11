@@ -372,7 +372,7 @@ const MainContent: React.FC<{
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  {/* <div className="flex items-center space-x-2">
                     <select className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white">
                       <option>상태</option>
                       {boardColumns.map((column) => (
@@ -400,7 +400,25 @@ const MainContent: React.FC<{
                     <select className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white">
                       <option>버전</option>
                     </select>
-                  </div>
+                  </div> */}
+                  <FilterBar
+                    searchTerm={searchTerm}
+                    onSearchTermChange={setSearchTerm}
+                    statusFilter={statusFilter}
+                    onStatusFilterChange={setStatusFilter}
+                    statuses={currentProject?.statuses || []}
+                    assigneeFilter={assigneeFilter}
+                    onAssigneeFilterChange={setAssigneeFilter}
+                    reporterFilter={reporterFilter}
+                    onReporterFilterChange={setReporterFilter}
+                    typeFilter={typeFilter}
+                    onTypeFilterChange={setTypeFilter}
+                    priorityFilter={priorityFilter}
+                    onPriorityFilterChange={setPriorityFilter}
+                    users={users}
+                    types={currentProject?.types || []}
+                    priorities={currentProject?.priorities || []}
+                  />
                 </div>
 
                 {/* 탭과 View 전환 영역 */}
