@@ -1410,13 +1410,41 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
         .json({ message: "이슈를 생성할 권한이 없습니다." });
     }
   }
-  const projectResult = await projectsCollection.findOneAndUpdate(
-    { _id: new ObjectId(projectId) },
-    { $inc: { nextIssueNumber: 1 } },
-    { returnDocument: "after" }
-  );
-  if (!projectResult) {
-    return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
+  // Check if this is a migration request with specific issue number
+  const isMigration = req.body.isMigration === true || req.body.isMigration === 'true';
+  const requestedIssueNumber = req.body.requestedIssueNumber ? parseInt(req.body.requestedIssueNumber) : null;
+  
+  let projectResult;
+  let issueNumber;
+
+  if (isMigration && requestedIssueNumber) {
+    // For migration: use the requested issue number and update nextIssueNumber if needed
+    projectResult = await projectsCollection.findOne({ _id: new ObjectId(projectId) });
+    if (!projectResult) {
+      return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+    
+    issueNumber = requestedIssueNumber;
+    
+    // Update nextIssueNumber to be at least one more than the requested number
+    if (projectResult.nextIssueNumber <= requestedIssueNumber) {
+      await projectsCollection.updateOne(
+        { _id: new ObjectId(projectId) },
+        { $set: { nextIssueNumber: requestedIssueNumber + 1 } }
+      );
+      projectResult.nextIssueNumber = requestedIssueNumber + 1;
+    }
+  } else {
+    // Normal flow: increment nextIssueNumber
+    projectResult = await projectsCollection.findOneAndUpdate(
+      { _id: new ObjectId(projectId) },
+      { $inc: { nextIssueNumber: 1 } },
+      { returnDocument: "after" }
+    );
+    if (!projectResult) {
+      return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+    issueNumber = projectResult.nextIssueNumber - 1;
   }
   const allowedTypes = projectResult.types || DEFAULT_TYPES;
   const typeObj = allowedTypes.find((t) =>
@@ -1463,7 +1491,6 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
       .status(400)
       .json({ message: "유효한 고객사를 선택해야 합니다." });
   }
-  const issueNumber = projectResult?.nextIssueNumber - 1;
   const issueKey = `${projectResult?.key}-${issueNumber}`;
 
   // Determine issue status

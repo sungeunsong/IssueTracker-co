@@ -352,8 +352,18 @@ async function processJiraIssue(jiraIssue) {
     return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
   });
 
+  // 8. Extract issue number from Jira key and add migration fields
+  const jiraIssueMatch = jiraIssue.key.match(/-(\d+)$/);
+  const jiraIssueNumber = jiraIssueMatch ? parseInt(jiraIssueMatch[1]) : null;
+
   // 8. Create Issue in IssueTracker
   const formData = new FormData();
+
+  // Add migration-specific fields
+  formData.append("isMigration", "true");
+  if (jiraIssueNumber) {
+    formData.append("requestedIssueNumber", jiraIssueNumber.toString());
+  }
 
   // Convert history array to JSON string before appending
   if (issueFormData.history) {
@@ -372,7 +382,7 @@ async function processJiraIssue(jiraIssue) {
       headers: formData.getHeaders(), // Important for multipart/form-data
     });
     console.log(
-      `Successfully created IssueTracker issue: ${newIssueResponse.data.issueKey}`
+      `Successfully created IssueTracker issue: ${newIssueResponse.data.issueKey} (Jira: ${jiraIssue.key})`
     );
     // Store mapping if needed: Jira Issue ID -> IssueTracker Issue ID
     const issueTrackerIssueId = newIssueResponse.data.id;
