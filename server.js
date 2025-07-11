@@ -1464,10 +1464,7 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
       .json({ message: "유효한 고객사를 선택해야 합니다." });
   }
   const issueNumber = projectResult?.nextIssueNumber - 1;
-  const issueKey = `${projectResult?.key}-${String(issueNumber).padStart(
-    4,
-    "0"
-  )}`;
+  const issueKey = `${projectResult?.key}-${issueNumber}`;
 
   // Determine issue status
   let issueStatusId;
