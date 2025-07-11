@@ -130,6 +130,7 @@ const MainContent: React.FC<{
   onToggleSidebar: () => void; // 추가
   setShowNotifications: (flag: boolean) => void;
   setIssueToResolve: (issue: Issue | null) => void;
+  isSidebarOpen: boolean;
 }> = ({
   isAuthenticated,
   isLoading,
@@ -207,26 +208,25 @@ const MainContent: React.FC<{
   onToggleSidebar,
   setShowNotifications,
   setIssueToResolve,
+  isSidebarOpen,
 }) => {
   if (!isAuthenticated) {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
 
   return (
-    <div className="flex h-screen bg-white text-slate-800 font-sans">
+    <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
       <Sidebar
         currentView={viewMode}
         onSetViewMode={setViewMode}
-        onCreateProject={() => {
-          setShowAddProjectModal(true);
-          setError(null);
-        }}
         projects={projects}
         currentProjectId={currentProjectId}
         onSelectProject={handleSelectProject}
         isAdmin={isAdmin}
         adminProjectIds={adminProjectIds}
         onOpenProjectSettings={handleOpenProjectSettings}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={onToggleSidebar}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar
@@ -247,8 +247,12 @@ const MainContent: React.FC<{
           onToggleNotifications={handleToggleNotifications}
           onToggleSidebar={onToggleSidebar}
           user={currentUser}
+          onCreateProject={() => {
+            setShowAddProjectModal(true);
+            setError(null);
+          }}
         />
-        <FilterBar
+        {/* <FilterBar
           searchTerm={searchTerm}
           onSearchTermChange={setSearchTerm}
           statusFilter={statusFilter}
@@ -265,16 +269,16 @@ const MainContent: React.FC<{
           users={users}
           types={currentProject?.types || []}
           priorities={currentProject?.priorities || []}
-        />
-        <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 p-4 sm:p-6">
+        /> */}
+        <main className="flex-1 overflow-x-auto overflow-y-auto bg-gray-50 p-6">
           {error && (
             <div
-              className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md shadow-sm"
+              className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg shadow-sm"
               role="alert"
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="font-bold">오류:</p>
+                  <p className="font-semibold">오류:</p>
                   <p className="text-sm">{error}</p>
                 </div>
                 <button
@@ -297,60 +301,204 @@ const MainContent: React.FC<{
               </div>
             </div>
           )}
+
           {projects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4">
-              <p className="text-lg">
-                프로젝트가 없습니다. 새 프로젝트를 추가하세요.
-              </p>
-              <button
-                onClick={() => {
-                  setShowAddProjectModal(true);
-                  setError(null);
-                }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
-                프로젝트 생성
-              </button>
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-6">
+              <div className="text-center">
+                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-4xl">📁</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  프로젝트가 없습니다
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  새 프로젝트를 생성하여 이슈 추적을 시작하세요.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowAddProjectModal(true);
+                    setError(null);
+                  }}
+                  className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                >
+                  <span>+</span>
+                  <span>프로젝트 생성</span>
+                </button>
+              </div>
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                <span className="text-slate-600 font-medium">
+              <div className="flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="text-gray-600 font-medium">
                   이슈 로딩 중...
                 </span>
               </div>
             </div>
           ) : (
-            <>
-              {viewMode === "board" && (
-                <BoardView
-                  columns={boardColumns}
-                  onSelectIssue={handleSelectIssueForDetail}
-                  onUpdateStatus={updateIssueStatus}
-                  users={users}
-                  project={currentProject}
-                />
-              )}
-              {viewMode === "list" && (
-                <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                  <IssueList
-                    issues={paginatedListIssues}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+              {/* 검색 및 필터 영역 */}
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    {/* 현재 선택된 프로젝트 표시 */}
+                    {currentProject && (
+                      <div className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md font-medium border border-blue-200">
+                        <span className="text-blue-600">📁</span>
+                        <span>{currentProject.name}</span>
+                      </div>
+                    )}
+
+                    {/* 검색창 */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="이슈 검색..."
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg
+                          className="h-5 w-5 text-gray-400"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <select className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white">
+                      <option>상태</option>
+                      {boardColumns.map((column) => (
+                        <option key={column.id} value={column.id}>
+                          {column.title}
+                        </option>
+                      ))}
+                    </select>
+                    <select className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white">
+                      <option>담당자</option>
+                      {users.map((user) => (
+                        <option key={user.userid} value={user.userid}>
+                          {user.username}
+                        </option>
+                      ))}
+                    </select>
+                    <select className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white">
+                      <option>보고자</option>
+                      {users.map((user) => (
+                        <option key={user.userid} value={user.userid}>
+                          {user.username}
+                        </option>
+                      ))}
+                    </select>
+                    <select className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white">
+                      <option>버전</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 탭과 View 전환 영역 */}
+                <div className="flex items-center justify-between">
+                  {/* 좌측: 탭들 */}
+                  <div className="flex space-x-6">
+                    <button className="pb-2 border-b-2 border-blue-500 text-blue-600 font-medium">
+                      모든 업무
+                    </button>
+                    <button className="pb-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                      릴리즈
+                    </button>
+                    <button className="pb-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                      컴포넌트
+                    </button>
+                  </div>
+
+                  {/* 우측: View 전환 Segmented Control */}
+                  <div className="flex items-center space-x-2">
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                      <button
+                        onClick={() => setViewMode("board")}
+                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          viewMode === "board"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span>보드</span>
+                      </button>
+                      <button
+                        onClick={() => setViewMode("list")}
+                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          viewMode === "list"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M3 4a1 1 0 000 2h.01a1 1 0 100-2H3zM6 4a1 1 0 000 2h11a1 1 0 100-2H6zM3 10a1 1 0 100 2h.01a1 1 0 100-2H3zM6 10a1 1 0 100 2h11a1 1 0 100-2H6zM3 16a1 1 0 100 2h.01a1 1 0 100-2H3zM6 16a1 1 0 100 2h11a1 1 0 100-2H6z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span>리스트</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 컨텐츠 영역 */}
+              <div className="flex-1 overflow-hidden">
+                {viewMode === "board" && (
+                  <BoardView
+                    columns={boardColumns}
+                    onSelectIssue={handleSelectIssueForDetail}
                     onUpdateStatus={updateIssueStatus}
-                    onDeleteIssue={requestDeleteIssue}
-                    onViewIssue={handleSelectIssueForDetail}
-                    onEditIssue={handleOpenEditModal}
-                    currentPage={currentPage}
-                    totalIssues={baseFilteredIssues.length}
-                    itemsPerPage={ITEMS_PER_PAGE_LIST}
-                    onPageChange={handlePageChange}
                     users={users}
-                    statuses={currentProject?.statuses || []}
                     project={currentProject}
                   />
-                </div>
-              )}
-            </>
+                )}
+                {viewMode === "list" && (
+                  <div className="h-full overflow-y-auto">
+                    <IssueList
+                      issues={paginatedListIssues}
+                      onUpdateStatus={updateIssueStatus}
+                      onDeleteIssue={requestDeleteIssue}
+                      onViewIssue={handleSelectIssueForDetail}
+                      onEditIssue={handleOpenEditModal}
+                      currentPage={currentPage}
+                      totalIssues={baseFilteredIssues.length}
+                      itemsPerPage={ITEMS_PER_PAGE_LIST}
+                      onPageChange={handlePageChange}
+                      users={users}
+                      statuses={currentProject?.statuses || []}
+                      project={currentProject}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </main>
       </div>
@@ -1357,6 +1505,7 @@ const App: React.FC = () => {
               user: currentUser,
               setShowNotifications: setShowNotifications,
               setIssueToResolve: setIssueToResolve,
+              isSidebarOpen: isSidebarOpen,
             }}
           />
         }
