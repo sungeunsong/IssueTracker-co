@@ -356,6 +356,33 @@ async function processJiraIssue(jiraIssue) {
   const jiraIssueMatch = jiraIssue.key.match(/-(\d+)$/);
   const jiraIssueNumber = jiraIssueMatch ? parseInt(jiraIssueMatch[1]) : null;
 
+  // Check if issue already exists in IssueTracker to avoid duplicates
+  if (jiraIssueNumber) {
+    try {
+      const existingIssueResponse = await issueTrackerApi.get(`/issues`);
+      const existingIssues = existingIssueResponse.data;
+      const issueAlreadyExists = existingIssues.some((issue) => {
+        const existingIssueMatch = issue.issueKey.match(/-(\d+)$/);
+        if (existingIssueMatch) {
+          const existingIssueNumber = parseInt(existingIssueMatch[1]);
+          return existingIssueNumber === jiraIssueNumber;
+        }
+        return false;
+      });
+
+      if (issueAlreadyExists) {
+        console.log(
+          `Issue ${jiraIssue.key} already exists in IssueTracker, skipping...`
+        );
+        return;
+      }
+    } catch (error) {
+      console.log(
+        `Error checking existing issues, continuing with migration: ${error.message}`
+      );
+    }
+  }
+
   // 8. Create Issue in IssueTracker
   const formData = new FormData();
 
