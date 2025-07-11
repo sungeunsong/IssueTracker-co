@@ -520,9 +520,107 @@ async function processJiraIssue(jiraIssue) {
   }
 }
 
+// --- Issue Range Filtering ---
+function parseIssueRange() {
+  const args = process.argv.slice(2);
+  if (args.length === 0) {
+    return { startNumber: null, endNumber: null };
+  }
+
+  if (args.length === 1) {
+    const startNumber = parseInt(args[0]);
+    if (isNaN(startNumber)) {
+      console.error("Invalid start issue number:", args[0]);
+      process.exit(1);
+    }
+    return { startNumber, endNumber: null };
+  }
+
+  if (args.length === 2) {
+    const startNumber = parseInt(args[0]);
+    const endNumber = parseInt(args[1]);
+    if (isNaN(startNumber) || isNaN(endNumber)) {
+      console.error("Invalid issue number range:", args[0], args[1]);
+      process.exit(1);
+    }
+    if (startNumber > endNumber) {
+      console.error("Start number must be less than or equal to end number");
+      process.exit(1);
+    }
+    return { startNumber, endNumber };
+  }
+
+  console.error(
+    "Too many arguments. Usage: node migrateJira.mjs [startNumber] [endNumber]"
+  );
+  process.exit(1);
+}
+
+function shouldProcessIssue(issueKey, startNumber, endNumber) {
+  if (!startNumber && !endNumber) {
+    return true; // Process all issues
+  }
+
+  // Extract number from issue key (e.g., "GA-200" -> 200)
+  const match = issueKey.match(/-(\d+)$/);
+  if (!match) {
+    console.warn(`Could not extract issue number from key: ${issueKey}`);
+    return false;
+  }
+
+  const issueNumber = parseInt(match[1]);
+
+  if (startNumber && issueNumber < startNumber) {
+    return false;
+  }
+
+  if (endNumber && issueNumber > endNumber) {
+    return false;
+  }
+
+  return true;
+}
+
+// --- Usage Help ---
+function showUsage() {
+  console.log(`
+Jira to IssueTracker Migration Script
+
+Usage:
+  node migrateJira.mjs                    # Migrate all issues
+  node migrateJira.mjs 200                # Migrate from issue number 200 to end
+  node migrateJira.mjs 200 300            # Migrate issues 200 to 300
+
+Arguments:
+  startNumber   Issue number to start migration from (e.g., 200 for GA-200)
+  endNumber     Issue number to end migration at (optional)
+
+Examples:
+  node migrateJira.mjs                    # Migrate all issues
+  node migrateJira.mjs 150                # Migrate GA-150, GA-151, GA-152, etc.
+  node migrateJira.mjs 100 200            # Migrate GA-100 through GA-200
+`);
+}
+
 // --- Main Migration Function ---
 async function migrateJiraIssues() {
-  console.log("Starting Jira issue migration...");
+  // Check for help flag
+  if (process.argv.includes("--help") || process.argv.includes("-h")) {
+    showUsage();
+    return;
+  }
+
+  const { startNumber, endNumber } = parseIssueRange();
+
+  if (startNumber || endNumber) {
+    console.log(
+      `Starting Jira issue migration (range: ${startNumber || "start"} to ${
+        endNumber || "end"
+      })...`
+    );
+  } else {
+    console.log("Starting Jira issue migration (all issues)...");
+  }
 
   try {
     const loggedIn = await loginToIssueTracker();
@@ -579,6 +677,14 @@ async function migrateJiraIssues() {
       }
 
       for (const jiraIssue of issues) {
+        // Check if this issue should be processed based on range filter
+        if (!shouldProcessIssue(jiraIssue.key, startNumber, endNumber)) {
+          console.log(`Skipping issue ${jiraIssue.key} (outside range)`);
+          continue;
+        }
+
+        console.log(`Processing issue ${jiraIssue.key}...`);
+
         // 위의 search api에서는 json 크기 때문인지 changelog값이 들어오지 않는다.
         // 그래서 별도로 해당 이슈키로 changelog를 가져온다.
         const issueResponse = await jiraApi.get(
