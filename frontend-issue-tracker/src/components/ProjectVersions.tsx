@@ -4,6 +4,8 @@ import { Modal } from "./Modal";
 import VersionForm from "./VersionForm";
 import type { Version, User } from "../types";
 import { EllipsisVerticalIcon } from "./icons/EllipsisVerticalIcon";
+import { UploadIcon } from "./icons/UploadIcon";
+import { DownloadIcon } from "./icons/DownloadIcon";
 
 interface ActionMenuProps {
   onEdit: () => void;
@@ -100,6 +102,109 @@ interface Props {
   currentUserId: string | null;
 }
 
+interface FileUploadProps {
+  versionId: string;
+  projectId: string;
+  onFileUploaded: () => void;
+}
+
+const FileUpload: React.FC<FileUploadProps> = ({ versionId, projectId, onFileUploaded }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch(`/api/versions/${versionId}/file`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        onFileUploaded();
+      } else {
+        console.error('파일 업로드 실패');
+      }
+    } catch (error) {
+      console.error('파일 업로드 중 오류:', error);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        onChange={handleFileUpload}
+        style={{ display: 'none' }}
+      />
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-50"
+        title="파일 업로드"
+      >
+        <UploadIcon className="h-4 w-4" />
+      </button>
+    </>
+  );
+};
+
+interface FileDownloadProps {
+  version: Version;
+}
+
+const FileDownload: React.FC<FileDownloadProps> = ({ version }) => {
+  const hasFile = version.attachments && version.attachments.length > 0;
+  
+  const handleDownload = async () => {
+    if (!hasFile) return;
+    
+    try {
+      const response = await fetch(`/api/versions/${version.id}/file/download`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = version.attachments![0].originalName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error('파일 다운로드 중 오류:', error);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleDownload}
+      disabled={!hasFile}
+      className={`p-1 ${
+        hasFile 
+          ? 'text-slate-600 hover:text-slate-800' 
+          : 'text-slate-300 cursor-not-allowed'
+      }`}
+      title={hasFile ? '파일 다운로드' : '업로드된 파일이 없습니다'}
+    >
+      <DownloadIcon className="h-4 w-4" />
+    </button>
+  );
+};
+
 export const ProjectVersions: React.FC<Props> = ({
   projectId,
   users,
@@ -175,6 +280,7 @@ export const ProjectVersions: React.FC<Props> = ({
             <th className="px-3 py-2 text-left font-semibold">릴리즈</th>
             <th className="px-3 py-2 text-left font-semibold">추진자</th>
             <th className="px-3 py-2 text-left font-semibold">상태</th>
+            <th className="px-3 py-2 text-left font-semibold">파일</th>
             <th className="px-3 py-2 text-center font-semibold">추가 작업</th>
           </tr>
         </thead>
@@ -193,6 +299,24 @@ export const ProjectVersions: React.FC<Props> = ({
               </td>
               <td className="px-3 py-2 whitespace-nowrap">
                 {v.released ? "릴리즈됨" : "미릴리즈"}
+              </td>
+              <td className="px-3 py-2 whitespace-nowrap">
+                <div className="flex items-center space-x-2">
+                  <FileUpload 
+                    versionId={v.id} 
+                    projectId={projectId} 
+                    onFileUploaded={fetchVersions} 
+                  />
+                  <FileDownload version={v} />
+                  {v.attachments && v.attachments.length > 0 && (
+                    <span 
+                      className="text-xs text-slate-600 max-w-24 truncate"
+                      title={v.attachments[0].originalName}
+                    >
+                      {v.attachments[0].originalName}
+                    </span>
+                  )}
+                </div>
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-center">
                 <ActionMenu

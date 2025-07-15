@@ -300,6 +300,7 @@ export interface Version {
   leader: string;
   description?: string;
   released: boolean;
+  attachments?: Attachment[];
 }
 
 export interface Component {
