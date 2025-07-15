@@ -217,6 +217,18 @@ const MainContent: React.FC<{
   setIssueToResolve,
   isSidebarOpen,
 }) => {
+  // 로딩 중일 때는 로딩 화면 표시
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex items-center space-x-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="text-gray-600 font-medium">로딩 중...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
@@ -899,6 +911,7 @@ const App: React.FC = () => {
           setAdminProjectIds(data.adminProjectIds || []);
           fetchUsers();
           fetchNotifications();
+          setIsLoading(false); // 인증 성공 시 로딩 상태 해제
         } else {
           setIsAuthenticated(false);
           setIsLoading(false);
