@@ -23,6 +23,55 @@ import { RichTextViewer } from "./RichTextViewer";
 import { MentionTextarea } from "./MentionTextarea";
 import { UserAvatarPlaceholderIcon } from "./icons/UserAvatarPlaceholderIcon";
 
+// 애니메이션 키프레임 정의
+const panelStyles = `
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+`;
+
+// 스타일 태그를 헤드에 추가
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = panelStyles;
+  if (!document.head.querySelector('style[data-panel-animations]')) {
+    styleElement.setAttribute('data-panel-animations', 'true');
+    document.head.appendChild(styleElement);
+  }
+}
+
 interface IssueDetailPanelProps {
   issue: Issue;
   onClose: () => void;
@@ -74,7 +123,16 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
 }) => {
   const [newComment, setNewComment] = useState("");
   const [localIssue, setLocalIssue] = useState(issue);
+  const [isClosing, setIsClosing] = useState(false);
   const [activeTab, setActiveTab] = useState("comments");
+
+  // 애니메이션이 있는 닫기 핸들러
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 300); // 애니메이션 시간과 일치
+  };
 
   useEffect(() => {
     setLocalIssue(issue);
@@ -210,7 +268,23 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
   };
 
   return (
-    <aside className="w-96 bg-white border-l border-slate-200 flex flex-col flex-shrink-0 h-full shadow-lg">
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* 백그라운드 오버레이 */}
+      <div 
+        className="absolute inset-0 bg-black bg-opacity-25 transition-opacity duration-300 ease-out" 
+        onClick={handleClose}
+        style={{
+          animation: isClosing ? 'fadeOut 0.3s ease-out forwards' : 'fadeIn 0.3s ease-out forwards'
+        }}
+      ></div>
+      
+      {/* 패널 */}
+      <aside 
+        className="absolute right-0 top-0 w-[48rem] bg-white border-l border-slate-200 flex flex-col h-full shadow-xl z-10 transition-transform duration-300 ease-out"
+        style={{
+          animation: isClosing ? 'slideOutRight 0.3s ease-out forwards' : 'slideInRight 0.3s ease-out forwards'
+        }}
+      >
       <div className="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
         <h2
           className="text-lg font-semibold text-slate-800 truncate"
@@ -220,7 +294,7 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
         </h2>
         <div className="flex items-center space-x-2">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
             aria-label="Close detail panel"
           >
@@ -501,5 +575,6 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
         </button>
       </div>
     </aside>
+    </div>
   );
 };
