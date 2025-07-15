@@ -1002,8 +1002,8 @@ app.delete("/api/versions/:id", async (req, res) => {
   res.status(204).send();
 });
 
-// 버전 파일 업로드
-app.post("/api/versions/:id/file", upload.single('file'), async (req, res) => {
+// 버전 파일 업로드 (여러 파일 지원)
+app.post("/api/versions/:id/file", upload.array('files', 10), async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -1019,7 +1019,7 @@ app.post("/api/versions/:id/file", upload.single('file'), async (req, res) => {
       return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
     
-    if (!req.file) {
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "파일이 제공되지 않았습니다." });
     }
     
@@ -1034,35 +1034,37 @@ app.post("/api/versions/:id/file", upload.single('file'), async (req, res) => {
       fs.mkdirSync(versionDir, { recursive: true });
     }
     
-    // 파일을 새 위치로 이동
-    const newFilePath = path.join(versionDir, req.file.filename);
-    fs.renameSync(req.file.path, newFilePath);
-    
-    // 기존 파일이 있다면 삭제
-    if (version.attachments && version.attachments.length > 0) {
-      const oldFilePath = path.join(versionDir, version.attachments[0].filename);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
-      }
+    // 새로 업로드된 파일들 처리
+    const newAttachments = [];
+    for (const file of req.files) {
+      const newFilePath = path.join(versionDir, file.filename);
+      fs.renameSync(file.path, newFilePath);
+      
+      newAttachments.push({
+        filename: file.filename,
+        originalName: file.originalname
+      });
     }
     
-    // 버전 문서에 첨부파일 정보 업데이트
-    const attachment = {
-      filename: req.file.filename,
-      originalName: req.file.originalname
-    };
+    // 기존 첨부파일 목록 가져오기
+    const existingAttachments = version.attachments || [];
+    const allAttachments = [...existingAttachments, ...newAttachments];
     
+    // 버전 문서에 첨부파일 정보 업데이트
     await versionsCollection.updateOne(
       { _id: new ObjectId(id) },
       { 
         $set: { 
-          attachments: [attachment],
+          attachments: allAttachments,
           updatedAt: new Date().toISOString()
         }
       }
     );
     
-    res.json({ message: "파일이 성공적으로 업로드되었습니다.", attachment });
+    res.json({ 
+      message: `${newAttachments.length}개 파일이 성공적으로 업로드되었습니다.`, 
+      attachments: newAttachments 
+    });
     
   } catch (error) {
     console.error("파일 업로드 중 오류:", error);
@@ -1070,8 +1072,105 @@ app.post("/api/versions/:id/file", upload.single('file'), async (req, res) => {
   }
 });
 
-// 버전 파일 다운로드
-app.get("/api/versions/:id/file/download", async (req, res) => {
+// 개별 파일 다운로드
+app.get("/api/versions/:id/file/:filename/download", async (req, res) => {
+  try {
+    const { id, filename } = req.params;
+    
+    // 버전 정보 가져오기
+    const version = await versionsCollection.findOne({ _id: new ObjectId(id) });
+    if (!version) {
+      return res.status(404).json({ message: "버전을 찾을 수 없습니다." });
+    }
+    
+    if (!version.attachments || version.attachments.length === 0) {
+      return res.status(404).json({ message: "첨부된 파일이 없습니다." });
+    }
+    
+    // 프로젝트 정보 가져오기
+    const project = await projectsCollection.findOne({ _id: new ObjectId(version.projectId) });
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+    
+    // 요청된 파일 찾기
+    const attachment = version.attachments.find(att => att.filename === filename);
+    if (!attachment) {
+      return res.status(404).json({ message: "해당 파일을 찾을 수 없습니다." });
+    }
+    
+    const filePath = path.join(UPLOAD_DIR, project.name, version.name, attachment.filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "파일을 찾을 수 없습니다." });
+    }
+    
+    res.download(filePath, attachment.originalName);
+    
+  } catch (error) {
+    console.error("파일 다운로드 중 오류:", error);
+    res.status(500).json({ message: "파일 다운로드 중 오류가 발생했습니다." });
+  }
+});
+
+// 개별 파일 삭제
+app.delete("/api/versions/:id/file/:filename", async (req, res) => {
+  try {
+    const { id, filename } = req.params;
+    
+    // 버전 정보 가져오기
+    const version = await versionsCollection.findOne({ _id: new ObjectId(id) });
+    if (!version) {
+      return res.status(404).json({ message: "버전을 찾을 수 없습니다." });
+    }
+    
+    if (!version.attachments || version.attachments.length === 0) {
+      return res.status(404).json({ message: "첨부된 파일이 없습니다." });
+    }
+    
+    // 프로젝트 정보 가져오기
+    const project = await projectsCollection.findOne({ _id: new ObjectId(version.projectId) });
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+    
+    // 삭제할 파일 찾기
+    const attachmentIndex = version.attachments.findIndex(att => att.filename === filename);
+    if (attachmentIndex === -1) {
+      return res.status(404).json({ message: "해당 파일을 찾을 수 없습니다." });
+    }
+    
+    const attachment = version.attachments[attachmentIndex];
+    const filePath = path.join(UPLOAD_DIR, project.name, version.name, attachment.filename);
+    
+    // 실제 파일 삭제
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    
+    // 데이터베이스에서 첨부파일 정보 삭제
+    const updatedAttachments = version.attachments.filter((_, index) => index !== attachmentIndex);
+    
+    await versionsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          attachments: updatedAttachments,
+          updatedAt: new Date().toISOString()
+        }
+      }
+    );
+    
+    res.json({ message: "파일이 성공적으로 삭제되었습니다." });
+    
+  } catch (error) {
+    console.error("파일 삭제 중 오류:", error);
+    res.status(500).json({ message: "파일 삭제 중 오류가 발생했습니다." });
+  }
+});
+
+// 전체 파일 다운로드 (ZIP)
+app.get("/api/versions/:id/files/download-all", async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -1091,18 +1190,27 @@ app.get("/api/versions/:id/file/download", async (req, res) => {
       return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
     
-    const attachment = version.attachments[0];
-    const filePath = path.join(UPLOAD_DIR, project.name, version.name, attachment.filename);
+    const archiver = require('archiver');
+    const archive = archiver('zip', { zlib: { level: 9 } });
     
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: "파일을 찾을 수 없습니다." });
+    res.attachment(`${project.name}-${version.name}-files.zip`);
+    archive.pipe(res);
+    
+    const versionDir = path.join(UPLOAD_DIR, project.name, version.name);
+    
+    // 각 첨부파일을 ZIP에 추가
+    for (const attachment of version.attachments) {
+      const filePath = path.join(versionDir, attachment.filename);
+      if (fs.existsSync(filePath)) {
+        archive.file(filePath, { name: attachment.originalName });
+      }
     }
     
-    res.download(filePath, attachment.originalName);
+    archive.finalize();
     
   } catch (error) {
-    console.error("파일 다운로드 중 오류:", error);
-    res.status(500).json({ message: "파일 다운로드 중 오류가 발생했습니다." });
+    console.error("전체 파일 다운로드 중 오류:", error);
+    res.status(500).json({ message: "전체 파일 다운로드 중 오류가 발생했습니다." });
   }
 });
 

@@ -6,6 +6,8 @@ import type { Version, User } from "../types";
 import { EllipsisVerticalIcon } from "./icons/EllipsisVerticalIcon";
 import { UploadIcon } from "./icons/UploadIcon";
 import { DownloadIcon } from "./icons/DownloadIcon";
+import { TrashIcon } from "./icons/TrashIcon";
+import { DownloadAllIcon } from "./icons/DownloadAllIcon";
 
 interface ActionMenuProps {
   onEdit: () => void;
@@ -113,12 +115,16 @@ const FileUpload: React.FC<FileUploadProps> = ({ versionId, projectId, onFileUpl
   const [uploading, setUploading] = useState(false);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
     const formData = new FormData();
-    formData.append('file', file);
+    
+    // 여러 파일을 formData에 추가
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i]);
+    }
 
     try {
       const response = await fetch(`/api/versions/${versionId}/file`, {
@@ -146,6 +152,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ versionId, projectId, onFileUpl
       <input
         ref={fileInputRef}
         type="file"
+        multiple
         onChange={handleFileUpload}
         style={{ display: 'none' }}
       />
@@ -153,7 +160,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ versionId, projectId, onFileUpl
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
         className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-50"
-        title="파일 업로드"
+        title="파일 업로드 (여러 파일 선택 가능)"
       >
         <UploadIcon className="h-4 w-4" />
       </button>
@@ -161,24 +168,23 @@ const FileUpload: React.FC<FileUploadProps> = ({ versionId, projectId, onFileUpl
   );
 };
 
-interface FileDownloadProps {
+interface FileListProps {
   version: Version;
+  onFileUploaded: () => void;
 }
 
-const FileDownload: React.FC<FileDownloadProps> = ({ version }) => {
-  const hasFile = version.attachments && version.attachments.length > 0;
+const FileList: React.FC<FileListProps> = ({ version, onFileUploaded }) => {
+  const hasFiles = version.attachments && version.attachments.length > 0;
   
-  const handleDownload = async () => {
-    if (!hasFile) return;
-    
+  const handleFileDownload = async (filename: string, originalName: string) => {
     try {
-      const response = await fetch(`/api/versions/${version.id}/file/download`);
+      const response = await fetch(`/api/versions/${version.id}/file/${filename}/download`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = version.attachments![0].originalName;
+        a.download = originalName;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -189,19 +195,96 @@ const FileDownload: React.FC<FileDownloadProps> = ({ version }) => {
     }
   };
 
+  const handleFileDelete = async (filename: string) => {
+    if (!confirm('정말로 이 파일을 삭제하시겠습니까?')) return;
+    
+    try {
+      const response = await fetch(`/api/versions/${version.id}/file/${filename}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        onFileUploaded(); // 목록 새로고침
+      } else {
+        console.error('파일 삭제 실패');
+      }
+    } catch (error) {
+      console.error('파일 삭제 중 오류:', error);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    try {
+      const response = await fetch(`/api/versions/${version.id}/files/download-all`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${version.name}-files.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error('전체 파일 다운로드 중 오류:', error);
+    }
+  };
+
+  if (!hasFiles) {
+    return (
+      <div className="text-xs text-slate-400">
+        업로드된 파일 없음
+      </div>
+    );
+  }
+
+  const files = version.attachments!;
+  const displayFiles = files.slice(0, 3); // 최대 3개까지만 표시
+  const remainingCount = files.length - 3;
+
   return (
-    <button
-      onClick={handleDownload}
-      disabled={!hasFile}
-      className={`p-1 ${
-        hasFile 
-          ? 'text-slate-600 hover:text-slate-800' 
-          : 'text-slate-300 cursor-not-allowed'
-      }`}
-      title={hasFile ? '파일 다운로드' : '업로드된 파일이 없습니다'}
-    >
-      <DownloadIcon className="h-4 w-4" />
-    </button>
+    <div className="space-y-1">
+      {/* 전체 다운로드 버튼 */}
+      {files.length > 1 && (
+        <button
+          onClick={handleDownloadAll}
+          className="text-xs text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+          title="전체 파일 다운로드 (ZIP)"
+        >
+          <DownloadAllIcon className="h-3 w-3" />
+          <span>전체 다운로드</span>
+        </button>
+      )}
+      
+      {/* 개별 파일 목록 */}
+      {displayFiles.map((attachment, index) => (
+        <div key={index} className="flex items-center space-x-1 text-xs">
+          <button
+            onClick={() => handleFileDownload(attachment.filename, attachment.originalName)}
+            className="text-slate-600 hover:text-slate-800 truncate max-w-32"
+            title={attachment.originalName}
+          >
+            {attachment.originalName}
+          </button>
+          <button
+            onClick={() => handleFileDelete(attachment.filename)}
+            className="text-red-400 hover:text-red-600 p-0.5"
+            title="파일 삭제"
+          >
+            <TrashIcon className="h-3 w-3" />
+          </button>
+        </div>
+      ))}
+      
+      {/* 남은 파일 개수 표시 */}
+      {remainingCount > 0 && (
+        <div className="text-xs text-slate-400">
+          +{remainingCount}개 파일 더
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -301,21 +384,18 @@ export const ProjectVersions: React.FC<Props> = ({
                 {v.released ? "릴리즈됨" : "미릴리즈"}
               </td>
               <td className="px-3 py-2 whitespace-nowrap">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-2">
                   <FileUpload 
                     versionId={v.id} 
                     projectId={projectId} 
                     onFileUploaded={fetchVersions} 
                   />
-                  <FileDownload version={v} />
-                  {v.attachments && v.attachments.length > 0 && (
-                    <span 
-                      className="text-xs text-slate-600 max-w-24 truncate"
-                      title={v.attachments[0].originalName}
-                    >
-                      {v.attachments[0].originalName}
-                    </span>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <FileList 
+                      version={v} 
+                      onFileUploaded={fetchVersions}
+                    />
+                  </div>
                 </div>
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-center">
