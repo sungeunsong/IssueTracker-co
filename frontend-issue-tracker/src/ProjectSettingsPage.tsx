@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProjectSettingsSidebar from './components/ProjectSettingsSidebar';
 import ProjectIssueSettings from './components/ProjectIssueSettings';
-import ProjectComponents from './components/ProjectComponents';
 import ProjectCustomers from './components/ProjectCustomers';
 import ProjectDetails from './components/ProjectDetails';
 import ProjectPermissions from './components/ProjectPermissions';
@@ -59,12 +58,6 @@ export const ProjectSettingsPage: React.FC = () => {
         ) : activeSection === '고객사' ? (
           projectId ? (
             <ProjectCustomers projectId={projectId} users={users} />
-          ) : (
-            <div>프로젝트 ID가 없습니다.</div>
-          )
-        ) : activeSection === '컴포넌트' ? (
-          projectId ? (
-            <ProjectComponents projectId={projectId} users={users} />
           ) : (
             <div>프로젝트 ID가 없습니다.</div>
           )

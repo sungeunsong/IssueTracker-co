@@ -15,6 +15,7 @@ import { IssueDetailPanel } from "./components/IssueDetailPanel";
 import ResolveIssueModal from "./components/ResolveIssueModal";
 import { UserSettingsPage } from "./pages/UserSettingsPage";
 import ProjectVersions from "./components/ProjectVersions";
+import ProjectComponents from "./components/ProjectComponents";
 import type {
   Issue,
   ResolutionStatus as StatusEnum,
@@ -557,9 +558,12 @@ const MainContent: React.FC<{
                     />
                   </div>
                 )}
-                {tabMode === "components" && (
+                {tabMode === "components" && currentProject && (
                   <div className="h-full overflow-y-auto p-6">
-                    <p className="text-gray-500">컴포넌트 관리는 준비 중입니다.</p>
+                    <ProjectComponents 
+                      projectId={currentProject.id} 
+                      users={users} 
+                    />
                   </div>
                 )}
               </div>
