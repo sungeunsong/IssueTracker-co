@@ -1727,7 +1727,8 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
       "new-issue",
       `새로운 이슈 '${newIssue.title}'가 할당되었습니다.`,
       result.insertedId,
-      newIssue.issueKey
+      newIssue.issueKey,
+      req.body.isMigration === "true"
     );
   }
   res
@@ -2167,7 +2168,8 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       "new-issue", // 'new-issue' 타입을 재사용하여 할당 알림을 보냅니다.
       `이슈 '${result.title}'가 회원님에게 할당되었습니다.`,
       result._id,
-      result.issueKey
+      result.issueKey,
+      req.body.isMigration === "true"
     );
   }
 
@@ -2238,7 +2240,8 @@ app.post("/api/issues/:id/comments", async (req, res) => {
           "mention",
           `'${issue.title}' 이슈에서 ${req.session.user.username}님이 회원님을 멘션했습니다.`,
           issue._id,
-          issue.issueKey
+          issue.issueKey,
+          req.body.isMigration === "true"
         );
       }
     }
@@ -2247,8 +2250,11 @@ app.post("/api/issues/:id/comments", async (req, res) => {
   res.json(await mapIssueWithLookups(result));
 });
 
-async function createNotification(userId, type, message, issueId, issueKey) {
+async function createNotification(userId, type, message, issueId, issueKey, isMigration = false) {
   if (!userId) return;
+  // 마이그레이션 모드에서는 알림을 생성하지 않음
+  if (isMigration) return;
+  
   await notificationsCollection.insertOne({
     userId,
     type,
