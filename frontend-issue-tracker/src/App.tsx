@@ -14,6 +14,7 @@ import { BoardView } from "./components/BoardView";
 import { IssueDetailPanel } from "./components/IssueDetailPanel";
 import ResolveIssueModal from "./components/ResolveIssueModal";
 import { UserSettingsPage } from "./pages/UserSettingsPage";
+import ProjectVersions from "./components/ProjectVersions";
 import type {
   Issue,
   ResolutionStatus as StatusEnum,
@@ -46,6 +47,7 @@ export type IssueFormData = {
 };
 
 export type ViewMode = "board" | "list";
+export type TabMode = "issues" | "releases" | "components";
 
 const MainContent: React.FC<{
   isAuthenticated: boolean;
@@ -53,6 +55,8 @@ const MainContent: React.FC<{
   issues: Issue[];
   viewMode: ViewMode;
   setViewMode: React.Dispatch<React.SetStateAction<ViewMode>>;
+  tabMode: TabMode;
+  setTabMode: React.Dispatch<React.SetStateAction<TabMode>>;
   projects: Project[];
   currentProjectId: string | null;
   handleSelectProject: (id: string) => void;
@@ -137,6 +141,8 @@ const MainContent: React.FC<{
   issues,
   viewMode,
   setViewMode,
+  tabMode,
+  setTabMode,
   projects,
   currentProjectId,
   handleSelectProject,
@@ -425,94 +431,135 @@ const MainContent: React.FC<{
                 <div className="flex items-center justify-between">
                   {/* 좌측: 탭들 */}
                   <div className="flex space-x-6">
-                    <button className="pb-2 border-b-2 border-blue-500 text-blue-600 font-medium">
+                    <button 
+                      onClick={() => setTabMode("issues")}
+                      className={`pb-2 border-b-2 font-medium ${
+                        tabMode === "issues" 
+                          ? "border-blue-500 text-blue-600" 
+                          : "border-transparent text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
                       모든 업무
                     </button>
-                    <button className="pb-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    <button 
+                      onClick={() => setTabMode("releases")}
+                      className={`pb-2 border-b-2 font-medium ${
+                        tabMode === "releases" 
+                          ? "border-blue-500 text-blue-600" 
+                          : "border-transparent text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
                       릴리즈
                     </button>
-                    <button className="pb-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    <button 
+                      onClick={() => setTabMode("components")}
+                      className={`pb-2 border-b-2 font-medium ${
+                        tabMode === "components" 
+                          ? "border-blue-500 text-blue-600" 
+                          : "border-transparent text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
                       컴포넌트
                     </button>
                   </div>
 
-                  {/* 우측: View 전환 Segmented Control */}
-                  <div className="flex items-center space-x-2">
-                    <div className="flex bg-gray-100 rounded-lg p-1">
-                      <button
-                        onClick={() => setViewMode("board")}
-                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                          viewMode === "board"
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
+                  {/* 우측: View 전환 Segmented Control - 이슈 탭에서만 보이도록 */}
+                  {tabMode === "issues" && (
+                    <div className="flex items-center space-x-2">
+                      <div className="flex bg-gray-100 rounded-lg p-1">
+                        <button
+                          onClick={() => setViewMode("board")}
+                          className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                            viewMode === "board"
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
                         >
-                          <path
-                            fillRule="evenodd"
-                            d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span>보드</span>
-                      </button>
-                      <button
-                        onClick={() => setViewMode("list")}
-                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                          viewMode === "list"
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
+                          <svg
+                            className="w-4 h-4"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span>보드</span>
+                        </button>
+                        <button
+                          onClick={() => setViewMode("list")}
+                          className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                            viewMode === "list"
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
                         >
-                          <path
-                            fillRule="evenodd"
-                            d="M3 4a1 1 0 000 2h.01a1 1 0 100-2H3zM6 4a1 1 0 000 2h11a1 1 0 100-2H6zM3 10a1 1 0 100 2h.01a1 1 0 100-2H3zM6 10a1 1 0 100 2h11a1 1 0 100-2H6zM3 16a1 1 0 100 2h.01a1 1 0 100-2H3zM6 16a1 1 0 100 2h11a1 1 0 100-2H6z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span>리스트</span>
-                      </button>
+                          <svg
+                            className="w-4 h-4"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M3 4a1 1 0 000 2h.01a1 1 0 100-2H3zM6 4a1 1 0 000 2h11a1 1 0 100-2H6zM3 10a1 1 0 100 2h.01a1 1 0 100-2H3zM6 10a1 1 0 100 2h11a1 1 0 100-2H6zM3 16a1 1 0 100 2h.01a1 1 0 100-2H3zM6 16a1 1 0 100 2h11a1 1 0 100-2H6z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span>리스트</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
               {/* 컨텐츠 영역 */}
               <div className="flex-1 overflow-hidden">
-                {viewMode === "board" && (
-                  <BoardView
-                    columns={boardColumns}
-                    onSelectIssue={handleSelectIssueForDetail}
-                    onUpdateStatus={updateIssueStatus}
-                    users={users}
-                    project={currentProject}
-                  />
+                {tabMode === "issues" && (
+                  <>
+                    {viewMode === "board" && (
+                      <BoardView
+                        columns={boardColumns}
+                        onSelectIssue={handleSelectIssueForDetail}
+                        onUpdateStatus={updateIssueStatus}
+                        users={users}
+                        project={currentProject}
+                      />
+                    )}
+                    {viewMode === "list" && (
+                      <div className="h-full overflow-y-auto">
+                        <IssueList
+                          issues={paginatedListIssues}
+                          onUpdateStatus={updateIssueStatus}
+                          onDeleteIssue={requestDeleteIssue}
+                          onViewIssue={handleSelectIssueForDetail}
+                          onEditIssue={handleOpenEditModal}
+                          currentPage={currentPage}
+                          totalIssues={baseFilteredIssues.length}
+                          itemsPerPage={ITEMS_PER_PAGE_LIST}
+                          onPageChange={handlePageChange}
+                          users={users}
+                          statuses={currentProject?.statuses || []}
+                          project={currentProject}
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
-                {viewMode === "list" && (
-                  <div className="h-full overflow-y-auto">
-                    <IssueList
-                      issues={paginatedListIssues}
-                      onUpdateStatus={updateIssueStatus}
-                      onDeleteIssue={requestDeleteIssue}
-                      onViewIssue={handleSelectIssueForDetail}
-                      onEditIssue={handleOpenEditModal}
-                      currentPage={currentPage}
-                      totalIssues={baseFilteredIssues.length}
-                      itemsPerPage={ITEMS_PER_PAGE_LIST}
-                      onPageChange={handlePageChange}
-                      users={users}
-                      statuses={currentProject?.statuses || []}
-                      project={currentProject}
+                {tabMode === "releases" && currentProject && (
+                  <div className="h-full overflow-y-auto p-6">
+                    <ProjectVersions 
+                      projectId={currentProject.id} 
+                      users={users} 
+                      currentUserId={currentUserId} 
                     />
+                  </div>
+                )}
+                {tabMode === "components" && (
+                  <div className="h-full overflow-y-auto p-6">
+                    <p className="text-gray-500">컴포넌트 관리는 준비 중입니다.</p>
                   </div>
                 )}
               </div>
@@ -737,6 +784,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [viewMode, setViewMode] = useState<ViewMode>("board");
+  const [tabMode, setTabMode] = useState<TabMode>("issues");
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
@@ -1451,6 +1499,8 @@ const App: React.FC = () => {
               issues,
               viewMode,
               setViewMode,
+              tabMode,
+              setTabMode,
               projects,
               currentProjectId,
               handleSelectProject,
