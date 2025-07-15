@@ -1079,6 +1079,10 @@ const App: React.FC = () => {
   }, []);
 
   const handleSelectProject = (id: string) => {
+    // 같은 프로젝트를 다시 선택한 경우 아무것도 하지 않음
+    if (currentProjectId === id) {
+      return;
+    }
     setIssues([]);
     setCurrentProjectId(id);
   };
