@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import session from "express-session";
 import multer from "multer";
 import fs from "fs";
+import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -366,6 +367,27 @@ async function migrateIssues() {
 }
 
 await migrateIssues();
+
+// CORS 설정
+app.use(cors({
+  origin: function (origin, callback) {
+    // 개발 환경에서는 모든 origin 허용
+    if (process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      // 프로덕션에서는 허용된 도메인만
+      const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
+  credentials: true, // 세션 쿠키 허용
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 app.use(express.json());
 app.use(

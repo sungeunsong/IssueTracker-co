@@ -7,7 +7,8 @@ const JIRA_BASE_URL = "https://pentalinkss.atlassian.net"; // Your Jira Cloud UR
 const JIRA_API_EMAIL = "korea.sesong@gmail.com"; // Your Jira email
 const JIRA_API_TOKEN = "";
 
-const ISSUETRACKER_API_BASE_URL = "http://localhost:3000/api"; // Your IssueTracker API URL
+const ISSUETRACKER_API_BASE_URL =
+  process.env.ISSUETRACKER_API_BASE_URL || "http://localhost:3000/api"; // Your IssueTracker API URL
 const ISSUETRACKER_ADMIN_USERID = "apadmin"; // IssueTracker admin username
 const ISSUETRACKER_ADMIN_PASSWORD = "0000"; // IssueTracker admin password (CHANGE THIS IN PRODUCTION)
 
@@ -422,10 +423,88 @@ async function processJiraIssue(jiraIssue) {
         );
         if (commentAuthorId) {
           try {
+            // 디버깅을 위해 댓글 전체 구조 출력
+            console.log(
+              `    Comment structure:`,
+              JSON.stringify(jiraComment, null, 2)
+            );
+
+            // 댓글 텍스트 변환
+            let commentText = convertAdfToMarkdown(jiraComment.body);
+
+            // 댓글에서 첨부파일 정보 찾기 (여러 가지 방법으로 시도)
+            let hasAttachments = false;
+
+            // 1. 직접 attachment 필드 확인
+            if (jiraComment.attachment && jiraComment.attachment.length > 0) {
+              hasAttachments = true;
+              if (!commentText || commentText.trim() === "") {
+                commentText = "[이미지 첨부]";
+              }
+              commentText += "\n\n--- 첨부파일 ---\n";
+              for (const attachment of jiraComment.attachment) {
+                commentText += `📎 ${attachment.filename}\n`;
+              }
+              commentText +=
+                "\n(참고: 댓글 첨부파일은 마이그레이션되지 않았습니다.)";
+            }
+
+            // 2. 댓글 내용에서 첨부파일 참조 찾기 (ADF 구조에서)
+            if (jiraComment.body && jiraComment.body.content) {
+              const findAttachments = (content) => {
+                for (const item of content) {
+                  if (
+                    item.type === "mediaGroup" ||
+                    item.type === "media" ||
+                    item.type === "mediaInline"
+                  ) {
+                    hasAttachments = true;
+                    if (!commentText || commentText.trim() === "") {
+                      commentText = "[미디어 첨부]";
+                    }
+                    commentText += `\n\n📎 미디어 파일이 첨부되어 있었습니다.\n(참고: 댓글 첨부파일은 마이그레이션되지 않았습니다.)`;
+                    break;
+                  }
+                  if (item.content && Array.isArray(item.content)) {
+                    findAttachments(item.content);
+                  }
+                }
+              };
+              findAttachments(jiraComment.body.content);
+            }
+
+            // 3. 댓글 텍스트에서 첨부파일 링크 패턴 찾기
+            if (
+              commentText &&
+              (commentText.includes("!") ||
+                commentText.includes("attachment:") ||
+                commentText.includes("[image]"))
+            ) {
+              hasAttachments = true;
+              if (commentText.trim() === "" || commentText.trim() === "!") {
+                commentText = "[이미지 첨부]";
+              }
+              commentText += `\n\n📎 이미지가 첨부되어 있었습니다.\n(참고: 댓글 첨부파일은 마이그레이션되지 않았습니다.)`;
+            }
+
+            // 빈 댓글이나 null 댓글 처리 (첨부파일이 없는 경우에만)
+            if (
+              !hasAttachments &&
+              (!commentText || commentText.trim() === "")
+            ) {
+              commentText = "[빈 댓글]";
+            }
+
+            // 디버깅을 위한 로그
+            console.log(`    Final comment text: "${commentText}"`);
+            console.log(`    Has attachments: ${hasAttachments}`);
+            console.log(`    Author ID: ${commentAuthorId}`);
+            console.log(`    Created at: ${jiraComment.created}`);
+
             await issueTrackerApi.post(
               `/issues/${issueTrackerIssueId}/comments`,
               {
-                text: convertAdfToMarkdown(jiraComment.body),
+                text: commentText,
                 userId: commentAuthorId,
                 createdAt: jiraComment.created,
                 isMigration: true, // 마이그레이션 모드 플래그 추가
@@ -439,6 +518,14 @@ async function processJiraIssue(jiraIssue) {
               `    Failed to migrate comment for issue ${jiraIssue.key}:`,
               commentError.message
             );
+            // 에러 발생 시 응답 데이터도 출력
+            if (commentError.response) {
+              console.error(
+                "    Response status:",
+                commentError.response.status
+              );
+              console.error("    Response data:", commentError.response.data);
+            }
           }
         }
       }
@@ -885,6 +972,7 @@ async function migrateJiraIssues(startNumber, endNumber) {
     // 1. Migrate Projects
     console.log("Migrating Jira projects...");
     const jiraProjectsResponse = await jiraApi.get("/rest/api/3/project");
+
     for (const jiraProject of jiraProjectsResponse.data) {
       await getOrCreateIssueTrackerProject(jiraProject);
     }

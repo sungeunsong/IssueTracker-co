@@ -6,10 +6,23 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "build": "cd frontend-issue-tracker && npm run build && cd .. && tsc",
+    "build:start": "npm run build && node dist/server.js",
+    "deploy:package": "bash scripts/deploy-package.sh",
     "postinstall": "echo '서버 설정 완료. npm start로 서버를 실행하세요.'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "@types/express": "^4.17.0",
+    "@types/bcryptjs": "^2.4.0",
+    "@types/express-session": "^1.17.0",
+    "@types/multer": "^1.4.0",
+    "@types/cors": "^2.8.0"
   },
   "dependencies": {
     "adf-to-md": "^1.2.1",
+    "cors": "^2.8.5",
     "adf2md": "^2.0.0",
     "archiver": "^5.3.1",
     "axios": "^1.10.0",
