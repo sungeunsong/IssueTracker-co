@@ -148,7 +148,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           {/* <span className="text-xs text-gray-600">
               {assignedUser?.username || issue.assignee}
             </span> */}
-          <span className="text-xs text-gray-600">{issue.issueKey}</span>
+          <Link
+            to={`/issues/${issue.issueKey}`}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {issue.issueKey}
+          </Link>
         </div>
       </div>
     </div>
