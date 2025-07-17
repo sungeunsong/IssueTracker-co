@@ -28,21 +28,32 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     // 한글 파일명 인코딩 처리
-    const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    const originalname = Buffer.from(file.originalname, "latin1").toString(
+      "utf8"
+    );
     cb(null, unique + path.extname(originalname));
   },
 });
-const upload = multer({ 
+const upload = multer({
   storage,
   // 한글 파일명 지원을 위한 설정
   fileFilter: (req, file, cb) => {
     // 여러 방법으로 파일명 디코딩 시도
     const attempts = [
-      { method: 'original', value: file.originalname },
-      { method: 'latin1->utf8', value: Buffer.from(file.originalname, 'latin1').toString('utf8') },
-      { method: 'utf8->latin1->utf8', value: Buffer.from(Buffer.from(file.originalname, 'utf8').toString('latin1'), 'latin1').toString('utf8') }
+      { method: "original", value: file.originalname },
+      {
+        method: "latin1->utf8",
+        value: Buffer.from(file.originalname, "latin1").toString("utf8"),
+      },
+      {
+        method: "utf8->latin1->utf8",
+        value: Buffer.from(
+          Buffer.from(file.originalname, "utf8").toString("latin1"),
+          "latin1"
+        ).toString("utf8"),
+      },
     ];
-    
+
     // 한글이 제대로 보이는 방법 선택
     for (const attempt of attempts) {
       if (/[가-힣]/.test(attempt.value)) {
@@ -50,15 +61,15 @@ const upload = multer({
         break;
       }
     }
-    
+
     // 한글이 없다면 latin1->utf8 시도
     if (!/[가-힣]/.test(file.originalname)) {
-      const decoded = Buffer.from(file.originalname, 'latin1').toString('utf8');
+      const decoded = Buffer.from(file.originalname, "latin1").toString("utf8");
       file.originalname = decoded;
     }
-    
+
     cb(null, true);
-  }
+  },
 });
 
 const client = new MongoClient(MONGO_URI);
@@ -369,25 +380,33 @@ async function migrateIssues() {
 await migrateIssues();
 
 // CORS 설정
-app.use(cors({
-  origin: function (origin, callback) {
-    // 개발 환경에서는 모든 origin 허용
-    if (process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      // 프로덕션에서는 허용된 도메인만
-      const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
-      if (!origin || allowedOrigins.includes(origin)) {
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // 개발 환경에서는 모든 origin 허용
+      if (process.env.NODE_ENV === "development") {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        // 프로덕션에서는 허용된 도메인만
+        const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+          .split(",")
+          .filter(Boolean);
+        if (
+          process.env.ALLOWED_ORIGINS === "*" ||
+          !origin ||
+          allowedOrigins.includes(origin)
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
       }
-    }
-  },
-  credentials: true, // 세션 쿠키 허용
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+    },
+    credentials: true, // 세션 쿠키 허용
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
 
 app.use(express.json());
 app.use(
@@ -1025,110 +1044,127 @@ app.delete("/api/versions/:id", async (req, res) => {
 });
 
 // 버전 파일 업로드 (여러 파일 지원)
-app.post("/api/versions/:id/file", upload.array('files', 10), async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // 버전 정보 가져오기
-    const version = await versionsCollection.findOne({ _id: new ObjectId(id) });
-    if (!version) {
-      return res.status(404).json({ message: "버전을 찾을 수 없습니다." });
-    }
-    
-    // 프로젝트 정보 가져오기
-    const project = await projectsCollection.findOne({ _id: new ObjectId(version.projectId) });
-    if (!project) {
-      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
-    }
-    
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "파일이 제공되지 않았습니다." });
-    }
-    
-    // 프로젝트/버전별 디렉토리 생성
-    const projectDir = path.join(UPLOAD_DIR, project.name);
-    const versionDir = path.join(projectDir, version.name);
-    
-    if (!fs.existsSync(projectDir)) {
-      fs.mkdirSync(projectDir, { recursive: true });
-    }
-    if (!fs.existsSync(versionDir)) {
-      fs.mkdirSync(versionDir, { recursive: true });
-    }
-    
-    // 새로 업로드된 파일들 처리
-    const newAttachments = [];
-    for (const file of req.files) {
-      const newFilePath = path.join(versionDir, file.filename);
-      fs.renameSync(file.path, newFilePath);
-      
-      newAttachments.push({
-        filename: file.filename,
-        originalName: file.originalname
+app.post(
+  "/api/versions/:id/file",
+  upload.array("files", 10),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // 버전 정보 가져오기
+      const version = await versionsCollection.findOne({
+        _id: new ObjectId(id),
       });
-    }
-    
-    // 기존 첨부파일 목록 가져오기
-    const existingAttachments = version.attachments || [];
-    const allAttachments = [...existingAttachments, ...newAttachments];
-    
-    // 버전 문서에 첨부파일 정보 업데이트
-    await versionsCollection.updateOne(
-      { _id: new ObjectId(id) },
-      { 
-        $set: { 
-          attachments: allAttachments,
-          updatedAt: new Date().toISOString()
-        }
+      if (!version) {
+        return res.status(404).json({ message: "버전을 찾을 수 없습니다." });
       }
-    );
-    
-    res.json({ 
-      message: `${newAttachments.length}개 파일이 성공적으로 업로드되었습니다.`, 
-      attachments: newAttachments 
-    });
-    
-  } catch (error) {
-    console.error("파일 업로드 중 오류:", error);
-    res.status(500).json({ message: "파일 업로드 중 오류가 발생했습니다." });
+
+      // 프로젝트 정보 가져오기
+      const project = await projectsCollection.findOne({
+        _id: new ObjectId(version.projectId),
+      });
+      if (!project) {
+        return res
+          .status(404)
+          .json({ message: "프로젝트를 찾을 수 없습니다." });
+      }
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: "파일이 제공되지 않았습니다." });
+      }
+
+      // 프로젝트/버전별 디렉토리 생성
+      const projectDir = path.join(UPLOAD_DIR, project.name);
+      const versionDir = path.join(projectDir, version.name);
+
+      if (!fs.existsSync(projectDir)) {
+        fs.mkdirSync(projectDir, { recursive: true });
+      }
+      if (!fs.existsSync(versionDir)) {
+        fs.mkdirSync(versionDir, { recursive: true });
+      }
+
+      // 새로 업로드된 파일들 처리
+      const newAttachments = [];
+      for (const file of req.files) {
+        const newFilePath = path.join(versionDir, file.filename);
+        fs.renameSync(file.path, newFilePath);
+
+        newAttachments.push({
+          filename: file.filename,
+          originalName: file.originalname,
+        });
+      }
+
+      // 기존 첨부파일 목록 가져오기
+      const existingAttachments = version.attachments || [];
+      const allAttachments = [...existingAttachments, ...newAttachments];
+
+      // 버전 문서에 첨부파일 정보 업데이트
+      await versionsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            attachments: allAttachments,
+            updatedAt: new Date().toISOString(),
+          },
+        }
+      );
+
+      res.json({
+        message: `${newAttachments.length}개 파일이 성공적으로 업로드되었습니다.`,
+        attachments: newAttachments,
+      });
+    } catch (error) {
+      console.error("파일 업로드 중 오류:", error);
+      res.status(500).json({ message: "파일 업로드 중 오류가 발생했습니다." });
+    }
   }
-});
+);
 
 // 개별 파일 다운로드
 app.get("/api/versions/:id/file/:filename/download", async (req, res) => {
   try {
     const { id, filename } = req.params;
-    
+
     // 버전 정보 가져오기
     const version = await versionsCollection.findOne({ _id: new ObjectId(id) });
     if (!version) {
       return res.status(404).json({ message: "버전을 찾을 수 없습니다." });
     }
-    
+
     if (!version.attachments || version.attachments.length === 0) {
       return res.status(404).json({ message: "첨부된 파일이 없습니다." });
     }
-    
+
     // 프로젝트 정보 가져오기
-    const project = await projectsCollection.findOne({ _id: new ObjectId(version.projectId) });
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(version.projectId),
+    });
     if (!project) {
       return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
-    
+
     // 요청된 파일 찾기
-    const attachment = version.attachments.find(att => att.filename === filename);
+    const attachment = version.attachments.find(
+      (att) => att.filename === filename
+    );
     if (!attachment) {
       return res.status(404).json({ message: "해당 파일을 찾을 수 없습니다." });
     }
-    
-    const filePath = path.join(UPLOAD_DIR, project.name, version.name, attachment.filename);
-    
+
+    const filePath = path.join(
+      UPLOAD_DIR,
+      project.name,
+      version.name,
+      attachment.filename
+    );
+
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: "파일을 찾을 수 없습니다." });
     }
-    
+
     res.download(filePath, attachment.originalName);
-    
   } catch (error) {
     console.error("파일 다운로드 중 오류:", error);
     res.status(500).json({ message: "파일 다운로드 중 오류가 발생했습니다." });
@@ -1139,52 +1175,62 @@ app.get("/api/versions/:id/file/:filename/download", async (req, res) => {
 app.delete("/api/versions/:id/file/:filename", async (req, res) => {
   try {
     const { id, filename } = req.params;
-    
+
     // 버전 정보 가져오기
     const version = await versionsCollection.findOne({ _id: new ObjectId(id) });
     if (!version) {
       return res.status(404).json({ message: "버전을 찾을 수 없습니다." });
     }
-    
+
     if (!version.attachments || version.attachments.length === 0) {
       return res.status(404).json({ message: "첨부된 파일이 없습니다." });
     }
-    
+
     // 프로젝트 정보 가져오기
-    const project = await projectsCollection.findOne({ _id: new ObjectId(version.projectId) });
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(version.projectId),
+    });
     if (!project) {
       return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
-    
+
     // 삭제할 파일 찾기
-    const attachmentIndex = version.attachments.findIndex(att => att.filename === filename);
+    const attachmentIndex = version.attachments.findIndex(
+      (att) => att.filename === filename
+    );
     if (attachmentIndex === -1) {
       return res.status(404).json({ message: "해당 파일을 찾을 수 없습니다." });
     }
-    
+
     const attachment = version.attachments[attachmentIndex];
-    const filePath = path.join(UPLOAD_DIR, project.name, version.name, attachment.filename);
-    
+    const filePath = path.join(
+      UPLOAD_DIR,
+      project.name,
+      version.name,
+      attachment.filename
+    );
+
     // 실제 파일 삭제
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
-    
+
     // 데이터베이스에서 첨부파일 정보 삭제
-    const updatedAttachments = version.attachments.filter((_, index) => index !== attachmentIndex);
-    
+    const updatedAttachments = version.attachments.filter(
+      (_, index) => index !== attachmentIndex
+    );
+
     await versionsCollection.updateOne(
       { _id: new ObjectId(id) },
-      { 
-        $set: { 
+      {
+        $set: {
           attachments: updatedAttachments,
-          updatedAt: new Date().toISOString()
-        }
+          updatedAt: new Date().toISOString(),
+        },
       }
     );
-    
+
     res.json({ message: "파일이 성공적으로 삭제되었습니다." });
-    
   } catch (error) {
     console.error("파일 삭제 중 오류:", error);
     res.status(500).json({ message: "파일 삭제 중 오류가 발생했습니다." });
@@ -1195,31 +1241,33 @@ app.delete("/api/versions/:id/file/:filename", async (req, res) => {
 app.get("/api/versions/:id/files/download-all", async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // 버전 정보 가져오기
     const version = await versionsCollection.findOne({ _id: new ObjectId(id) });
     if (!version) {
       return res.status(404).json({ message: "버전을 찾을 수 없습니다." });
     }
-    
+
     if (!version.attachments || version.attachments.length === 0) {
       return res.status(404).json({ message: "첨부된 파일이 없습니다." });
     }
-    
+
     // 프로젝트 정보 가져오기
-    const project = await projectsCollection.findOne({ _id: new ObjectId(version.projectId) });
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(version.projectId),
+    });
     if (!project) {
       return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
-    
-    const archiver = require('archiver');
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    
+
+    const archiver = require("archiver");
+    const archive = archiver("zip", { zlib: { level: 9 } });
+
     res.attachment(`${project.name}-${version.name}-files.zip`);
     archive.pipe(res);
-    
+
     const versionDir = path.join(UPLOAD_DIR, project.name, version.name);
-    
+
     // 각 첨부파일을 ZIP에 추가
     for (const attachment of version.attachments) {
       const filePath = path.join(versionDir, attachment.filename);
@@ -1227,12 +1275,13 @@ app.get("/api/versions/:id/files/download-all", async (req, res) => {
         archive.file(filePath, { name: attachment.originalName });
       }
     }
-    
+
     archive.finalize();
-    
   } catch (error) {
     console.error("전체 파일 다운로드 중 오류:", error);
-    res.status(500).json({ message: "전체 파일 다운로드 중 오류가 발생했습니다." });
+    res
+      .status(500)
+      .json({ message: "전체 파일 다운로드 중 오류가 발생했습니다." });
   }
 });
 
@@ -1645,21 +1694,26 @@ app.post("/api/issues", upload.array("files"), async (req, res) => {
     }
   }
   // Check if this is a migration request with specific issue number
-  const isMigration = req.body.isMigration === true || req.body.isMigration === 'true';
-  const requestedIssueNumber = req.body.requestedIssueNumber ? parseInt(req.body.requestedIssueNumber) : null;
-  
+  const isMigration =
+    req.body.isMigration === true || req.body.isMigration === "true";
+  const requestedIssueNumber = req.body.requestedIssueNumber
+    ? parseInt(req.body.requestedIssueNumber)
+    : null;
+
   let projectResult;
   let issueNumber;
 
   if (isMigration && requestedIssueNumber) {
     // For migration: use the requested issue number and update nextIssueNumber if needed
-    projectResult = await projectsCollection.findOne({ _id: new ObjectId(projectId) });
+    projectResult = await projectsCollection.findOne({
+      _id: new ObjectId(projectId),
+    });
     if (!projectResult) {
       return res.status(400).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
-    
+
     issueNumber = requestedIssueNumber;
-    
+
     // Update nextIssueNumber to be at least one more than the requested number
     if (projectResult.nextIssueNumber <= requestedIssueNumber) {
       await projectsCollection.updateOne(
@@ -1937,27 +1991,27 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   let statusChanged = false;
   let fromStatus;
   let toStatus;
-  
+
   if (title !== undefined && title.trim() !== existing.title) {
     updateFields.title = title.trim();
-    changedFields.push('title');
+    changedFields.push("title");
     fieldChanges.title = { from: existing.title, to: title.trim() };
   }
   if (content !== undefined && content.trim() !== existing.content) {
     updateFields.content = content.trim();
-    changedFields.push('content');
+    changedFields.push("content");
     fieldChanges.content = { from: existing.content, to: content.trim() };
   }
   if (reporter !== undefined && reporter.trim() !== existing.reporter) {
     updateFields.reporter = reporter.trim();
-    changedFields.push('reporter');
+    changedFields.push("reporter");
     fieldChanges.reporter = { from: existing.reporter, to: reporter.trim() };
   }
   if (assignee !== undefined) {
     const newAssignee = assignee.trim() === "" ? undefined : assignee.trim();
     if (newAssignee !== existing.assignee) {
       updateFields.assignee = newAssignee;
-      changedFields.push('assignee');
+      changedFields.push("assignee");
       fieldChanges.assignee = { from: existing.assignee, to: newAssignee };
     }
   }
@@ -1975,9 +2029,10 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
   }
   if (resolution !== undefined) {
     const trimmedResolution = resolution.trim();
-    const newResolution = trimmedResolution === "" ? undefined : trimmedResolution;
+    const newResolution =
+      trimmedResolution === "" ? undefined : trimmedResolution;
     let newResolutionId;
-    
+
     if (trimmedResolution) {
       const resolutionObj = project.resolutions?.find((r) =>
         typeof r === "object"
@@ -1992,19 +2047,26 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     } else {
       newResolutionId = undefined;
     }
-    
+
     if (newResolutionId !== existing.resolutionId) {
       updateFields.resolution = newResolutionId;
       updateFields.resolutionId = newResolutionId;
-      changedFields.push('resolution');
+      changedFields.push("resolution");
       // 해결책 이름 찾기
-      const oldResolutionName = existing.resolutionId ? 
-        (project.resolutions?.find(r => (typeof r === 'object' ? r.id : r) === existing.resolutionId)?.name || existing.resolutionId) : 
-        undefined;
-      const newResolutionName = newResolutionId ? 
-        (project.resolutions?.find(r => (typeof r === 'object' ? r.id : r) === newResolutionId)?.name || newResolutionId) : 
-        undefined;
-      fieldChanges.resolution = { from: oldResolutionName, to: newResolutionName };
+      const oldResolutionName = existing.resolutionId
+        ? project.resolutions?.find(
+            (r) => (typeof r === "object" ? r.id : r) === existing.resolutionId
+          )?.name || existing.resolutionId
+        : undefined;
+      const newResolutionName = newResolutionId
+        ? project.resolutions?.find(
+            (r) => (typeof r === "object" ? r.id : r) === newResolutionId
+          )?.name || newResolutionId
+        : undefined;
+      fieldChanges.resolution = {
+        from: oldResolutionName,
+        to: newResolutionName,
+      };
     }
   }
   if (status !== undefined) {
@@ -2028,7 +2090,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     if (statusId !== existing.statusId && statusName !== existing.status) {
       updateFields.status = statusId;
       updateFields.statusId = statusId;
-      changedFields.push('status');
+      changedFields.push("status");
       statusChanged = true;
       fromStatus = existing.status;
       toStatus = statusName;
@@ -2047,17 +2109,23 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 업무 유형을 제공해야 합니다." });
     }
-    const typeId = typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj);
-    
+    const typeId =
+      typeof typeObj === "object" ? typeObj.id : mapOldTypeToId(typeObj);
+
     if (typeId !== existing.typeId) {
       updateFields.type = typeId;
       updateFields.typeId = typeId;
-      changedFields.push('type');
+      changedFields.push("type");
       // 타입 이름 찾기
-      const oldTypeName = existing.typeId ? 
-        (project.types?.find(t => (typeof t === 'object' ? t.id : t) === existing.typeId)?.name || existing.typeId) : 
-        undefined;
-      const newTypeName = project.types?.find(t => (typeof t === 'object' ? t.id : t) === typeId)?.name || typeId;
+      const oldTypeName = existing.typeId
+        ? project.types?.find(
+            (t) => (typeof t === "object" ? t.id : t) === existing.typeId
+          )?.name || existing.typeId
+        : undefined;
+      const newTypeName =
+        project.types?.find(
+          (t) => (typeof t === "object" ? t.id : t) === typeId
+        )?.name || typeId;
       fieldChanges.type = { from: oldTypeName, to: newTypeName };
     }
   }
@@ -2072,19 +2140,25 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 우선순위를 제공해야 합니다." });
     }
-    const priorityId = typeof priorityObj === "object"
-      ? priorityObj.id
-      : mapOldPriorityToId(priorityObj);
-      
+    const priorityId =
+      typeof priorityObj === "object"
+        ? priorityObj.id
+        : mapOldPriorityToId(priorityObj);
+
     if (priorityId !== existing.priorityId) {
       updateFields.priority = priorityId;
       updateFields.priorityId = priorityId;
-      changedFields.push('priority');
+      changedFields.push("priority");
       // 우선순위 이름 찾기
-      const oldPriorityName = existing.priorityId ? 
-        (project.priorities?.find(p => (typeof p === 'object' ? p.id : p) === existing.priorityId)?.name || existing.priorityId) : 
-        undefined;
-      const newPriorityName = project.priorities?.find(p => (typeof p === 'object' ? p.id : p) === priorityId)?.name || priorityId;
+      const oldPriorityName = existing.priorityId
+        ? project.priorities?.find(
+            (p) => (typeof p === "object" ? p.id : p) === existing.priorityId
+          )?.name || existing.priorityId
+        : undefined;
+      const newPriorityName =
+        project.priorities?.find(
+          (p) => (typeof p === "object" ? p.id : p) === priorityId
+        )?.name || priorityId;
       fieldChanges.priority = { from: oldPriorityName, to: newPriorityName };
     }
   }
@@ -2099,7 +2173,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 컴포넌트를 제공해야 합니다." });
     }
-    
+
     let newComponentId;
     if (component.trim() === "") {
       newComponentId = undefined;
@@ -2107,17 +2181,17 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       const comp = comps.find((c) => c.name === component);
       newComponentId = comp?._id.toString();
     }
-    
+
     if (newComponentId !== existing.componentId) {
       updateFields.componentId = newComponentId;
-      changedFields.push('component');
+      changedFields.push("component");
       // 컴포넌트 이름 찾기
-      const oldComponentName = existing.componentId ? 
-        comps.find(c => c._id.toString() === existing.componentId)?.name : 
-        undefined;
-      const newComponentName = newComponentId ? 
-        comps.find(c => c._id.toString() === newComponentId)?.name : 
-        undefined;
+      const oldComponentName = existing.componentId
+        ? comps.find((c) => c._id.toString() === existing.componentId)?.name
+        : undefined;
+      const newComponentName = newComponentId
+        ? comps.find((c) => c._id.toString() === newComponentId)?.name
+        : undefined;
       fieldChanges.component = { from: oldComponentName, to: newComponentName };
     }
   }
@@ -2132,7 +2206,7 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         .status(400)
         .json({ message: "유효한 고객사를 제공해야 합니다." });
     }
-    
+
     let newCustomerId;
     if (customer.trim() === "") {
       newCustomerId = undefined;
@@ -2140,17 +2214,17 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       const cust = custs.find((c) => c.name === customer);
       newCustomerId = cust?._id.toString();
     }
-    
+
     if (newCustomerId !== existing.customerId) {
       updateFields.customerId = newCustomerId;
-      changedFields.push('customer');
+      changedFields.push("customer");
       // 고객사 이름 찾기
-      const oldCustomerName = existing.customerId ? 
-        custs.find(c => c._id.toString() === existing.customerId)?.name : 
-        undefined;
-      const newCustomerName = newCustomerId ? 
-        custs.find(c => c._id.toString() === newCustomerId)?.name : 
-        undefined;
+      const oldCustomerName = existing.customerId
+        ? custs.find((c) => c._id.toString() === existing.customerId)?.name
+        : undefined;
+      const newCustomerName = newCustomerId
+        ? custs.find((c) => c._id.toString() === newCustomerId)?.name
+        : undefined;
       fieldChanges.customer = { from: oldCustomerName, to: newCustomerName };
     }
   }
@@ -2165,18 +2239,29 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       });
       newAffectsVersionId = ver?._id.toString();
     }
-    
+
     if (newAffectsVersionId !== existing.affectsVersionId) {
       updateFields.affectsVersionId = newAffectsVersionId;
-      changedFields.push('affectsVersion');
+      changedFields.push("affectsVersion");
       // 영향 받는 버전 이름 찾기
-      const oldAffectsVersionName = existing.affectsVersionId ? 
-        (await versionsCollection.findOne({ _id: new ObjectId(existing.affectsVersionId) }))?.name : 
-        undefined;
-      const newAffectsVersionName = newAffectsVersionId ? 
-        (await versionsCollection.findOne({ _id: new ObjectId(newAffectsVersionId) }))?.name : 
-        undefined;
-      fieldChanges.affectsVersion = { from: oldAffectsVersionName, to: newAffectsVersionName };
+      const oldAffectsVersionName = existing.affectsVersionId
+        ? (
+            await versionsCollection.findOne({
+              _id: new ObjectId(existing.affectsVersionId),
+            })
+          )?.name
+        : undefined;
+      const newAffectsVersionName = newAffectsVersionId
+        ? (
+            await versionsCollection.findOne({
+              _id: new ObjectId(newAffectsVersionId),
+            })
+          )?.name
+        : undefined;
+      fieldChanges.affectsVersion = {
+        from: oldAffectsVersionName,
+        to: newAffectsVersionName,
+      };
     }
   }
   if (fixVersion !== undefined) {
@@ -2190,37 +2275,53 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
       });
       newFixVersionId = ver?._id.toString();
     }
-    
+
     if (newFixVersionId !== existing.fixVersionId) {
       updateFields.fixVersionId = newFixVersionId;
-      changedFields.push('fixVersion');
+      changedFields.push("fixVersion");
       // 수정 버전 이름 찾기
-      const oldFixVersionName = existing.fixVersionId ? 
-        (await versionsCollection.findOne({ _id: new ObjectId(existing.fixVersionId) }))?.name : 
-        undefined;
-      const newFixVersionName = newFixVersionId ? 
-        (await versionsCollection.findOne({ _id: new ObjectId(newFixVersionId) }))?.name : 
-        undefined;
-      fieldChanges.fixVersion = { from: oldFixVersionName, to: newFixVersionName };
+      const oldFixVersionName = existing.fixVersionId
+        ? (
+            await versionsCollection.findOne({
+              _id: new ObjectId(existing.fixVersionId),
+            })
+          )?.name
+        : undefined;
+      const newFixVersionName = newFixVersionId
+        ? (
+            await versionsCollection.findOne({
+              _id: new ObjectId(newFixVersionId),
+            })
+          )?.name
+        : undefined;
+      fieldChanges.fixVersion = {
+        from: oldFixVersionName,
+        to: newFixVersionName,
+      };
     }
   }
   if (projectId !== undefined && projectId !== existing.projectId) {
     updateFields.projectId = projectId;
-    changedFields.push('project');
+    changedFields.push("project");
     // 프로젝트 이름 찾기
-    const oldProject = await projectsCollection.findOne({ _id: new ObjectId(existing.projectId) });
-    const newProject = await projectsCollection.findOne({ _id: new ObjectId(projectId) });
+    const oldProject = await projectsCollection.findOne({
+      _id: new ObjectId(existing.projectId),
+    });
+    const newProject = await projectsCollection.findOne({
+      _id: new ObjectId(projectId),
+    });
     fieldChanges.project = { from: oldProject?.name, to: newProject?.name };
   }
-  
+
   // 실제로 변경된 필드가 있는 경우에만 updatedAt과 기록 추가
   if (changedFields.length > 0 || commentEntry) {
     updateFields.updatedAt = new Date().toISOString();
   }
-  
+
   // 마이그레이션 모드 확인
-  const isMigration = req.body.isMigration === 'true' || req.body.isMigration === true;
-  
+  const isMigration =
+    req.body.isMigration === "true" || req.body.isMigration === true;
+
   let historyEntry;
   if (changedFields.length > 0 && !isMigration) {
     historyEntry = {
@@ -2235,11 +2336,11 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
     historyEntry.fromStatus = fromStatus;
     historyEntry.toStatus = toStatus;
   }
-  
+
   const updateOperation = {
     $set: updateFields,
   };
-  
+
   // 기록 또는 댓글이 있는 경우에만 $push 추가
   if (historyEntry || commentEntry) {
     updateOperation.$push = {};
@@ -2262,13 +2363,13 @@ app.put("/api/issues/:id", upload.array("files"), async (req, res) => {
         // 마이그레이션에서 전송한 원본 파일명이 있으면 사용
         let originalName;
         if (req.body.originalFilename) {
-          originalName = Array.isArray(req.body.originalFilename) 
-            ? req.body.originalFilename[index] 
+          originalName = Array.isArray(req.body.originalFilename)
+            ? req.body.originalFilename[index]
             : req.body.originalFilename;
         } else {
           originalName = Buffer.from(f.originalname, "latin1").toString("utf8");
         }
-        
+
         return {
           filename: f.filename,
           originalName: originalName,
@@ -2318,14 +2419,15 @@ app.post("/api/issues/:id/comments", async (req, res) => {
 
   const isAdmin = req.session.user.isAdmin;
   const authorId = isAdmin && userId ? userId : req.session.user.userid;
-  const commentDate = isAdmin && createdAt ? createdAt : new Date().toISOString();
+  const commentDate =
+    isAdmin && createdAt ? createdAt : new Date().toISOString();
 
   const comment = {
     userId: authorId,
     text: text.trim(),
     createdAt: commentDate,
   };
-  
+
   // 마이그레이션 모드일 때는 히스토리 엔트리를 생성하지 않음
   const updateOperation = {
     $push: {
@@ -2333,7 +2435,7 @@ app.post("/api/issues/:id/comments", async (req, res) => {
     },
     $set: { updatedAt: new Date().toISOString() },
   };
-  
+
   // 마이그레이션이 아닐 때만 히스토리 엔트리 추가
   if (!isMigration) {
     updateOperation.$push.history = {
@@ -2343,7 +2445,7 @@ app.post("/api/issues/:id/comments", async (req, res) => {
       comment: comment.text,
     };
   }
-  
+
   const result = await issuesCollection.findOneAndUpdate(
     { _id: new ObjectId(id) },
     updateOperation,
@@ -2380,11 +2482,18 @@ app.post("/api/issues/:id/comments", async (req, res) => {
   res.json(await mapIssueWithLookups(result));
 });
 
-async function createNotification(userId, type, message, issueId, issueKey, isMigration = false) {
+async function createNotification(
+  userId,
+  type,
+  message,
+  issueId,
+  issueKey,
+  isMigration = false
+) {
   if (!userId) return;
   // 마이그레이션 모드에서는 알림을 생성하지 않음
   if (isMigration) return;
-  
+
   await notificationsCollection.insertOne({
     userId,
     type,
@@ -2438,7 +2547,7 @@ app.delete("/api/issues/:id", async (req, res) => {
   res.status(204).send();
 });
 
-const frontendDistPath = path.join(__dirname, "frontend-issue-tracker", "dist");
+const frontendDistPath = path.join(__dirname, "frontend-dist");
 app.use(express.static(frontendDistPath));
 
 app.get("*", (req, res) => {

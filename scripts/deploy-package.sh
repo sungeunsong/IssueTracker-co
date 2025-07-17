@@ -12,12 +12,12 @@ npm run build
 # 배포용 디렉토리 생성
 DEPLOY_DIR="deploy-package"
 rm -rf $DEPLOY_DIR
-mkdir -p $DEPLOY_DIR
+mkdir -p $DEPLOY_DIR/frontend-dist
 
 echo "2. 배포 파일 복사..."
 # 빌드된 파일들
 cp -r dist/ $DEPLOY_DIR/
-cp -r frontend-issue-tracker/dist/ $DEPLOY_DIR/frontend-dist/
+cp -r frontend-issue-tracker/dist/* $DEPLOY_DIR/frontend-dist/
 
 # 설정 파일들
 cp package.json $DEPLOY_DIR/
