@@ -360,8 +360,15 @@ export const IssueForm: React.FC<IssueFormProps> = ({
             id="issue-type"
             value={type}
             onChange={(e) => {
-              setType(e.target.value);
+              const newType = e.target.value;
+              setType(newType);
               if (typeError) setTypeError("");
+              
+              // 라이선스 유형 선택 시 스니펫 자동 삽입
+              if (newType === "license" && !content.trim()) {
+                const licenseSnippet = `용도: \n고객사: \n노드 수량: \n유효기간: \n유효IP: `;
+                setContent(licenseSnippet);
+              }
             }}
             className={`mt-1 block w-full shadow-sm sm:text-sm border rounded-md py-2 px-3 ${
               typeError ? "border-red-500" : "border-slate-300"
