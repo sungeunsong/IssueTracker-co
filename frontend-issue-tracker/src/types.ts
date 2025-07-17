@@ -43,6 +43,7 @@ export const DEFAULT_ISSUE_TYPES: TypeItem[] = [
   { id: "bug", name: "버그", color: "red", order: 2 },
   { id: "feature", name: "새 기능", color: "lime", order: 3 },
   { id: "improvement", name: "개선", color: "yellow", order: 4 },
+  { id: "license", name: "라이선스", color: "purple", order: 5 },
 ];
 
 export const DEFAULT_PRIORITIES: PriorityItem[] = [
@@ -169,6 +170,7 @@ export const issueTypeColors: Record<string, string> = {
   버그: "bg-red-100 text-red-800 ring-red-600/20",
   "새 기능": "bg-lime-100 text-lime-800 ring-lime-600/20",
   개선: "bg-amber-100 text-amber-800 ring-amber-600/20",
+  라이선스: "bg-purple-100 text-purple-800 ring-purple-600/20",
 };
 
 export const issuePriorityColors: Record<string, string> = {

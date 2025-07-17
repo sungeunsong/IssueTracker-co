@@ -101,6 +101,7 @@ const DEFAULT_TYPES = [
   { id: "bug", name: "버그", color: "red", order: 2 },
   { id: "feature", name: "새 기능", color: "lime", order: 3 },
   { id: "improvement", name: "개선", color: "yellow", order: 4 },
+  { id: "license", name: "라이선스", color: "purple", order: 5 },
 ];
 const DEFAULT_PRIORITIES = [
   { id: "highest", name: "HIGHEST", color: "red", order: 1 },
@@ -135,6 +136,7 @@ function mapOldTypeToId(oldType) {
     버그: "bug",
     "새 기능": "feature",
     개선: "improvement",
+    라이선스: "license",
   };
   return mapping[oldType] || "task";
 }

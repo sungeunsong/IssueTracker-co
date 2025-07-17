@@ -118,6 +118,8 @@ export const IssueForm: React.FC<IssueFormProps> = ({
         return { label: typeName, value: typeValue, icon: "📝" };
       } else if (typeName === "새 기능") {
         return { label: typeName, value: typeValue, icon: "➕" };
+      } else if (typeName === "라이선스") {
+        return { label: typeName, value: typeValue, icon: "📜" };
       } else {
         return { label: typeName, value: typeValue, icon: "📦" };
       }
