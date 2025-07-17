@@ -416,6 +416,12 @@ app.use(
     secret: process.env.SESSION_SECRET || "change_this_secret",
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // HTTPS에서만 secure 쿠키
+      httpOnly: true, // XSS 방지
+      maxAge: 24 * 60 * 60 * 1000, // 24시간
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 크로스 도메인 허용
+    },
   })
 );
 app.use("/uploads", express.static(UPLOAD_DIR, { fallthrough: false }));
