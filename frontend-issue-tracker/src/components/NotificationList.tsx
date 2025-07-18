@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Notification } from '../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,6 +10,20 @@ interface NotificationListProps {
 
 const NotificationList: React.FC<NotificationListProps> = ({ notifications, onClose, onRead }) => {
   const navigate = useNavigate();
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleNotificationClick = (notification: Notification) => {
     onRead(notification.id);
@@ -18,7 +32,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ notifications, onCl
   };
 
   return (
-    <div className="absolute top-16 right-4 w-80 bg-white rounded-lg shadow-lg border z-50">
+    <div ref={notificationRef} className="absolute top-16 right-4 w-80 bg-white rounded-lg shadow-lg border z-50">
       <div className="p-4 border-b">
         <h3 className="font-semibold">알림</h3>
       </div>
