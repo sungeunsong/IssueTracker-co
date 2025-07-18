@@ -22,6 +22,7 @@ interface TopBarProps {
   hasUnreadNotifications: boolean;
   onToggleNotifications: () => void;
   onCreateProject: () => void; // 프로젝트 추가 함수 추가
+  onOpenNotificationSettings: () => void; // 알림 설정 모달 열기 함수 추가
 }
 
 const TopBar: React.FC<TopBarProps> = ({
@@ -37,6 +38,7 @@ const TopBar: React.FC<TopBarProps> = ({
   hasUnreadNotifications,
   onToggleNotifications,
   onCreateProject,
+  onOpenNotificationSettings,
 }) => {
   return (
     <header
@@ -170,6 +172,39 @@ const TopBar: React.FC<TopBarProps> = ({
                       />
                       사용자 설정
                     </Link>
+                  )}
+                </Menu.Item>
+                <Menu.Item>
+                  {({ active }) => (
+                    <button
+                      onClick={onOpenNotificationSettings}
+                      className={`${
+                        active ? "bg-blue-500 text-white" : "text-gray-900"
+                      } group flex rounded-md items-center w-full px-3 py-2 text-sm`}
+                    >
+                      <svg
+                        className={`w-4 h-4 mr-3 ${
+                          active ? "text-white" : "text-gray-400"
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 17h5l-5 5V17z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10.05 4.575a6 6 0 0 1 9.375 5.043 6 6 0 0 1-9.375 5.043V4.575z"
+                        />
+                      </svg>
+                      알림 설정
+                    </button>
                   )}
                 </Menu.Item>
               </div>

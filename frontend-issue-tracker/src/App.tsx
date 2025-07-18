@@ -27,6 +27,7 @@ import type {
 import { DEFAULT_ISSUE_TYPES, DEFAULT_PRIORITIES } from "./types";
 import { LoginScreen } from "./components/LoginScreen";
 import NotificationList from "./components/NotificationList";
+import NotificationSettingsModal from "./components/NotificationSettingsModal";
 
 const ITEMS_PER_PAGE_LIST = 10;
 
@@ -136,6 +137,8 @@ const MainContent: React.FC<{
   setShowNotifications: (flag: boolean) => void;
   setIssueToResolve: (issue: Issue | null) => void;
   isSidebarOpen: boolean;
+  showNotificationSettingsModal: boolean;
+  setShowNotificationSettingsModal: (flag: boolean) => void;
 }> = ({
   isAuthenticated,
   isLoading,
@@ -216,6 +219,8 @@ const MainContent: React.FC<{
   setShowNotifications,
   setIssueToResolve,
   isSidebarOpen,
+  showNotificationSettingsModal,
+  setShowNotificationSettingsModal,
 }) => {
   // 로딩 중일 때는 로딩 화면 표시
   if (isLoading) {
@@ -270,6 +275,7 @@ const MainContent: React.FC<{
             setShowAddProjectModal(true);
             setError(null);
           }}
+          onOpenNotificationSettings={() => setShowNotificationSettingsModal(true)}
         />
         {/* <FilterBar
           searchTerm={searchTerm}
@@ -367,28 +373,6 @@ const MainContent: React.FC<{
                         <span>{currentProject.name}</span>
                       </div>
                     )}
-
-                    {/* 검색창 */}
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="이슈 검색..."
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                    </div>
                   </div>
 
                   {/* <div className="flex items-center space-x-2">
@@ -444,31 +428,31 @@ const MainContent: React.FC<{
                 <div className="flex items-center justify-between">
                   {/* 좌측: 탭들 */}
                   <div className="flex space-x-6">
-                    <button 
+                    <button
                       onClick={() => setTabMode("issues")}
                       className={`pb-2 border-b-2 font-medium ${
-                        tabMode === "issues" 
-                          ? "border-blue-500 text-blue-600" 
+                        tabMode === "issues"
+                          ? "border-blue-500 text-blue-600"
                           : "border-transparent text-gray-500 hover:text-gray-700"
                       }`}
                     >
                       모든 업무
                     </button>
-                    <button 
+                    <button
                       onClick={() => setTabMode("releases")}
                       className={`pb-2 border-b-2 font-medium ${
-                        tabMode === "releases" 
-                          ? "border-blue-500 text-blue-600" 
+                        tabMode === "releases"
+                          ? "border-blue-500 text-blue-600"
                           : "border-transparent text-gray-500 hover:text-gray-700"
                       }`}
                     >
                       릴리즈
                     </button>
-                    <button 
+                    <button
                       onClick={() => setTabMode("components")}
                       className={`pb-2 border-b-2 font-medium ${
-                        tabMode === "components" 
-                          ? "border-blue-500 text-blue-600" 
+                        tabMode === "components"
+                          ? "border-blue-500 text-blue-600"
                           : "border-transparent text-gray-500 hover:text-gray-700"
                       }`}
                     >
@@ -563,18 +547,18 @@ const MainContent: React.FC<{
                 )}
                 {tabMode === "releases" && currentProject && (
                   <div className="h-full overflow-y-auto p-6">
-                    <ProjectVersions 
-                      projectId={currentProject.id} 
-                      users={users} 
-                      currentUserId={currentUserId} 
+                    <ProjectVersions
+                      projectId={currentProject.id}
+                      users={users}
+                      currentUserId={currentUserId}
                     />
                   </div>
                 )}
                 {tabMode === "components" && currentProject && (
                   <div className="h-full overflow-y-auto p-6">
-                    <ProjectComponents 
-                      projectId={currentProject.id} 
-                      users={users} 
+                    <ProjectComponents
+                      projectId={currentProject.id}
+                      users={users}
                     />
                   </div>
                 )}
@@ -787,6 +771,12 @@ const MainContent: React.FC<{
           onRead={handleReadNotification}
         />
       )}
+
+      <NotificationSettingsModal
+        isOpen={showNotificationSettingsModal}
+        onClose={() => setShowNotificationSettingsModal(false)}
+      />
+
     </div>
   );
 };
@@ -833,6 +823,7 @@ const App: React.FC = () => {
   const [issueToDelete, setIssueToDelete] = useState<string | null>(null);
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [issueToResolve, setIssueToResolve] = useState<Issue | null>(null);
+  const [showNotificationSettingsModal, setShowNotificationSettingsModal] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -1595,6 +1586,8 @@ const App: React.FC = () => {
               setShowNotifications: setShowNotifications,
               setIssueToResolve: setIssueToResolve,
               isSidebarOpen: isSidebarOpen,
+              showNotificationSettingsModal,
+              setShowNotificationSettingsModal,
             }}
           />
         }
