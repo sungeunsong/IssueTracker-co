@@ -115,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {isSidebarOpen && (
               <div>
                 <h1 className="text-lg font-semibold text-gray-900">
-                  Acra Flux
+                  Issue Tracker
                 </h1>
               </div>
             )}

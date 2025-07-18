@@ -362,17 +362,47 @@ export const IssueDetailPanel: React.FC<IssueDetailPanelProps> = ({
           <DetailItem
             label="등록자"
             value={
-              users.find((u) => u.userid === issue.reporter)?.username ||
-              issue.reporter
+              (() => {
+                const reporterUser = users.find((u) => u.userid === issue.reporter);
+                return (
+                  <div className="flex items-center space-x-2">
+                    {reporterUser?.profileImage ? (
+                      <img
+                        src={reporterUser.profileImage}
+                        alt="Reporter"
+                        className="w-6 h-6 rounded-full"
+                      />
+                    ) : (
+                      <UserAvatarPlaceholderIcon className="w-6 h-6 text-gray-400" />
+                    )}
+                    <span>{reporterUser?.username || issue.reporter}</span>
+                  </div>
+                );
+              })()
             }
           />
           <DetailItem
             label="담당자"
             value={
-              issue.assignee
-                ? users.find((u) => u.userid === issue.assignee)?.username ||
-                  issue.assignee
-                : undefined
+              issue.assignee ? (
+                (() => {
+                  const assigneeUser = users.find((u) => u.userid === issue.assignee);
+                  return (
+                    <div className="flex items-center space-x-2">
+                      {assigneeUser?.profileImage ? (
+                        <img
+                          src={assigneeUser.profileImage}
+                          alt="Assignee"
+                          className="w-6 h-6 rounded-full"
+                        />
+                      ) : (
+                        <UserAvatarPlaceholderIcon className="w-6 h-6 text-gray-400" />
+                      )}
+                      <span>{assigneeUser?.username || issue.assignee}</span>
+                    </div>
+                  );
+                })()
+              ) : undefined
             }
           />
           {showComponents && (

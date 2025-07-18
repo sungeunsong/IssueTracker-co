@@ -14,6 +14,7 @@ import {
   getPriorityNameById,
 } from '../types';
 import { RichTextViewer } from './RichTextViewer';
+import { UserAvatarPlaceholderIcon } from './icons/UserAvatarPlaceholderIcon';
 
 interface IssueDetailsViewProps {
   issue: Issue;
@@ -72,8 +73,26 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({
   const statusColor = getStatusColorById(issue.statusId || issue.status, statuses as StatusItem[]);
   const typeName = getTypeNameById(issue.typeId || issue.type, types as TypeItem[]);
   const priorityName = getPriorityNameById(issue.priorityId || issue.priority, priorities as PriorityItem[]);
-  const reporterName = users.find(u => u.userid === issue.reporter)?.username || issue.reporter;
-  const assigneeName = issue.assignee ? (users.find(u => u.userid === issue.assignee)?.username || issue.assignee) : undefined;
+  
+  // 사용자 정보 조회 헬퍼 함수
+  const getReporterUser = () => users.find(u => u.userid === issue.reporter);
+  const getAssigneeUser = () => issue.assignee ? users.find(u => u.userid === issue.assignee) : null;
+  
+  // 사용자 표시 컴포넌트 헬퍼 함수
+  const renderUserWithAvatar = (user: any, defaultId: string) => (
+    <div className="flex items-center space-x-2">
+      {user?.profileImage ? (
+        <img
+          src={user.profileImage}
+          alt="User"
+          className="w-6 h-6 rounded-full"
+        />
+      ) : (
+        <UserAvatarPlaceholderIcon className="w-6 h-6 text-gray-400" />
+      )}
+      <span>{user?.username || defaultId}</span>
+    </div>
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -147,8 +166,14 @@ export const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({
                   </span>
                 } 
               />
-              <DetailItem label="담당자" value={assigneeName} />
-              <DetailItem label="등록자" value={reporterName} />
+              <DetailItem 
+                label="담당자" 
+                value={issue.assignee ? renderUserWithAvatar(getAssigneeUser(), issue.assignee) : undefined} 
+              />
+              <DetailItem 
+                label="등록자" 
+                value={renderUserWithAvatar(getReporterUser(), issue.reporter)} 
+              />
               <DetailItem label="업무 유형" value={typeName} />
               <DetailItem label="우선순위" value={priorityName} />
               {showComponents && <DetailItem label="컴포넌트" value={issue.component} />}
