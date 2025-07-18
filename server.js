@@ -27,7 +27,6 @@ const port = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const DB_NAME = process.env.DB_NAME || "issuetracker";
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_MOCK_MODE = process.env.TELEGRAM_MOCK_MODE === "true";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, "uploads");
 if (!fs.existsSync(UPLOAD_DIR)) {
