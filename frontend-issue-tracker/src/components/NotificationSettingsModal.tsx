@@ -6,6 +6,9 @@ interface NotificationSettings {
   mentions: boolean;
   issueStatusChanged: boolean;
   issueCommented: boolean;
+  messengerNotifications: boolean;
+  messengerType: 'slack' | 'telegram' | null;
+  messengerIntegrated: boolean;
 }
 
 interface NotificationSettingsModalProps {
@@ -22,9 +25,18 @@ const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
     mentions: true,
     issueStatusChanged: true,
     issueCommented: true,
+    messengerNotifications: false,
+    messengerType: null,
+    messengerIntegrated: false,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [telegramStatus, setTelegramStatus] = useState({
+    isConnected: false,
+    telegramUsername: null as string | null
+  });
+  const [chatId, setChatId] = useState('');
+  const [isSavingChatId, setIsSavingChatId] = useState(false);
 
   const notificationTypes = [
     {
@@ -72,6 +84,7 @@ const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       fetchSettings();
+      fetchTelegramStatus();
     }
   }, [isOpen]);
 
@@ -92,11 +105,86 @@ const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
     }
   };
 
+  const fetchTelegramStatus = async () => {
+    try {
+      const response = await fetch('/api/telegram/status', {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTelegramStatus(data);
+        if (data.isConnected) {
+          setSettings(prev => ({
+            ...prev,
+            messengerType: 'telegram',
+            messengerIntegrated: true,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('텔레그램 상태 확인 실패:', error);
+    }
+  };
+
   const handleToggle = (key: keyof NotificationSettings) => {
     setSettings(prev => ({
       ...prev,
       [key]: !prev[key],
     }));
+  };
+
+  const handleTelegramSave = async () => {
+    if (!chatId.trim()) {
+      alert('Chat ID를 입력해주세요.');
+      return;
+    }
+    setIsSavingChatId(true);
+    try {
+      const response = await fetch('/api/telegram/save-chat-id', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ chatId }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message);
+        setTelegramStatus({ isConnected: true, telegramUsername: data.telegramUsername });
+        setSettings(prev => ({ ...prev, messengerIntegrated: true }));
+      } else {
+        throw new Error(data.message || '연동에 실패했습니다.');
+      }
+    } catch (error: any) {
+      console.error('텔레그램 연동 실패:', error);
+      alert(`텔레그램 연동 실패: ${error.message}`);
+    } finally {
+      setIsSavingChatId(false);
+    }
+  };
+
+  const handleTelegramDisconnect = async () => {
+    if (!confirm('텔레그램 연동을 해제하시겠습니까?')) {
+      return;
+    }
+    try {
+      const response = await fetch('/api/telegram/disconnect', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        setTelegramStatus({ isConnected: false, telegramUsername: null });
+        setSettings(prev => ({ ...prev, messengerType: null, messengerIntegrated: false }));
+        setChatId('');
+        alert('텔레그램 연동이 해제되었습니다.');
+      } else {
+        throw new Error('연동 해제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('텔레그램 연동 해제 실패:', error);
+      alert('텔레그램 연동 해제에 실패했습니다.');
+    }
   };
 
   const handleSave = async () => {
@@ -110,7 +198,6 @@ const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
         credentials: 'include',
         body: JSON.stringify(settings),
       });
-      
       if (response.ok) {
         onClose();
       } else {
@@ -118,7 +205,7 @@ const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
       }
     } catch (error) {
       console.error('알림 설정 저장 실패:', error);
-      alert('설정 저장에 실패했습니다. 다시 시도해주세요.');
+      alert('설정 저장에 실패했습니다.');
     } finally {
       setSaving(false);
     }
@@ -146,42 +233,125 @@ const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-gray-600 mb-6">
-                  받고 싶은 알림 유형을 선택하세요.
-                </p>
+                <p className="text-sm text-gray-600 mb-6">받고 싶은 알림 유형을 선택하세요.</p>
                 
                 {notificationTypes.map((type) => (
                   <div key={type.key} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start space-x-3">
-                      <div className="text-blue-500 mt-0.5">
-                        {type.icon}
-                      </div>
+                      <div className="text-blue-500 mt-0.5">{type.icon}</div>
                       <div className="flex-1">
-                        <h4 className="text-sm font-medium text-gray-900">
-                          {type.title}
-                        </h4>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {type.description}
-                        </p>
+                        <h4 className="text-sm font-medium text-gray-900">{type.title}</h4>
+                        <p className="text-xs text-gray-500 mt-1">{type.description}</p>
                       </div>
                     </div>
                     <div className="flex-shrink-0">
                       <button
                         type="button"
-                        className={`${
-                          settings[type.key] ? 'bg-blue-600' : 'bg-gray-200'
-                        } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                        className={`${settings[type.key] ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                         onClick={() => handleToggle(type.key)}
                       >
-                        <span
-                          className={`${
-                            settings[type.key] ? 'translate-x-5' : 'translate-x-0'
-                          } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                        />
+                        <span className={`${settings[type.key] ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`} />
                       </button>
                     </div>
                   </div>
                 ))}
+
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h4 className="text-sm font-medium text-gray-900 mb-4">메신저 알림</h4>
+                  
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start space-x-3">
+                      <div className="text-blue-500 mt-0.5">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900">메신저로 알림 받기</h4>
+                        <p className="text-xs text-gray-500 mt-1">외부 메신저 앱으로 알림을 받습니다</p>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <button
+                        type="button"
+                        className={`${settings.messengerNotifications ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                        onClick={() => handleToggle('messengerNotifications')}
+                      >
+                        <span className={`${settings.messengerNotifications ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {settings.messengerNotifications && (
+                    <div className="mt-4 ml-8 space-y-3">
+                      <p className="text-sm text-gray-600 mb-3">알림을 받을 메신저를 선택하세요:</p>
+                      
+                      <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-gray-50">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="telegram"
+                            name="messengerType"
+                            value="telegram"
+                            checked={settings.messengerType === 'telegram'}
+                            onChange={(e) => setSettings(prev => ({ ...prev, messengerType: e.target.value as 'telegram' }))}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                          />
+                          <label htmlFor="telegram" className="text-sm font-medium text-gray-900">
+                            Telegram
+                            {telegramStatus.isConnected && telegramStatus.telegramUsername && (
+                              <span className="ml-2 text-xs text-green-600">({telegramStatus.telegramUsername})</span>
+                            )}
+                          </label>
+                        </div>
+                      </div>
+
+                      {settings.messengerType === 'telegram' && (
+                        <div className="p-4 border-l-4 border-blue-400 bg-blue-50">
+                          {telegramStatus.isConnected ? (
+                            <div className='text-center'>
+                              <p className='text-sm text-green-700'>텔레그램이 성공적으로 연동되었습니다.</p>
+                              <button
+                                type="button"
+                                className="mt-2 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-600 rounded-md hover:bg-red-50"
+                                onClick={handleTelegramDisconnect}
+                              >
+                                연동해제
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <p className="text-sm text-gray-700">
+                                1. 텔레그램에서 <a href="https://t.me/issuetracker_alert_bot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">@issuetracker_alert_bot</a>을 검색하여 대화를 시작하세요. (아무 메시지나 보내기)
+                              </p>
+                              <p className="text-sm text-gray-700">
+                                2. 텔레그램에서 <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">@userinfobot</a>을 검색하여 대화를 시작하세요.
+                              </p>
+                              <p className="text-sm text-gray-700">
+                                3. 봇이 알려주는 숫자 'Id'를 아래에 입력하세요.
+                              </p>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="text"
+                                  value={chatId}
+                                  onChange={(e) => setChatId(e.target.value)}
+                                  placeholder="Chat ID 입력"
+                                  className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <button
+                                  type="button"
+                                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                  onClick={handleTelegramSave}
+                                  disabled={isSavingChatId}
+                                >
+                                  {isSavingChatId ? '확인 중...' : '저장'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -199,17 +369,7 @@ const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
                 onClick={handleSave}
                 disabled={saving || loading}
               >
-                {saving ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    저장 중...
-                  </>
-                ) : (
-                  '저장'
-                )}
+                {saving ? '저장 중...' : '저장'}
               </button>
             </div>
           </Dialog.Panel>
