@@ -49,7 +49,9 @@ export const MentionTextarea: React.FC<MentionTextareaProps> = ({
       if (!projectId) return;
       
       try {
-        const response = await fetch(`/api/projects/${projectId}/users`);
+        const response = await fetch(`/api/projects/${projectId}/users`, {
+          credentials: "include"
+        });
         if (response.ok) {
           const userData = await response.json();
           setUsers(userData);
@@ -79,28 +81,53 @@ export const MentionTextarea: React.FC<MentionTextareaProps> = ({
 
   // @ 문자 위치 계산을 위한 헬퍼 함수
   const getCaretPosition = (textArea: HTMLTextAreaElement, atIndex: number) => {
-    const textBeforeAt = textArea.value.substring(0, atIndex);
-    const lines = textBeforeAt.split('\n');
-    const currentLine = lines.length - 1;
-    const currentColumn = lines[currentLine].length;
-    
-    // 폰트 크기와 줄 간격 가져오기
+    // 임시 요소를 만들어서 정확한 텍스트 크기 측정
+    const tempDiv = document.createElement('div');
     const styles = window.getComputedStyle(textArea);
-    const fontSize = parseFloat(styles.fontSize);
-    const lineHeight = parseFloat(styles.lineHeight) || fontSize * 1.2;
-    const paddingTop = parseFloat(styles.paddingTop) || 0;
-    const paddingLeft = parseFloat(styles.paddingLeft) || 0;
     
-    // 문자 너비 추정 (대략적)
-    const charWidth = fontSize * 0.6;
+    // textarea 스타일을 복사
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.visibility = 'hidden';
+    tempDiv.style.whiteSpace = 'pre-wrap';
+    tempDiv.style.wordWrap = 'break-word';
+    tempDiv.style.fontSize = styles.fontSize;
+    tempDiv.style.fontFamily = styles.fontFamily;
+    tempDiv.style.lineHeight = styles.lineHeight;
+    tempDiv.style.padding = styles.padding;
+    tempDiv.style.border = styles.border;
+    tempDiv.style.width = styles.width;
     
+    document.body.appendChild(tempDiv);
+    
+    // @ 문자까지의 텍스트를 설정
+    const textBeforeAt = textArea.value.substring(0, atIndex + 1);
+    tempDiv.textContent = textBeforeAt;
+    
+    // 마지막 문자(@) 위치 측정
+    const range = document.createRange();
+    const textNode = tempDiv.firstChild;
+    if (textNode) {
+      range.setStart(textNode, Math.max(0, textBeforeAt.length - 1));
+      range.setEnd(textNode, textBeforeAt.length);
+      const rangeRect = range.getBoundingClientRect();
+      
+      document.body.removeChild(tempDiv);
+      
+      const textareaRect = textArea.getBoundingClientRect();
+      
+      return {
+        x: rangeRect.right,
+        y: rangeRect.bottom + 5,
+      };
+    }
+    
+    document.body.removeChild(tempDiv);
+    
+    // fallback to original method
     const rect = textArea.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-    
     return {
-      x: rect.left + scrollLeft + paddingLeft + (currentColumn * charWidth),
-      y: rect.top + scrollTop + paddingTop + (currentLine * lineHeight) + lineHeight + 5,
+      x: rect.left + 10,
+      y: rect.bottom + 5,
     };
   };
 

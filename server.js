@@ -11,7 +11,6 @@ import dotenv from "dotenv";
 import axios from "axios";
 import dns from "dns";
 import telegramRouter, { sendTelegramMessage } from "./routes/telegram.js";
-import notificationsRouter from "./routes/notifications.js";
 dotenv.config();
 
 // DNS 서버를 Google DNS로 설정 (네트워크 연결 문제 해결)
@@ -428,10 +427,10 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // HTTPS에서만 secure 쿠키
+      secure: false, // HTTPS에서만 secure 쿠키
       httpOnly: true, // XSS 방지
       maxAge: 24 * 60 * 60 * 1000, // 24시간
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 크로스 도메인 허용
+      sameSite: "lax", // 크로스 도메인 허용
     },
   })
 );
@@ -459,9 +458,6 @@ app.use((req, res, next) => {
 
 // 텔레그램 라우터 연결
 app.use("/api/telegram", telegramRouter);
-
-// 알림 라우터 연결
-app.use("/api/notifications", notificationsRouter);
 
 function mapIssue(doc) {
   const {
@@ -2595,6 +2591,129 @@ async function createNotification(
     console.error("알림 생성 오류:", error);
   }
 }
+
+app.get("/api/notifications", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  const notifications = await notificationsCollection
+    .find({ userId: req.session.user.userid })
+    .sort({ createdAt: -1 })
+    .toArray();
+  res.json(
+    notifications.map((n) => ({
+      id: n._id.toString(),
+      ...n,
+    }))
+  );
+});
+
+app.post("/api/notifications/:id/read", async (req, res) => {
+  const { id } = req.params;
+  if (!req.session.user) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  const result = await notificationsCollection.updateOne(
+    { _id: new ObjectId(id), userId: req.session.user.userid },
+    { $set: { read: true } }
+  );
+  if (result.modifiedCount === 0) {
+    return res
+      .status(404)
+      .json({ message: "알림을 찾을 수 없거나 권한이 없습니다." });
+  }
+  res.status(200).json({ message: "알림을 읽음으로 표시했습니다." });
+});
+
+// 알림 설정 조회
+app.get("/api/notification-settings", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+
+  try {
+    const user = await usersCollection.findOne({
+      userid: req.session.user.userid,
+    });
+    if (!user) {
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+    }
+
+    // 기본 알림 설정
+    const defaultSettings = {
+      newIssueAssigned: true,
+      mentions: true,
+      issueStatusChanged: true,
+      issueCommented: true,
+      messengerNotifications: false,
+      messengerType: null,
+      messengerIntegrated: false,
+    };
+
+    const settings = user.notificationSettings || defaultSettings;
+    res.json(settings);
+  } catch (error) {
+    console.error("알림 설정 조회 오류:", error);
+    res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  }
+});
+
+// 알림 설정 업데이트
+app.put("/api/notification-settings", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+
+  const {
+    newIssueAssigned,
+    mentions,
+    issueStatusChanged,
+    issueCommented,
+    messengerNotifications,
+    messengerType,
+    messengerIntegrated,
+  } = req.body;
+
+  // 유효성 검사
+  if (
+    typeof newIssueAssigned !== "boolean" ||
+    typeof mentions !== "boolean" ||
+    typeof issueStatusChanged !== "boolean" ||
+    typeof issueCommented !== "boolean" ||
+    typeof messengerNotifications !== "boolean" ||
+    (messengerType !== null &&
+      !["slack", "telegram"].includes(messengerType)) ||
+    typeof messengerIntegrated !== "boolean"
+  ) {
+    return res.status(400).json({ message: "잘못된 설정 값입니다." });
+  }
+
+  try {
+    const settings = {
+      newIssueAssigned,
+      mentions,
+      issueStatusChanged,
+      issueCommented,
+      messengerNotifications,
+      messengerType,
+      messengerIntegrated,
+    };
+
+    const result = await usersCollection.updateOne(
+      { userid: req.session.user.userid },
+      { $set: { notificationSettings: settings } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+    }
+
+    res.json({ message: "알림 설정이 업데이트되었습니다." });
+  } catch (error) {
+    console.error("알림 설정 업데이트 오류:", error);
+    res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  }
+});
 
 app.delete("/api/issues/:id", async (req, res) => {
   const { id } = req.params;

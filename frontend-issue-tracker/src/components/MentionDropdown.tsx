@@ -33,13 +33,21 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
     return null;
   }
 
+  // 화면 경계 체크 및 위치 조정
+  const adjustedPosition = {
+    x: Math.min(position.x, window.innerWidth - 220), // 드롭다운 너비 + 여유분
+    y: position.y + 200 > window.innerHeight 
+      ? position.y - 200 // 아래 공간이 부족하면 위로
+      : position.y
+  };
+
   if (users.length === 0) {
     return (
       <div
         className="fixed z-[9999] bg-white border border-gray-300 rounded-md shadow-lg p-2"
         style={{
-          left: position.x,
-          top: position.y,
+          left: adjustedPosition.x,
+          top: adjustedPosition.y,
           minWidth: "200px",
         }}
       >
@@ -52,8 +60,8 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
     <div
       className="fixed z-[9999] bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto"
       style={{
-        left: position.x,
-        top: position.y,
+        left: adjustedPosition.x,
+        top: adjustedPosition.y,
         minWidth: "200px",
       }}
     >
