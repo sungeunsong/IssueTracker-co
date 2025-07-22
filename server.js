@@ -13,6 +13,7 @@ import axios from "axios";
 import telegramRouter, { sendTelegramMessage } from "./routes/telegram.js";
 import { createAuthRoutes } from "./routes/auth.js";
 import { createVersionsRoutes } from "./routes/versions.js";
+import { createProjectsRoutes } from "./routes/projects.js";
 dotenv.config();
 
 // DNS 서버를 Google DNS로 설정 (네트워크 연결 문제 해결)
@@ -469,6 +470,10 @@ app.use("/api", authRouter);
 const versionsRouter = createVersionsRoutes(versionsCollection, projectsCollection, UPLOAD_DIR, upload);
 app.use("/api", versionsRouter);
 
+// Projects 라우터 연결
+const projectsRouter = createProjectsRoutes(projectsCollection, usersCollection, componentsCollection, customersCollection, issuesCollection);
+app.use("/api", projectsRouter);
+
 function mapIssue(doc) {
   const {
     _id,
@@ -490,16 +495,7 @@ function mapIssue(doc) {
   };
 }
 
-function mapProject(doc) {
-  const { _id, nextIssueNumber, ...rest } = doc;
-  return { id: _id.toString(), ...rest };
-}
 
-
-function mapComponent(doc) {
-  const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest };
-}
 
 async function mapIssueWithLookups(doc) {
   const base = mapIssue(doc);
@@ -538,127 +534,9 @@ async function mapIssueWithLookups(doc) {
   return base;
 }
 
-app.get("/api/projects", async (req, res) => {
-  const currentUserId = req.session.user?.userid;
-  const { key, name } = req.query; // 쿼리 파라미터 추가
 
-  if (!currentUserId) {
-    return res.status(401).json({ message: "로그인이 필요합니다." });
-  }
 
-  // 현재 사용자 정보 조회
-  const currentUser = await usersCollection.findOne({ userid: currentUserId });
 
-  // 필터 조건 생성
-  let filter = {};
-  if (key) {
-    filter.key = key;
-  }
-  if (name) {
-    filter.name = name;
-  }
-
-  const projects = await projectsCollection.find(filter).toArray();
-
-  // 관리자인 경우 모든 프로젝트 반환
-  if (currentUser && currentUser.isAdmin) {
-    return res.json(projects.map(mapProject));
-  }
-
-  // 권한이 있는 프로젝트만 필터링
-  const filteredProjects = projects.filter((project) => {
-    const hasReadPermission =
-      project.readUsers && project.readUsers.includes(currentUserId);
-    const hasWritePermission =
-      project.writeUsers && project.writeUsers.includes(currentUserId);
-    const hasAdminPermission =
-      project.adminUsers && project.adminUsers.includes(currentUserId);
-
-    // 명시적으로 권한이 있는 경우만 표시
-    return hasReadPermission || hasWritePermission || hasAdminPermission;
-  });
-
-  res.json(filteredProjects.map(mapProject));
-});
-
-app.post("/api/projects", async (req, res) => {
-  const { name, key } = req.body;
-  if (!name || !key) {
-    return res
-      .status(400)
-      .json({ message: "프로젝트 이름과 키는 필수입니다." });
-  }
-  const existingKey = await projectsCollection.findOne({ key: key.trim() });
-  if (existingKey) {
-    return res
-      .status(409)
-      .json({ message: "이미 존재하는 프로젝트 키입니다." });
-  }
-  const currentUserId = req.session.user?.userid;
-  if (!currentUserId) {
-    return res.status(401).json({ message: "로그인이 필요합니다." });
-  }
-
-  const result = await projectsCollection.insertOne({
-    name: name.trim(),
-    key: key.trim().toUpperCase(),
-    nextIssueNumber: 1,
-    statuses: DEFAULT_STATUSES,
-    priorities: DEFAULT_PRIORITIES,
-    resolutions: DEFAULT_RESOLUTIONS,
-    types: DEFAULT_TYPES,
-    components: DEFAULT_COMPONENTS,
-    customers: DEFAULT_CUSTOMERS,
-    showCustomers: true,
-    showComponents: true,
-    adminUsers: [currentUserId],
-    readUsers: [currentUserId],
-    writeUsers: [currentUserId],
-  });
-  res.status(201).json({
-    id: result.insertedId.toString(),
-    name: name.trim(),
-    key: key.trim().toUpperCase(),
-    statuses: DEFAULT_STATUSES,
-    priorities: DEFAULT_PRIORITIES,
-    resolutions: DEFAULT_RESOLUTIONS,
-    types: DEFAULT_TYPES,
-    components: DEFAULT_COMPONENTS,
-    customers: DEFAULT_CUSTOMERS,
-    showCustomers: true,
-    showComponents: true,
-  });
-});
-
-app.get("/api/projects/:projectId", async (req, res) => {
-  const { projectId } = req.params;
-  const project = await projectsCollection.findOne({
-    _id: new ObjectId(projectId),
-  });
-  if (!project) {
-    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
-  }
-  res.json(mapProject(project));
-});
-
-app.put("/api/projects/:projectId", async (req, res) => {
-  const { projectId } = req.params;
-  const { showCustomers, showComponents } = req.body;
-  const update = {};
-  if (showCustomers !== undefined) update.showCustomers = !!showCustomers;
-  if (showComponents !== undefined) update.showComponents = !!showComponents;
-  await projectsCollection.updateOne(
-    { _id: new ObjectId(projectId) },
-    { $set: update }
-  );
-  const proj = await projectsCollection.findOne({
-    _id: new ObjectId(projectId),
-  });
-  if (!proj) {
-    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
-  }
-  res.json(mapProject(proj));
-});
 
 
 
