@@ -117,20 +117,22 @@ const TopBar: React.FC<TopBarProps> = ({
         {/* Right Section: User Registration Button, Notifications, User Menu */}
         <div className="flex items-center space-x-3">
           {/* User Registration Button - 흰 배경에 파란 테두리 */}
-          <button
-            onClick={onRequestRegister}
-            type="button"
-            className="inline-flex items-center space-x-2 px-4 py-2 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span>사용자 등록</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={onRequestRegister}
+              type="button"
+              className="inline-flex items-center space-x-2 px-4 py-2 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>사용자 등록</span>
+            </button>
+          )}
 
           {/* Notifications */}
           <NotificationIcon
