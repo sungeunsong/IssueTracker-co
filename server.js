@@ -497,6 +497,7 @@ function mapIssue(doc) {
 
 
 
+
 async function mapIssueWithLookups(doc) {
   const base = mapIssue(doc);
   if (doc.componentId) {
@@ -591,75 +592,6 @@ app.get("/api/users/:userId", async (req, res) => {
   });
 });
 
-app.get("/api/projects/:projectId/users", async (req, res) => {
-  const { projectId } = req.params;
-  const currentUserId = req.session.user?.userid;
-
-  if (!currentUserId) {
-    return res.status(401).json({ message: "로그인이 필요합니다." });
-  }
-
-  const project = await projectsCollection.findOne({
-    _id: new ObjectId(projectId),
-  });
-
-  if (!project) {
-    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
-  }
-
-  // 현재 사용자 정보 조회
-  const currentUser = await usersCollection.findOne({ userid: currentUserId });
-
-  // 관리자가 아닌 경우 프로젝트 권한 확인
-  if (!currentUser || !currentUser.isAdmin) {
-    const hasReadPermission =
-      project.readUsers && project.readUsers.includes(currentUserId);
-    const hasWritePermission =
-      project.writeUsers && project.writeUsers.includes(currentUserId);
-    const hasAdminPermission =
-      project.adminUsers && project.adminUsers.includes(currentUserId);
-
-    if (!hasReadPermission && !hasWritePermission && !hasAdminPermission) {
-      return res
-        .status(403)
-        .json({ message: "이 프로젝트에 접근할 권한이 없습니다." });
-    }
-  }
-
-  // 프로젝트에 읽기 또는 쓰기 권한을 가진 사용자 ID 수집
-  const authorizedUserIds = new Set([
-    ...(project.readUsers || []),
-    ...(project.writeUsers || []),
-    ...(project.adminUsers || []),
-  ]);
-
-  // 권한을 가진 사용자들의 정보 조회
-  const users = await usersCollection
-    .find(
-      { userid: { $in: Array.from(authorizedUserIds) } },
-      {
-        projection: {
-          userid: 1,
-          username: 1,
-          isAdmin: 1,
-          _id: 1,
-          profileImage: 1,
-        },
-      }
-    )
-    .toArray();
-
-  const mappedUsers = users.map((user) => ({
-    id: user._id.toString(),
-    userid: user.userid,
-    username: user.username,
-    name: user.username,
-    isAdmin: user.isAdmin || false,
-    profileImage: user.profileImage,
-  }));
-
-  res.json(mappedUsers);
-});
 
 app.put("/api/users/:userId/password", async (req, res) => {
   const { userId } = req.params;
@@ -746,45 +678,6 @@ app.put("/api/users/:userId/details", async (req, res) => {
   res.json({ message: "프로필 정보가 성공적으로 업데이트되었습니다." });
 });
 
-app.get("/api/projects/:projectId/issue-settings", async (req, res) => {
-  const { projectId } = req.params;
-  const project = await projectsCollection.findOne({
-    _id: new ObjectId(projectId),
-  });
-  if (!project) {
-    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
-  }
-  const comps = await componentsCollection
-    .find({ projectId })
-    .project({ name: 1 })
-    .toArray();
-  res.json({
-    statuses: project.statuses || DEFAULT_STATUSES,
-    priorities: project.priorities || DEFAULT_PRIORITIES,
-    resolutions: project.resolutions || DEFAULT_RESOLUTIONS,
-    types: project.types || DEFAULT_TYPES,
-    components: comps.map((c) => c.name),
-  });
-});
-
-app.put("/api/projects/:projectId/issue-settings", async (req, res) => {
-  const { projectId } = req.params;
-  const { statuses, priorities, resolutions, types } = req.body;
-  if (
-    !Array.isArray(statuses) ||
-    !Array.isArray(priorities) ||
-    !Array.isArray(resolutions) ||
-    !Array.isArray(types)
-  ) {
-    return res.status(400).json({ message: "Invalid data" });
-  }
-  const update = { statuses, priorities, resolutions, types };
-  await projectsCollection.updateOne(
-    { _id: new ObjectId(projectId) },
-    { $set: update }
-  );
-  res.json(update);
-});
 
 
 
@@ -794,236 +687,16 @@ app.put("/api/projects/:projectId/issue-settings", async (req, res) => {
 
 
 
-app.get("/api/projects/:projectId/components", async (req, res) => {
-  const { projectId } = req.params;
-  const comps = await componentsCollection
-    .find({ projectId })
-    .sort({ name: 1 })
-    .toArray();
-  const countsArr = await issuesCollection
-    .aggregate([
-      { $match: { projectId, component: { $ne: null } } },
-      { $group: { _id: "$component", count: { $sum: 1 } } },
-    ])
-    .toArray();
-  const countMap = Object.fromEntries(countsArr.map((c) => [c._id, c.count]));
-  res.json(
-    comps.map((c) => ({
-      ...mapComponent(c),
-      issueCount: countMap[c.name] || 0,
-    }))
-  );
-});
 
-app.post("/api/projects/:projectId/components", async (req, res) => {
-  const { projectId } = req.params;
-  const { name, description, owners } = req.body;
-  if (!name) {
-    return res.status(400).json({ message: "이름은 필수입니다." });
-  }
-  const doc = {
-    projectId,
-    name: name.trim(),
-    description: description?.trim() || undefined,
-    owners: Array.isArray(owners) ? owners : [],
-    createdAt: new Date().toISOString(),
-  };
-  const result = await componentsCollection.insertOne(doc);
-  await projectsCollection.updateOne(
-    { _id: new ObjectId(projectId) },
-    { $addToSet: { components: doc.name } }
-  );
-  res
-    .status(201)
-    .json({ id: result.insertedId.toString(), ...doc, issueCount: 0 });
-});
 
-app.put("/api/components/:id", async (req, res) => {
-  const { id } = req.params;
-  const { name, description, owners } = req.body;
-  const existing = await componentsCollection.findOne({
-    _id: new ObjectId(id),
-  });
-  if (!existing) {
-    return res.status(404).json({ message: "컴포넌트를 찾을 수 없습니다." });
-  }
-  const update = { updatedAt: new Date().toISOString() };
-  if (name !== undefined) update.name = name.trim();
-  if (description !== undefined)
-    update.description =
-      description.trim() === "" ? undefined : description.trim();
-  if (owners !== undefined) update.owners = Array.isArray(owners) ? owners : [];
-  await componentsCollection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: update }
-  );
-  if (name !== undefined && name.trim() !== existing.name) {
-    await projectsCollection.updateOne(
-      { _id: new ObjectId(existing.projectId) },
-      { $pull: { components: existing.name } }
-    );
-    await projectsCollection.updateOne(
-      { _id: new ObjectId(existing.projectId) },
-      { $addToSet: { components: name.trim() } }
-    );
-  }
-  const updated = await componentsCollection.findOne({ _id: new ObjectId(id) });
-  const issueCount = await issuesCollection.countDocuments({
-    projectId: existing.projectId,
-    component: updated.name,
-  });
-  res.json({ ...mapComponent(updated), issueCount });
-});
 
-app.delete("/api/components/:id", async (req, res) => {
-  const { id } = req.params;
-  const existing = await componentsCollection.findOne({
-    _id: new ObjectId(id),
-  });
-  if (!existing) {
-    return res.status(404).json({ message: "컴포넌트를 찾을 수 없습니다." });
-  }
-  await componentsCollection.deleteOne({ _id: new ObjectId(id) });
-  await projectsCollection.updateOne(
-    { _id: new ObjectId(existing.projectId) },
-    { $pull: { components: existing.name } }
-  );
-  res.status(204).send();
-});
 
-app.get("/api/projects/:projectId/customers", async (req, res) => {
-  const { projectId } = req.params;
-  const custs = await customersCollection
-    .find({ projectId })
-    .sort({ name: 1 })
-    .toArray();
-  const countsArr = await issuesCollection
-    .aggregate([
-      { $match: { projectId, customer: { $ne: null } } },
-      { $group: { _id: "$customer", count: { $sum: 1 } } },
-    ])
-    .toArray();
-  const countMap = Object.fromEntries(countsArr.map((c) => [c._id, c.count]));
-  res.json(
-    custs.map((c) => ({
-      ...mapComponent(c),
-      issueCount: countMap[c.name] || 0,
-    }))
-  );
-});
 
-app.post("/api/projects/:projectId/customers", async (req, res) => {
-  const { projectId } = req.params;
-  const { name, description, owners } = req.body;
-  if (!name) {
-    return res.status(400).json({ message: "이름은 필수입니다." });
-  }
-  const doc = {
-    projectId,
-    name: name.trim(),
-    description: description?.trim() || undefined,
-    owners: Array.isArray(owners) ? owners : [],
-    createdAt: new Date().toISOString(),
-  };
-  const result = await customersCollection.insertOne(doc);
-  await projectsCollection.updateOne(
-    { _id: new ObjectId(projectId) },
-    { $addToSet: { customers: doc.name } }
-  );
-  res
-    .status(201)
-    .json({ id: result.insertedId.toString(), ...doc, issueCount: 0 });
-});
 
-app.put("/api/customers/:id", async (req, res) => {
-  const { id } = req.params;
-  const { name, description, owners } = req.body;
-  const existing = await customersCollection.findOne({ _id: new ObjectId(id) });
-  if (!existing) {
-    return res.status(404).json({ message: "고객사를 찾을 수 없습니다." });
-  }
-  const update = { updatedAt: new Date().toISOString() };
-  if (name !== undefined) update.name = name.trim();
-  if (description !== undefined)
-    update.description =
-      description.trim() === "" ? undefined : description.trim();
-  if (owners !== undefined) update.owners = Array.isArray(owners) ? owners : [];
-  await customersCollection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: update }
-  );
-  if (name !== undefined && name.trim() !== existing.name) {
-    await projectsCollection.updateOne(
-      { _id: new ObjectId(existing.projectId) },
-      { $pull: { customers: existing.name } }
-    );
-    await projectsCollection.updateOne(
-      { _id: new ObjectId(existing.projectId) },
-      { $addToSet: { customers: name.trim() } }
-    );
-  }
-  const updated = await customersCollection.findOne({ _id: new ObjectId(id) });
-  const issueCount = await issuesCollection.countDocuments({
-    projectId: existing.projectId,
-    customer: updated.name,
-  });
-  res.json({ ...mapComponent(updated), issueCount });
-});
 
-app.delete("/api/customers/:id", async (req, res) => {
-  const { id } = req.params;
-  const existing = await customersCollection.findOne({ _id: new ObjectId(id) });
-  if (!existing) {
-    return res.status(404).json({ message: "고객사를 찾을 수 없습니다." });
-  }
-  await customersCollection.deleteOne({ _id: new ObjectId(id) });
-  await projectsCollection.updateOne(
-    { _id: new ObjectId(existing.projectId) },
-    { $pull: { customers: existing.name } }
-  );
-  res.status(204).send();
-});
 
-app.get("/api/projects/:projectId/permissions", async (req, res) => {
-  const { projectId } = req.params;
-  const project = await projectsCollection.findOne({
-    _id: new ObjectId(projectId),
-  });
-  if (!project) {
-    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
-  }
-  res.json({
-    readUsers: project.readUsers || [],
-    writeUsers: project.writeUsers || [],
-    adminUsers: project.adminUsers || [],
-  });
-});
 
-app.put("/api/projects/:projectId/permissions", async (req, res) => {
-  const { projectId } = req.params;
-  const { readUsers, writeUsers, adminUsers } = req.body;
 
-  const project = await projectsCollection.findOne({
-    _id: new ObjectId(projectId),
-  });
-  if (!project) {
-    return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
-  }
-
-  await projectsCollection.updateOne(
-    { _id: new ObjectId(projectId) },
-    {
-      $set: {
-        readUsers: readUsers || [],
-        writeUsers: writeUsers || [],
-        adminUsers: adminUsers || [],
-        updatedAt: new Date().toISOString(),
-      },
-    }
-  );
-
-  res.json({ message: "권한이 성공적으로 업데이트되었습니다." });
-});
 
 app.get("/api/issues", async (req, res) => {
   const { projectId, assignee, reporter, type, priority } = req.query;

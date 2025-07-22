@@ -157,6 +157,322 @@ export function createProjectsRoutes(
     res.json(mapProject(proj));
   });
 
+  // 프로젝트 사용자 목록 조회
+  router.get("/projects/:projectId/users", async (req, res) => {
+    const { projectId } = req.params;
+    const currentUserId = req.session.user?.userid;
+
+    if (!currentUserId) {
+      return res.status(401).json({ message: "로그인이 필요합니다." });
+    }
+
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(projectId),
+    });
+
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+
+    const readUsers = project.readUsers || [];
+    const writeUsers = project.writeUsers || [];
+    const adminUsers = project.adminUsers || [];
+
+    const allUserIds = [...new Set([...readUsers, ...writeUsers, ...adminUsers])];
+    const users = await usersCollection
+      .find(
+        { userid: { $in: allUserIds } },
+        {
+          projection: {
+            userid: 1,
+            username: 1,
+            isAdmin: 1,
+            _id: 1,
+            profileImage: 1,
+          },
+        }
+      )
+      .toArray();
+
+    const mappedUsers = users.map((user) => ({
+      id: user._id.toString(),
+      userid: user.userid,
+      username: user.username,
+      isAdmin: user.isAdmin || false,
+      profileImage: user.profileImage,
+    }));
+
+    res.json(mappedUsers);
+  });
+
+  // 프로젝트 이슈 설정 조회
+  router.get("/projects/:projectId/issue-settings", async (req, res) => {
+    const { projectId } = req.params;
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(projectId),
+    });
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+
+    const comps = await componentsCollection
+      .find({ projectId })
+      .sort({ name: 1 })
+      .toArray();
+
+    res.json({
+      statuses: project.statuses || DEFAULT_STATUSES,
+      priorities: project.priorities || DEFAULT_PRIORITIES,
+      resolutions: project.resolutions || DEFAULT_RESOLUTIONS,
+      types: project.types || DEFAULT_TYPES,
+      components: comps.map((c) => c.name),
+    });
+  });
+
+  // 프로젝트 이슈 설정 업데이트
+  router.put("/projects/:projectId/issue-settings", async (req, res) => {
+    const { projectId } = req.params;
+    const { statuses, priorities, resolutions, types } = req.body;
+    if (
+      !Array.isArray(statuses) ||
+      !Array.isArray(priorities) ||
+      !Array.isArray(resolutions) ||
+      !Array.isArray(types)
+    ) {
+      return res.status(400).json({ message: "올바르지 않은 형식입니다." });
+    }
+    
+    await projectsCollection.updateOne(
+      { _id: new ObjectId(projectId) },
+      { $set: { statuses, priorities, resolutions, types } }
+    );
+    
+    res.json({ message: "업데이트 완료" });
+  });
+
+  // 프로젝트 컴포넌트 목록 조회
+  router.get("/projects/:projectId/components", async (req, res) => {
+    const { projectId } = req.params;
+    const comps = await componentsCollection
+      .find({ projectId })
+      .sort({ name: 1 })
+      .toArray();
+    const countsArr = await issuesCollection
+      .aggregate([
+        { $match: { projectId, component: { $ne: null } } },
+        { $group: { _id: "$component", count: { $sum: 1 } } },
+      ])
+      .toArray();
+    const countMap = Object.fromEntries(countsArr.map((c) => [c._id, c.count]));
+    res.json(
+      comps.map((c) => ({
+        id: c._id.toString(),
+        name: c.name,
+        description: c.description,
+        owners: c.owners,
+        issueCount: countMap[c.name] || 0,
+      }))
+    );
+  });
+
+  // 프로젝트에 새 컴포넌트 생성
+  router.post("/projects/:projectId/components", async (req, res) => {
+    const { projectId } = req.params;
+    const { name, description, owners } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "이름은 필수입니다." });
+    }
+    const doc = {
+      projectId,
+      name: name.trim(),
+      description: description?.trim() || undefined,
+      owners: owners || [],
+      createdAt: new Date().toISOString(),
+    };
+    const result = await componentsCollection.insertOne(doc);
+    res.status(201).json({ id: result.insertedId.toString(), ...doc });
+  });
+
+  // 컴포넌트 수정
+  router.put("/components/:id", async (req, res) => {
+    const { id } = req.params;
+    const { name, description, owners } = req.body;
+    const update = { updatedAt: new Date().toISOString() };
+    if (name !== undefined) update.name = name.trim();
+    if (description !== undefined)
+      update.description = description.trim() === "" ? undefined : description.trim();
+    if (owners !== undefined) update.owners = owners;
+    
+    const result = await componentsCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: update },
+      { returnDocument: "after" }
+    );
+    
+    if (!result) {
+      return res.status(404).json({ message: "컴포넌트를 찾을 수 없습니다." });
+    }
+    
+    res.json(mapComponent(result));
+  });
+
+  // 컴포넌트 삭제
+  router.delete("/components/:id", async (req, res) => {
+    const { id } = req.params;
+    const existing = await componentsCollection.findOne({ _id: new ObjectId(id) });
+    if (!existing) {
+      return res.status(404).json({ message: "삭제할 컴포넌트를 찾을 수 없습니다." });
+    }
+    
+    await componentsCollection.deleteOne({ _id: new ObjectId(id) });
+    
+    // 이슈에서 해당 컴포넌트 제거
+    await issuesCollection.updateMany(
+      { component: existing.name },
+      { $unset: { component: "" } }
+    );
+    
+    // 프로젝트에서 컴포넌트 제거
+    await projectsCollection.updateMany(
+      { components: existing.name },
+      { $pull: { components: existing.name } }
+    );
+    
+    res.status(204).send();
+  });
+
+  // 프로젝트 고객 목록 조회
+  router.get("/projects/:projectId/customers", async (req, res) => {
+    const { projectId } = req.params;
+    const custs = await customersCollection
+      .find({ projectId })
+      .sort({ name: 1 })
+      .toArray();
+    const countsArr = await issuesCollection
+      .aggregate([
+        { $match: { projectId, customer: { $ne: null } } },
+        { $group: { _id: "$customer", count: { $sum: 1 } } },
+      ])
+      .toArray();
+    const countMap = Object.fromEntries(countsArr.map((c) => [c._id, c.count]));
+    res.json(
+      custs.map((c) => ({
+        id: c._id.toString(),
+        name: c.name,
+        description: c.description,
+        owners: c.owners,
+        issueCount: countMap[c.name] || 0,
+      }))
+    );
+  });
+
+  // 프로젝트에 새 고객 생성
+  router.post("/projects/:projectId/customers", async (req, res) => {
+    const { projectId } = req.params;
+    const { name, description, owners } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "이름은 필수입니다." });
+    }
+    const doc = {
+      projectId,
+      name: name.trim(),
+      description: description?.trim() || undefined,
+      owners: owners || [],
+      createdAt: new Date().toISOString(),
+    };
+    const result = await customersCollection.insertOne(doc);
+    res.status(201).json({ id: result.insertedId.toString(), ...doc });
+  });
+
+  // 고객 수정
+  router.put("/customers/:id", async (req, res) => {
+    const { id } = req.params;
+    const { name, description, owners } = req.body;
+    const update = { updatedAt: new Date().toISOString() };
+    if (name !== undefined) update.name = name.trim();
+    if (description !== undefined)
+      update.description = description.trim() === "" ? undefined : description.trim();
+    if (owners !== undefined) update.owners = owners;
+    
+    const result = await customersCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: update },
+      { returnDocument: "after" }
+    );
+    
+    if (!result) {
+      return res.status(404).json({ message: "고객을 찾을 수 없습니다." });
+    }
+    
+    res.json(mapCustomer(result));
+  });
+
+  // 고객 삭제
+  router.delete("/customers/:id", async (req, res) => {
+    const { id } = req.params;
+    const existing = await customersCollection.findOne({ _id: new ObjectId(id) });
+    if (!existing) {
+      return res.status(404).json({ message: "삭제할 고객을 찾을 수 없습니다." });
+    }
+    
+    await customersCollection.deleteOne({ _id: new ObjectId(id) });
+    
+    // 이슈에서 해당 고객 제거
+    await issuesCollection.updateMany(
+      { customer: existing.name },
+      { $unset: { customer: "" } }
+    );
+    
+    // 프로젝트에서 고객 제거
+    await projectsCollection.updateMany(
+      { customers: existing.name },
+      { $pull: { customers: existing.name } }
+    );
+    
+    res.status(204).send();
+  });
+
+  // 프로젝트 권한 조회
+  router.get("/projects/:projectId/permissions", async (req, res) => {
+    const { projectId } = req.params;
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(projectId),
+    });
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+    res.json({
+      readUsers: project.readUsers || [],
+      writeUsers: project.writeUsers || [],
+      adminUsers: project.adminUsers || [],
+    });
+  });
+
+  // 프로젝트 권한 업데이트
+  router.put("/projects/:projectId/permissions", async (req, res) => {
+    const { projectId } = req.params;
+    const { readUsers, writeUsers, adminUsers } = req.body;
+
+    const project = await projectsCollection.findOne({
+      _id: new ObjectId(projectId),
+    });
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+
+    const update = {};
+    if (Array.isArray(readUsers)) update.readUsers = readUsers;
+    if (Array.isArray(writeUsers)) update.writeUsers = writeUsers;
+    if (Array.isArray(adminUsers)) update.adminUsers = adminUsers;
+
+    await projectsCollection.updateOne(
+      { _id: new ObjectId(projectId) },
+      { $set: update }
+    );
+
+    res.json({ message: "권한이 업데이트되었습니다." });
+  });
+
   return router;
 }
 
