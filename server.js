@@ -187,6 +187,8 @@ async function ensureAdminUser() {
       username: ADMIN_USERNAME,
       passwordHash,
       isAdmin: true,
+      isActive: true,
+      lastLogin: new Date(),
     });
     console.log("Default admin user created");
   }

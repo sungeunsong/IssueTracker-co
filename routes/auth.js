@@ -40,6 +40,8 @@ export function createAuthRoutes(usersCollection, projectsCollection) {
       username,
       passwordHash,
       isAdmin: false,
+      isActive: true,
+      lastLogin: new Date(),
       department,
       position,
       manager,
@@ -63,12 +65,20 @@ export function createAuthRoutes(usersCollection, projectsCollection) {
         .status(401)
         .json({ message: "잘못된 사용자 이름 또는 비밀번호" });
     }
+
+    if (user.isActive === false) {
+      return res.status(403).json({ message: "비활성화된 계정입니다." });
+    }
+
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) {
       return res
         .status(401)
         .json({ message: "잘못된 사용자 이름 또는 비밀번호" });
     }
+
+    await usersCollection.updateOne({ userid }, { $set: { lastLogin: new Date() } });
+
     req.session.user = {
       userid: user.userid,
       username: user.username,

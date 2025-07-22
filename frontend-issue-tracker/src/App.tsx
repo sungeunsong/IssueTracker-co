@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { IssueForm } from "./components/IssueForm";
 import { IssueList } from "./components/IssueList";
 import { ConfirmationModal } from "./components/ConfirmationModal";
@@ -14,6 +14,8 @@ import { BoardView } from "./components/BoardView";
 import { IssueDetailPanel } from "./components/IssueDetailPanel";
 import ResolveIssueModal from "./components/ResolveIssueModal";
 import { UserSettingsPage } from "./pages/UserSettingsPage";
+import UserManagementPage from "./pages/UserManagementPage";
+import ProjectSettingsPage from "./ProjectSettingsPage";
 import ProjectVersions from "./components/ProjectVersions";
 import ProjectComponents from "./components/ProjectComponents";
 import type {
@@ -275,7 +277,9 @@ const MainContent: React.FC<{
             setShowAddProjectModal(true);
             setError(null);
           }}
-          onOpenNotificationSettings={() => setShowNotificationSettingsModal(true)}
+          onOpenNotificationSettings={() =>
+            setShowNotificationSettingsModal(true)
+          }
         />
         {/* <FilterBar
           searchTerm={searchTerm}
@@ -776,7 +780,6 @@ const MainContent: React.FC<{
         isOpen={showNotificationSettingsModal}
         onClose={() => setShowNotificationSettingsModal(false)}
       />
-
     </div>
   );
 };
@@ -823,7 +826,8 @@ const App: React.FC = () => {
   const [issueToDelete, setIssueToDelete] = useState<string | null>(null);
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [issueToResolve, setIssueToResolve] = useState<Issue | null>(null);
-  const [showNotificationSettingsModal, setShowNotificationSettingsModal] = useState(false);
+  const [showNotificationSettingsModal, setShowNotificationSettingsModal] =
+    useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -1499,10 +1503,21 @@ const App: React.FC = () => {
     });
   }, [baseFilteredIssues, currentProject]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex items-center space-x-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="text-gray-600 font-medium">로딩 중...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Routes>
       <Route
-        path="/"
+        path="/*"
         element={
           <MainContent
             {...{
@@ -1592,7 +1607,11 @@ const App: React.FC = () => {
           />
         }
       />
-      <Route path="/settings/user" element={<UserSettingsPage />} />
+      <Route path="/settings/user" element={isAuthenticated ? <UserSettingsPage /> : <Navigate to="/" />} />
+      <Route
+        path="/settings/users"
+        element={isAuthenticated && isAdmin ? <UserManagementPage /> : <Navigate to="/" />}
+      />
     </Routes>
   );
 };

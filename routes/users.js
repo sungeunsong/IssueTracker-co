@@ -11,6 +11,8 @@ function mapUser(user) {
     username: user.username,
     name: user.username,
     isAdmin: user.isAdmin || false,
+    isActive: user.isActive,
+    lastLogin: user.lastLogin,
     profileImage: user.profileImage,
   };
 }
@@ -20,6 +22,10 @@ export function createUsersRoutes(usersCollection, upload) {
 
   // 사용자 목록 조회
   router.get("/users", async (req, res) => {
+    if (!req.session.user || !req.session.user.isAdmin) {
+      return res.status(403).json({ message: "권한이 없습니다." });
+    }
+
     const { username } = req.query;
     const filter = {};
     if (username) {
@@ -29,11 +35,7 @@ export function createUsersRoutes(usersCollection, upload) {
     const users = await usersCollection
       .find(filter, {
         projection: {
-          userid: 1,
-          username: 1,
-          isAdmin: 1,
-          _id: 1,
-          profileImage: 1,
+          passwordHash: 0,
         },
       })
       .toArray();
@@ -141,6 +143,41 @@ export function createUsersRoutes(usersCollection, upload) {
     await usersCollection.updateOne({ userid: userId }, { $set: updateFields });
 
     res.json({ message: "프로필 정보가 성공적으로 업데이트되었습니다." });
+  });
+
+  // 사용자 역할 및 상태 변경 (관리자 전용)
+  router.put("/users/:userId/status", async (req, res) => {
+    if (!req.session.user || !req.session.user.isAdmin) {
+      return res.status(403).json({ message: "권한이 없습니다." });
+    }
+
+    const { userId } = req.params;
+    const { isAdmin, isActive } = req.body;
+
+    if (req.session.user.userid === userId) {
+      return res.status(400).json({ message: "자신의 역할 또는 상태를 변경할 수 없습니다." });
+    }
+
+    const user = await usersCollection.findOne({ userid: userId });
+    if (!user) {
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+    }
+
+    const updateFields = {};
+    if (typeof isAdmin === 'boolean') {
+      updateFields.isAdmin = isAdmin;
+    }
+    if (typeof isActive === 'boolean') {
+      updateFields.isActive = isActive;
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: "변경할 내용이 없습니다." });
+    }
+
+    await usersCollection.updateOne({ userid: userId }, { $set: updateFields });
+
+    res.json({ message: "사용자 정보가 성공적으로 업데이트되었습니다." });
   });
 
   return router;

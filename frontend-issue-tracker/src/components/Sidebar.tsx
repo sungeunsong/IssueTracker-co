@@ -214,6 +214,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 label="완료된 이슈"
                 onClick={() => alert("Completed issues clicked")}
               />
+              {isAdmin && (
+                <NavItem
+                  icon={<span className="text-gray-500">👥</span>}
+                  label="사용자 관리"
+                  href="/settings/users"
+                />
+              )}
               {/* <NavItem
                 icon={<span className="text-gray-500">🔧</span>}
                 label="최근 위키"
