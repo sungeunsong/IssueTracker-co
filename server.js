@@ -14,6 +14,7 @@ import telegramRouter, { sendTelegramMessage } from "./routes/telegram.js";
 import { createAuthRoutes } from "./routes/auth.js";
 import { createVersionsRoutes } from "./routes/versions.js";
 import { createProjectsRoutes } from "./routes/projects.js";
+import { createUsersRoutes } from "./routes/users.js";
 dotenv.config();
 
 // DNS 서버를 Google DNS로 설정 (네트워크 연결 문제 해결)
@@ -474,6 +475,10 @@ app.use("/api", versionsRouter);
 const projectsRouter = createProjectsRoutes(projectsCollection, usersCollection, componentsCollection, customersCollection, issuesCollection);
 app.use("/api", projectsRouter);
 
+// Users 라우터 연결
+const usersRouter = createUsersRoutes(usersCollection, upload);
+app.use("/api", usersRouter);
+
 function mapIssue(doc) {
   const {
     _id,
@@ -542,141 +547,11 @@ async function mapIssueWithLookups(doc) {
 
 
 
-app.get("/api/users", async (req, res) => {
-  const { username } = req.query;
-  const filter = {};
-  if (username) {
-    filter.username = username;
-  }
-
-  const users = await usersCollection
-    .find(filter, {
-      projection: {
-        userid: 1,
-        username: 1,
-        isAdmin: 1,
-        _id: 1,
-        profileImage: 1,
-      },
-    })
-    .toArray();
-
-  const mappedUsers = users.map((user) => ({
-    id: user._id.toString(),
-    userid: user.userid,
-    username: user.username,
-    name: user.username, // username을 name으로도 사용
-    isAdmin: user.isAdmin || false,
-    profileImage: user.profileImage,
-  }));
-
-  res.json(mappedUsers);
-});
-
-app.get("/api/users/:userId", async (req, res) => {
-  const { userId } = req.params;
-  const user = await usersCollection.findOne(
-    { userid: userId },
-    { projection: { passwordHash: 0 } }
-  );
-  if (!user) {
-    return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
-  }
-  res.json({
-    id: user._id.toString(),
-    userid: user.userid,
-    username: user.username,
-    name: user.username,
-    isAdmin: user.isAdmin || false,
-    profileImage: user.profileImage,
-  });
-});
 
 
-app.put("/api/users/:userId/password", async (req, res) => {
-  const { userId } = req.params;
-  const { currentPassword, newPassword } = req.body;
 
-  if (req.session.user?.userid !== userId) {
-    return res.status(403).json({ message: "권한이 없습니다." });
-  }
 
-  const user = await usersCollection.findOne({ userid: userId });
-  if (!user) {
-    return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
-  }
 
-  const match = await bcrypt.compare(currentPassword, user.passwordHash);
-  if (!match) {
-    return res
-      .status(400)
-      .json({ message: "현재 비밀번호가 일치하지 않습니다." });
-  }
-
-  const newPasswordHash = await bcrypt.hash(newPassword, 10);
-  await usersCollection.updateOne(
-    { userid: userId },
-    { $set: { passwordHash: newPasswordHash } }
-  );
-
-  res.json({ message: "비밀번호가 성공적으로 변경되었습니다." });
-});
-
-app.post(
-  "/api/users/:userId/profile-image",
-  upload.single("profileImage"),
-  async (req, res) => {
-    const { userId } = req.params;
-
-    if (req.session.user?.userid !== userId) {
-      return res.status(403).json({ message: "권한이 없습니다." });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ message: "이미지 파일이 필요합니다." });
-    }
-
-    const profileImage = `/uploads/${req.file.filename}`;
-    await usersCollection.updateOne(
-      { userid: userId },
-      { $set: { profileImage } }
-    );
-
-    res.json({
-      message: "프로필 이미지가 성공적으로 업로드되었습니다.",
-      profileImage,
-    });
-  }
-);
-
-app.put("/api/users/:userId/details", async (req, res) => {
-  const { userId } = req.params;
-  const { department, position, manager, employeeId, workPhone, email, role } =
-    req.body;
-
-  if (req.session.user?.userid !== userId) {
-    return res.status(403).json({ message: "권한이 없습니다." });
-  }
-
-  const user = await usersCollection.findOne({ userid: userId });
-  if (!user) {
-    return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
-  }
-
-  const updateFields = {
-    department,
-    position,
-    manager,
-    employeeId,
-    workPhone,
-    email,
-    role,
-  };
-
-  await usersCollection.updateOne({ userid: userId }, { $set: updateFields });
-
-  res.json({ message: "프로필 정보가 성공적으로 업데이트되었습니다." });
-});
 
 
 
