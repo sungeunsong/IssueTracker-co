@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Routes, Route, useNavigate, Navigate, useParams } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+  useParams,
+} from "react-router-dom";
 import { IssueForm } from "./components/IssueForm";
 import { IssueList } from "./components/IssueList";
 import { ConfirmationModal } from "./components/ConfirmationModal";
@@ -787,6 +793,9 @@ const MainContent: React.FC<{
 const App: React.FC = () => {
   const navigate = useNavigate();
   const { projectId: urlProjectId } = useParams<{ projectId?: string }>();
+
+  // /settings 경로를 위한 특별 처리
+  const isSettingsPath = window.location.pathname.startsWith("/settings");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1111,10 +1120,12 @@ const App: React.FC = () => {
     }
   }, [isAuthenticated, fetchProjects]);
 
-  // URL에서 프로젝트 ID를 바탕으로 초기화
+  // URL에서 프로젝트 ID를 바탕으로 초기화 (설정 경로가 아닌 경우에만)
   useEffect(() => {
+    if (isSettingsPath) return; // 설정 경로이면 스킵
+
     if (projects.length > 0) {
-      if (urlProjectId && projects.find(p => p.id === urlProjectId)) {
+      if (urlProjectId && projects.find((p) => p.id === urlProjectId)) {
         // URL에 지정된 프로젝트가 존재하는 경우
         if (currentProjectId !== urlProjectId) {
           setCurrentProjectId(urlProjectId);
@@ -1129,7 +1140,7 @@ const App: React.FC = () => {
         navigate(`/projects/${currentProjectId}`, { replace: true });
       }
     }
-  }, [projects, urlProjectId, currentProjectId, navigate]);
+  }, [projects, urlProjectId, currentProjectId, navigate, isSettingsPath]);
 
   useEffect(() => {
     if (currentProjectId && isAuthenticated) {
@@ -1534,6 +1545,20 @@ const App: React.FC = () => {
   return (
     <Routes>
       <Route
+        path="/settings/user"
+        element={isAuthenticated ? <UserSettingsPage /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/settings/users"
+        element={
+          isAuthenticated && isAdmin ? (
+            <UserManagementPage />
+          ) : (
+            <Navigate to="/" />
+          )
+        }
+      />
+      <Route
         path="/*"
         element={
           <MainContent
@@ -1623,11 +1648,6 @@ const App: React.FC = () => {
             }}
           />
         }
-      />
-      <Route path="/settings/user" element={isAuthenticated ? <UserSettingsPage /> : <Navigate to="/" />} />
-      <Route
-        path="/settings/users"
-        element={isAuthenticated && isAdmin ? <UserManagementPage /> : <Navigate to="/" />}
       />
     </Routes>
   );

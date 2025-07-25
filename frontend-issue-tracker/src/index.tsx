@@ -16,9 +16,9 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/projects/:projectId/*" element={<App />} />
         <Route path="/issues/:issueKey" element={<IssueDetailPage />} />
         <Route path="/projects/:projectId/settings" element={<ProjectSettingsPage />} />
+        <Route path="/projects/:projectId/*" element={<App />} />
         <Route path="/*" element={<App />} />
       </Routes>
     </BrowserRouter>

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import type { ViewMode } from "../App";
 import type { Project } from "../types";
 import { ProjectIcon } from "./icons/ProjectIcon";
@@ -56,14 +57,14 @@ const NavItem: React.FC<NavItemProps> = ({
 
   if (href) {
     return (
-      <a
-        href={href}
+      <Link
+        to={href}
         className={`${baseClasses} ${
           isActive ? activeClasses : inactiveClasses
         }`}
       >
         {content}
-      </a>
+      </Link>
     );
   }
 
