@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Navigate, useParams } from "react-router-dom";
 import { IssueForm } from "./components/IssueForm";
 import { IssueList } from "./components/IssueList";
 import { ConfirmationModal } from "./components/ConfirmationModal";
@@ -786,6 +786,7 @@ const MainContent: React.FC<{
 
 const App: React.FC = () => {
   const navigate = useNavigate();
+  const { projectId: urlProjectId } = useParams<{ projectId?: string }>();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1093,6 +1094,8 @@ const App: React.FC = () => {
     }
     setIssues([]);
     setCurrentProjectId(id);
+    // URL 업데이트
+    navigate(`/projects/${id}`);
   };
 
   const handleOpenProjectSettings = (pid: string) => {
@@ -1108,11 +1111,25 @@ const App: React.FC = () => {
     }
   }, [isAuthenticated, fetchProjects]);
 
+  // URL에서 프로젝트 ID를 바탕으로 초기화
   useEffect(() => {
-    if (projects.length > 0 && !currentProjectId) {
-      setCurrentProjectId(projects[0].id);
+    if (projects.length > 0) {
+      if (urlProjectId && projects.find(p => p.id === urlProjectId)) {
+        // URL에 지정된 프로젝트가 존재하는 경우
+        if (currentProjectId !== urlProjectId) {
+          setCurrentProjectId(urlProjectId);
+        }
+      } else if (!currentProjectId) {
+        // 현재 선택된 프로젝트가 없는 경우 첫 번째 프로젝트 선택
+        const firstProject = projects[0];
+        setCurrentProjectId(firstProject.id);
+        navigate(`/projects/${firstProject.id}`, { replace: true });
+      } else if (currentProjectId && !urlProjectId) {
+        // 현재 선택된 프로젝트가 있지만 URL에 없는 경우
+        navigate(`/projects/${currentProjectId}`, { replace: true });
+      }
     }
-  }, [projects, currentProjectId]);
+  }, [projects, urlProjectId, currentProjectId, navigate]);
 
   useEffect(() => {
     if (currentProjectId && isAuthenticated) {
